@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@config "../tailwind.config.ts";
+@source "../app/**/*.{ts,tsx}";
+@source "../src/**/*.{ts,tsx}";
+
+:root {
+  color-scheme: light;
+  background: #f3f5f8;
+  color: #18202f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, #ffffff 0, #f3f5f8 360px),
+    #f3f5f8;
+  color: #18202f;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #315cff;
+  outline-offset: 2px;
+}
+
+svg text {
+  paint-order: stroke;
+}
