@@ -61,7 +61,7 @@ function renderElement(element: FigureElement, selectedId?: string, onSelect?: (
         height={element.height}
         rx={element.rx}
         fill={element.fill}
-        stroke={isSelected ? "#315CFF" : element.stroke}
+        stroke={isSelected ? "#737A82" : element.stroke}
         strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 1.5, 3) : element.strokeWidth}
       />
     );
@@ -79,7 +79,7 @@ function renderElement(element: FigureElement, selectedId?: string, onSelect?: (
         y1={element.y1}
         x2={element.x2}
         y2={element.y2}
-        stroke={isSelected ? "#315CFF" : element.stroke}
+        stroke={isSelected ? "#737A82" : element.stroke}
         strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 2, 3) : element.strokeWidth}
         strokeLinecap="round"
       />
@@ -104,9 +104,11 @@ function renderText(
   const width = element.width ?? 240;
   const lineHeight = fontSize * 1.18;
   const lines = wrapSvgText(element.text, width, fontSize);
+  const height = element.height ?? lines.length * lineHeight;
   const anchor = element.textAnchor ?? "middle";
   const anchorX = anchor === "start" ? element.x : anchor === "end" ? element.x + width : element.x + width / 2;
-  const startY = element.y + fontSize;
+  const blockHeight = lines.length * lineHeight;
+  const firstLineY = element.y + (height - blockHeight) / 2 + lineHeight / 2;
 
   return (
     <g {...shared}>
@@ -115,9 +117,9 @@ function renderText(
           x={element.x - 6}
           y={element.y - 4}
           width={width + 12}
-          height={(element.height ?? lines.length * lineHeight) + 8}
+          height={height + 8}
           fill="none"
-          stroke="#315CFF"
+        stroke="#737A82"
           strokeDasharray="6 5"
           strokeWidth={2}
           rx={6}
@@ -125,15 +127,16 @@ function renderText(
       ) : null}
       <text
         x={anchorX}
-        y={startY}
-        fill={element.fill ?? "#1D2433"}
+        y={firstLineY}
+        fill={element.fill ?? "#2F3337"}
         fontSize={fontSize}
         fontWeight={element.fontWeight ?? 500}
         textAnchor={anchor}
+        dominantBaseline="middle"
         fontFamily="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"
       >
         {lines.map((line, index) => (
-          <tspan key={`${element.id}-line-${index}`} x={anchorX} dy={index === 0 ? 0 : lineHeight}>
+          <tspan key={`${element.id}-line-${index}`} x={anchorX} y={firstLineY + index * lineHeight}>
             {line}
           </tspan>
         ))}
@@ -153,7 +156,7 @@ function renderArrow(
     className: string;
   }
 ) {
-  const color = isSelected ? "#315CFF" : element.stroke;
+  const color = isSelected ? "#737A82" : element.stroke;
   const strokeWidth = isSelected ? Math.max(element.strokeWidth ?? 2, 3) : element.strokeWidth ?? 2;
   const points = arrowHeadPoints(element.x1, element.y1, element.x2, element.y2, 15 + strokeWidth * 1.5, 9 + strokeWidth);
   const lineEnd = lineEndBeforeArrow(element.x1, element.y1, element.x2, element.y2, 12 + strokeWidth);

@@ -8,11 +8,11 @@ const config: Config = {
         sans: ["Inter", "Roboto", "Noto Sans CJK SC", "Arial", "sans-serif"]
       },
       colors: {
-        ink: "#1D2433",
-        panel: "#F7F8FA",
-        line: "#D9DEE8",
-        cobalt: "#315CFF",
-        mint: "#1F9D7A",
+        ink: "#2F3337",
+        panel: "#F6F6F6",
+        line: "#E1E3E6",
+        cobalt: "#6B7280",
+        mint: "#737A82",
         amber: "#B7791F",
         coral: "#D95C4A"
       }
@@ -22,4 +22,3 @@ const config: Config = {
 };
 
 export default config;
-

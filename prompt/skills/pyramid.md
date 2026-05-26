@@ -16,3 +16,7 @@ Good uses:
 - capability layers
 - strategic priorities
 
+Global requirements:
+- Follow the active output language exactly: `zh` outputs Simplified Chinese; `en` outputs English.
+- Do not add decorative side symbols, edge icons, corner marks, ornamental badges, or standalone symbols.
+- Center layer labels and supporting text horizontally and vertically within each pyramid or funnel layer.

@@ -8,6 +8,16 @@ const DEFAULT_CANVAS = {
 
 export const INTERNAL_SKILLS: InternalSkill[] = [
   {
+    id: "freeform",
+    name: { en: "Other / AI choice", zh: "其他 / AI 自由发挥" },
+    description: {
+      en: "Let AI choose the best visual structure for the request.",
+      zh: "由 AI 根据描述自由选择最合适的图形结构。"
+    },
+    promptFile: "skills/freeform.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
     id: "flow",
     name: { en: "Flow", zh: "流程图" },
     description: {
@@ -66,4 +76,3 @@ export function getInternalSkill(skillId: string): InternalSkill | undefined {
 export function isSkillId(value: string): value is SkillId {
   return INTERNAL_SKILLS.some((skill) => skill.id === value);
 }
-

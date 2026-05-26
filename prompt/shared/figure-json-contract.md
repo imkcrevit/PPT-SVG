@@ -102,5 +102,8 @@ Rules:
 - Keep all geometry within the canvas.
 - Every element id must be unique, lowercase, and stable.
 - Text should be concise enough to fit in its box.
+- Text inside a background rectangle/card should use a text box centered within that shape on both axes; use `textAnchor: "middle"` unless a clear exception is needed.
+- Numbers, step indexes, and content labels must be horizontally and vertically centered against their own background shapes. If a number and a label share one background, align the combined text group to the visual center of that background.
+- The final large background panel, when present, must be centered on the canvas. The complete content group inside that large panel must share the panel's horizontal and vertical center.
+- When there is no large background panel, the complete main content group must be centered on the canvas. Titles may stay above the main content, but the non-title content group should remain centered.
 - Do not include comments, markdown, trailing commas, or prose outside the JSON object.
-

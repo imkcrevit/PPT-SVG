@@ -12,18 +12,27 @@ const PROMPT_ROOT = path.resolve(process.cwd(), "prompt");
 
 export async function loadPrompt(relativePath: string): Promise<string> {
   const fullPath = path.resolve(PROMPT_ROOT, relativePath);
+  const relative = path.relative(PROMPT_ROOT, fullPath);
 
-  if (!fullPath.startsWith(PROMPT_ROOT)) {
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error(`Invalid prompt path: ${relativePath}`);
   }
 
   return readFile(fullPath, "utf8");
 }
 
+function assertSkillPromptPath(promptFile: string): void {
+  if (!/^skills\/[a-z0-9-]+\.md$/.test(promptFile)) {
+    throw new Error(`Skill prompts must live in PPT-SVG/prompt/skills: ${promptFile}`);
+  }
+}
+
 export async function buildGenerateMessages(
   request: GenerateFigureRequest,
   skill: InternalSkill
 ): Promise<ChatMessage[]> {
+  assertSkillPromptPath(skill.promptFile);
+
   const [systemPrompt, contractPrompt, qualityPrompt, skillPrompt] = await Promise.all([
     loadPrompt("system/generate-figure.md"),
     loadPrompt("shared/figure-json-contract.md"),
@@ -42,6 +51,11 @@ export async function buildGenerateMessages(
         {
           selected_skill: skill.id,
           output_language: request.language,
+          ui_language_environment: request.language === "zh" ? "Simplified Chinese" : "English",
+          language_instruction:
+            request.language === "zh"
+              ? "The active UI language is Simplified Chinese. Output every visible label, title, note, and metadata value directly in Simplified Chinese unless the user explicitly asks for another language."
+              : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
           canvas: skill.defaultCanvas,
           user_description: request.userDescription,
           ppt_context: request.pptContext ?? null
@@ -78,4 +92,3 @@ export async function buildRepairMessages(rawOutput: string, validationErrors: s
     }
   ];
 }
-

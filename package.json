@@ -4,9 +4,11 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "bash ./scripts/start.sh dev",
+    "debug": "bash ./scripts/start.sh debug",
+    "build": "NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH-/ppt} next build",
+    "start": "bash ./scripts/start.sh prod",
+    "stop": "bash ./scripts/start.sh stop",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

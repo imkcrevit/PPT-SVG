@@ -1,7 +1,7 @@
 export const LOCALES = ["en", "zh"] as const;
 export type Locale = (typeof LOCALES)[number];
 
-export const SKILL_IDS = ["flow", "matrix", "timeline", "pyramid", "architecture"] as const;
+export const SKILL_IDS = ["freeform", "flow", "matrix", "timeline", "pyramid", "architecture"] as const;
 export type SkillId = (typeof SKILL_IDS)[number];
 
 export interface CanvasSpec {

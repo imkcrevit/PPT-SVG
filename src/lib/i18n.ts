@@ -7,7 +7,7 @@ export function isLocale(value: string): value is Locale {
 export const dictionaries = {
   en: {
     appName: "PPT-SVG",
-    appSubtitle: "Internal skills to high-quality SVG.",
+    appSubtitle: "Simple SVG diagrams for presentation slides.",
     languageEnglish: "EN",
     languageChinese: "中文",
     skillLabel: "Diagram type",
@@ -21,6 +21,9 @@ export const dictionaries = {
     invalidPpt: "Choose a .pptx file.",
     generate: "Generate",
     generating: "Generating",
+    generateQueued: "Sending request to the generation API...",
+    generateThinking: "AI thinking...",
+    generateRendering: "Rendering generated SVG...",
     downloadSvg: "Download SVG",
     preview: "Preview",
     json: "JSON",
@@ -38,7 +41,7 @@ export const dictionaries = {
   },
   zh: {
     appName: "PPT-SVG",
-    appSubtitle: "使用内部 Skills 生成高质量 SVG。",
+    appSubtitle: "以简洁为主，生成适合演示文稿的 SVG 图形。",
     languageEnglish: "EN",
     languageChinese: "中文",
     skillLabel: "图形类型",
@@ -52,6 +55,9 @@ export const dictionaries = {
     invalidPpt: "请选择 .pptx 文件。",
     generate: "生成",
     generating: "生成中",
+    generateQueued: "正在请求生成接口...",
+    generateThinking: "AI 正在思考...",
+    generateRendering: "正在渲染生成的 SVG...",
     downloadSvg: "下载 SVG",
     preview: "预览",
     json: "JSON",
@@ -70,4 +76,3 @@ export const dictionaries = {
 } satisfies Record<Locale, Record<string, string>>;
 
 export type Dictionary = (typeof dictionaries)[Locale];
-

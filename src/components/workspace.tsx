@@ -1,8 +1,8 @@
 "use client";
 
-import { Braces, CheckCircle2, Download, Eye, FileUp, Loader2, Sparkles, Undo2 } from "lucide-react";
+import { CheckCircle2, Loader2, Undo2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import { appUrl } from "@/lib/app-url";
@@ -25,7 +25,7 @@ interface GenerateApiResponse {
 
 export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
-  const [skillId, setSkillId] = useState<SkillId>("flow");
+  const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
   const [pptFileName, setPptFileName] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -36,13 +36,28 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "json">("preview");
   const [history, setHistory] = useState<Figure[]>([]);
   const [error, setError] = useState("");
+  const [generationStatus, setGenerationStatus] = useState("");
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
 
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
     [figure, selectedId]
   );
+
+  useEffect(() => {
+    if (generationStartedAt === null) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setGenerationSeconds(Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000)));
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [generationStartedAt]);
 
   async function handleGenerate() {
     if (!description.trim()) {
@@ -52,10 +67,14 @@ export function Workspace({ locale }: WorkspaceProps) {
 
     setIsGenerating(true);
     setError("");
+    setGenerationStatus(t.generateThinking);
+    setGenerationStartedAt(Date.now());
+    setGenerationSeconds(0);
     setSelectedId("");
 
     try {
-      const response = await fetch(appUrl("/api/generate"), {
+      const generateUrl = appUrl("/api/generate");
+      const response = await fetch(generateUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -67,13 +86,20 @@ export function Workspace({ locale }: WorkspaceProps) {
           pptContext: pptFileName ? { fileName: pptFileName } : undefined
         })
       });
+      const responseText = await response.text();
+      let payload: GenerateApiResponse;
 
-      const payload = (await response.json()) as GenerateApiResponse;
+      try {
+        payload = JSON.parse(responseText) as GenerateApiResponse;
+      } catch {
+        throw new Error(`${response.status} ${response.statusText || "Invalid response"} from ${generateUrl}`);
+      }
 
       if (!response.ok) {
         throw new Error([payload.error, ...(payload.details ?? [])].filter(Boolean).join(" "));
       }
 
+      setGenerationStatus(t.generateRendering);
       setFigure(payload.figure);
       setFit(payload.fit);
       setModel(payload.model ?? "");
@@ -83,6 +109,9 @@ export function Workspace({ locale }: WorkspaceProps) {
       setError(generationError instanceof Error ? generationError.message : t.errorTitle);
     } finally {
       setIsGenerating(false);
+      setGenerationStatus("");
+      setGenerationStartedAt(null);
+      setGenerationSeconds(0);
     }
   }
 
@@ -150,11 +179,8 @@ export function Workspace({ locale }: WorkspaceProps) {
   return (
     <main className="min-h-screen overflow-x-hidden px-2 py-2 text-ink sm:px-5 sm:py-3 lg:px-6">
       <div className="mx-auto flex max-w-[1560px] flex-col gap-3 sm:gap-4">
-        <header className="flex flex-col gap-3 rounded-md border border-line bg-white px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-xs font-semibold text-white sm:h-10 sm:w-10 sm:text-sm">
-              PS
-            </div>
+        <header className="flex flex-col gap-3 rounded-md border border-line bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+          <div className="flex min-w-0 items-center">
             <div className="min-w-0">
               <h1 className="truncate text-lg font-semibold tracking-normal text-ink sm:text-xl">{t.appName}</h1>
               <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-slate-500 sm:truncate sm:text-sm">
@@ -167,7 +193,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             <Link
               href="/en"
               className={`rounded px-3 py-1.5 text-center text-sm font-medium transition ${
-                locale === "en" ? "bg-white text-cobalt shadow-sm" : "text-slate-600 hover:text-ink"
+                locale === "en" ? "bg-white text-ink shadow-sm" : "text-slate-600 hover:text-ink"
               }`}
             >
               {t.languageEnglish}
@@ -175,7 +201,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             <Link
               href="/zh"
               className={`rounded px-3 py-1.5 text-center text-sm font-medium transition ${
-                locale === "zh" ? "bg-white text-cobalt shadow-sm" : "text-slate-600 hover:text-ink"
+                locale === "zh" ? "bg-white text-ink shadow-sm" : "text-slate-600 hover:text-ink"
               }`}
             >
               {t.languageChinese}
@@ -184,7 +210,7 @@ export function Workspace({ locale }: WorkspaceProps) {
         </header>
 
         <div className="grid gap-3 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-4">
-          <section className="rounded-md border border-line bg-white shadow-sm">
+          <section className="rounded-md border border-line bg-white">
             <div className="border-b border-line px-3 py-3 sm:px-4">
               <h2 className="text-sm font-semibold text-ink">{t.generate}</h2>
             </div>
@@ -195,7 +221,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                 <select
                   value={skillId}
                   onChange={(event) => setSkillId(event.target.value as SkillId)}
-                  className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink shadow-sm transition hover:border-slate-400"
+                  className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink transition hover:border-slate-400"
                 >
                   {INTERNAL_SKILLS.map((skill) => (
                     <option key={skill.id} value={skill.id}>
@@ -220,7 +246,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder={t.promptPlaceholder}
                   rows={6}
-                  className="w-full resize-none rounded-md border border-line bg-white px-3 py-2.5 text-sm leading-6 text-ink shadow-sm transition placeholder:text-slate-400 hover:border-slate-400"
+                  className="w-full resize-none rounded-md border border-line bg-white px-3 py-2.5 text-sm leading-6 text-ink transition placeholder:text-slate-400 hover:border-slate-400"
                 />
               </label>
 
@@ -234,12 +260,9 @@ export function Workspace({ locale }: WorkspaceProps) {
                     handleFile(event.dataTransfer.files[0]);
                   }}
                   onDragOver={(event) => event.preventDefault()}
-                  className="flex min-h-20 w-full items-center justify-center rounded-md border border-dashed border-slate-300 bg-panel px-3 py-4 text-sm text-slate-700 transition hover:border-cobalt hover:bg-white"
+                  className="flex min-h-20 w-full items-center justify-center rounded-md border border-dashed border-slate-300 bg-panel px-3 py-4 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
                 >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <FileUp className="shrink-0 text-cobalt" size={17} />
-                    <span className="truncate">{pptFileName ? `${t.pptReady}: ${pptFileName}` : t.pptIdle}</span>
-                  </span>
+                  <span className="truncate">{pptFileName ? `${t.pptReady}: ${pptFileName}` : t.pptIdle}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -255,11 +278,16 @@ export function Workspace({ locale }: WorkspaceProps) {
                 type="button"
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cobalt px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:bg-slate-400"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:bg-slate-400"
               >
-                {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
                 {isGenerating ? t.generating : t.generate}
               </button>
+
+              {thinkingStatus ? (
+                <div className="animate-pulse rounded-md border border-line bg-panel px-3 py-2.5 text-sm leading-5 text-slate-700">
+                  {thinkingStatus}
+                </div>
+              ) : null}
 
               {error ? (
                 <div className="rounded-md border border-coral/40 bg-red-50 px-3 py-2.5 text-sm text-red-800">
@@ -270,27 +298,25 @@ export function Workspace({ locale }: WorkspaceProps) {
             </div>
           </section>
 
-          <section className="flex min-h-[520px] flex-col overflow-hidden rounded-md border border-line bg-white shadow-sm lg:min-h-[680px]">
+          <section className="flex min-h-[520px] flex-col overflow-hidden rounded-md border border-line bg-white lg:min-h-[680px]">
             <div className="flex flex-col gap-3 border-b border-line bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div className="grid grid-cols-2 rounded-md border border-line bg-panel p-1 sm:flex">
                 <button
                   type="button"
                   onClick={() => setActiveTab("preview")}
-                  className={`flex h-8 items-center justify-center gap-1.5 rounded px-3 text-sm font-medium transition ${
+                  className={`flex h-8 items-center justify-center rounded px-3 text-sm font-medium transition ${
                     activeTab === "preview" ? "bg-white text-ink shadow-sm" : "text-slate-600 hover:text-ink"
                   }`}
                 >
-                  <Eye size={16} />
                   {t.preview}
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("json")}
-                  className={`flex h-8 items-center justify-center gap-1.5 rounded px-3 text-sm font-medium transition ${
+                  className={`flex h-8 items-center justify-center rounded px-3 text-sm font-medium transition ${
                     activeTab === "json" ? "bg-white text-ink shadow-sm" : "text-slate-600 hover:text-ink"
                   }`}
                 >
-                  <Braces size={16} />
                   {t.json}
                 </button>
               </div>
@@ -309,31 +335,32 @@ export function Workspace({ locale }: WorkspaceProps) {
                   type="button"
                   onClick={downloadSvg}
                   disabled={!figure}
-                  className="flex h-9 min-w-0 items-center justify-center gap-2 rounded-md border border-line bg-white px-3 text-sm font-semibold text-ink transition hover:border-slate-400 hover:bg-panel disabled:opacity-40"
+                  className="flex h-9 min-w-0 items-center justify-center rounded-md border border-line bg-white px-3 text-sm font-semibold text-ink transition hover:border-slate-400 hover:bg-panel disabled:opacity-40"
                 >
-                  <Download className="shrink-0" size={17} />
                   <span className="truncate">{t.downloadSvg}</span>
                 </button>
               </div>
             </div>
 
             <div className="grid flex-1 xl:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="flex min-h-[300px] items-center justify-center bg-[linear-gradient(#eef2f7_1px,transparent_1px),linear-gradient(90deg,#eef2f7_1px,transparent_1px)] bg-[size:20px_20px] p-2 sm:min-h-[430px] sm:bg-[size:24px_24px] sm:p-4 lg:min-h-[560px] lg:p-6">
-                {figure ? (
+              <div className="flex min-h-[300px] items-center justify-center bg-panel p-2 sm:min-h-[430px] sm:p-4 lg:min-h-[560px] lg:p-6">
+                {isGenerating ? (
+                  <div className="flex min-h-[220px] w-full max-w-[1080px] flex-col items-center justify-center gap-3 rounded-md border border-line bg-white/90 text-center">
+                    <Loader2 size={30} className="animate-spin text-cobalt" />
+                    <div className="animate-pulse text-sm font-semibold text-ink">{thinkingStatus || t.generating}</div>
+                  </div>
+                ) : figure ? (
                   activeTab === "preview" ? (
-                    <div className="aspect-video w-full max-w-[1080px] overflow-hidden rounded-md border border-line bg-white shadow-md">
+                    <div className="aspect-video w-full max-w-[1080px] overflow-hidden rounded-md border border-line bg-white">
                       <FigureSvg figure={figure} selectedId={selectedId} onSelect={setSelectedId} />
                     </div>
                   ) : (
-                    <pre className="h-full max-h-[360px] w-full overflow-auto rounded-md border border-line bg-white p-3 text-xs leading-5 text-slate-800 shadow-sm sm:max-h-[520px] sm:p-4 lg:max-h-[620px]">
+                    <pre className="h-full max-h-[360px] w-full overflow-auto rounded-md border border-line bg-white p-3 text-xs leading-5 text-slate-800 sm:max-h-[520px] sm:p-4 lg:max-h-[620px]">
                       {JSON.stringify({ figure, fit }, null, 2)}
                     </pre>
                   )
                 ) : (
-                  <div className="flex max-w-[260px] flex-col items-center gap-3 px-3 text-center sm:max-w-sm">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-md border border-line bg-white text-cobalt shadow-sm sm:h-12 sm:w-12">
-                      <Eye size={21} />
-                    </div>
+                  <div className="flex max-w-[260px] flex-col items-center px-3 text-center sm:max-w-sm">
                     <div className="text-sm font-medium leading-5 text-slate-600">{t.emptyState}</div>
                   </div>
                 )}
@@ -395,7 +422,7 @@ function ElementPanel({
               onChange={(event) =>
                 onPatch((current) => (current.type === "text" ? { ...current, text: event.target.value } : current))
               }
-              className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink shadow-sm transition hover:border-slate-400"
+              className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink transition hover:border-slate-400"
             />
           </label>
         ) : null}
@@ -409,7 +436,7 @@ function ElementPanel({
               onChange={(event) =>
                 onPatch((current) => ("fill" in current ? { ...current, fill: event.target.value } : current))
               }
-              className="h-10 w-full rounded-md border border-line bg-white p-1 shadow-sm"
+              className="h-10 w-full rounded-md border border-line bg-white p-1"
             />
           </label>
         ) : null}
@@ -423,7 +450,7 @@ function ElementPanel({
               onChange={(event) =>
                 onPatch((current) => ("stroke" in current ? { ...current, stroke: event.target.value } : current))
               }
-              className="h-10 w-full rounded-md border border-line bg-white p-1 shadow-sm"
+              className="h-10 w-full rounded-md border border-line bg-white p-1"
             />
           </label>
         ) : null}

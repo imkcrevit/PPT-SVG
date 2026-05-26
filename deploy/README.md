@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Then open `http://localhost:3000/en` or `http://localhost:3000/zh`.
+Then open `http://localhost:3000/ppt/en` or `http://localhost:3000/ppt/zh`.
 
 ## Build the app
 
@@ -49,6 +49,9 @@ The config accepts `labs.graptolite.ai`. DNS still needs to point this hostname 
 
 ```bash
 curl -i http://127.0.0.1:3000/ppt/en
+curl -i -X POST http://127.0.0.1:3000/ppt/api/generate \
+  -H 'Content-Type: application/json' \
+  --data '{"skillId":"freeform","userDescription":"test flow","language":"en"}'
 curl -i http://labs.graptolite.ai/ppt/healthz
 curl -i http://labs.graptolite.ai/ppt
 ```

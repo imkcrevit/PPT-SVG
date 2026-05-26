@@ -21,6 +21,12 @@ interface ValidationResult {
 }
 
 type Path = Array<string | number>;
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export function validateAndNormalizeFigureResponse(
   value: unknown,
@@ -71,6 +77,8 @@ export function validateAndNormalizeFigureResponse(
     )
     .filter((element): element is FigureElement => Boolean(element));
 
+  normalizeFigureLayout(elements, canvas.width, canvas.height);
+
   if (elements.length === 0) {
     errors.push("figure.elements must contain at least one valid element.");
   }
@@ -97,6 +105,273 @@ export function validateAndNormalizeFigureResponse(
     response: { figure, fit },
     errors
   };
+}
+
+function normalizeFigureLayout(elements: FigureElement[], canvasWidth: number, canvasHeight: number): void {
+  centerTextGroupsInSmallRects(elements, canvasWidth, canvasHeight);
+
+  if (centerLargeBackgroundLayouts(elements, canvasWidth, canvasHeight)) {
+    centerTextGroupsInSmallRects(elements, canvasWidth, canvasHeight);
+    return;
+  }
+
+  centerPrimaryContentInCanvas(elements, canvasWidth, canvasHeight);
+  centerTextGroupsInSmallRects(elements, canvasWidth, canvasHeight);
+}
+
+function centerTextGroupsInSmallRects(elements: FigureElement[], canvasWidth: number, canvasHeight: number): void {
+  const canvasArea = canvasWidth * canvasHeight;
+  const leaves = flattenLeaves(elements);
+  const rects = leaves
+    .filter(isRectElement)
+    .filter((rect) => rect.width * rect.height <= canvasArea * 0.18)
+    .sort((a, b) => a.width * a.height - b.width * b.height);
+  const assignments = new Map<RectElement, TextElement[]>();
+
+  for (const text of leaves.filter(isTextElement)) {
+    const textBox = elementBox(text);
+    const rect = rects.find((candidate) => containsBox(elementBox(candidate), textBox, 12));
+
+    if (!rect) {
+      continue;
+    }
+
+    assignments.set(rect, [...(assignments.get(rect) ?? []), text]);
+  }
+
+  for (const [rect, texts] of assignments) {
+    const rectBox = elementBox(rect);
+    const maxTextWidth = Math.max(1, rect.width - 32);
+
+    for (const text of texts) {
+      text.width = Math.min(text.width ?? maxTextWidth, maxTextWidth);
+      text.x = round(rect.x + (rect.width - text.width) / 2);
+      text.textAnchor = "middle";
+    }
+
+    const textGroupBox = unionBoxes(texts.map(elementBox));
+    if (!textGroupBox) {
+      continue;
+    }
+
+    const dy = rectBox.y + rectBox.height / 2 - (textGroupBox.y + textGroupBox.height / 2);
+    for (const text of texts) {
+      moveElement(text, 0, dy);
+    }
+  }
+}
+
+function centerLargeBackgroundLayouts(elements: FigureElement[], canvasWidth: number, canvasHeight: number): boolean {
+  const canvasArea = canvasWidth * canvasHeight;
+  const leaves = flattenLeaves(elements);
+  const backgroundRects = leaves
+    .filter(isRectElement)
+    .filter((rect) => rect.width * rect.height >= canvasArea * 0.18 && !isFullCanvasRect(rect, canvasWidth, canvasHeight))
+    .sort((a, b) => b.width * b.height - a.width * a.height);
+
+  if (!backgroundRects.length) {
+    return false;
+  }
+
+  for (const background of backgroundRects) {
+    const backgroundBox = elementBox(background);
+    const contained = leaves.filter((element) => element !== background && containsBox(backgroundBox, elementBox(element), 6));
+
+    if (!contained.length) {
+      continue;
+    }
+
+    const backgroundMoveBox = unionBoxes([backgroundBox, ...contained.map(elementBox)]);
+    if (backgroundMoveBox) {
+      const centered = constrainedDelta(
+        canvasWidth / 2 - (backgroundBox.x + backgroundBox.width / 2),
+        canvasHeight / 2 - (backgroundBox.y + backgroundBox.height / 2),
+        backgroundMoveBox,
+        canvasWidth,
+        canvasHeight
+      );
+      for (const element of [background, ...contained]) {
+        moveElement(element, centered.dx, centered.dy);
+      }
+    }
+
+    const movedBackgroundBox = elementBox(background);
+    const contentBox = unionBoxes(contained.map(elementBox));
+    if (!contentBox) {
+      continue;
+    }
+
+    const contentMove = constrainedDelta(
+      movedBackgroundBox.x + movedBackgroundBox.width / 2 - (contentBox.x + contentBox.width / 2),
+      movedBackgroundBox.y + movedBackgroundBox.height / 2 - (contentBox.y + contentBox.height / 2),
+      contentBox,
+      canvasWidth,
+      canvasHeight
+    );
+    for (const element of contained) {
+      moveElement(element, contentMove.dx, contentMove.dy);
+    }
+  }
+
+  return true;
+}
+
+function centerPrimaryContentInCanvas(elements: FigureElement[], canvasWidth: number, canvasHeight: number): void {
+  const leaves = flattenLeaves(elements);
+  const movable = leaves.filter(
+    (element) =>
+      !(isRectElement(element) && isFullCanvasRect(element, canvasWidth, canvasHeight)) &&
+      !(isTextElement(element) && isLikelyTitleText(element))
+  );
+  const contentBox = unionBoxes(movable.map(elementBox));
+
+  if (!contentBox) {
+    return;
+  }
+
+  const move = constrainedDelta(
+    canvasWidth / 2 - (contentBox.x + contentBox.width / 2),
+    canvasHeight / 2 - (contentBox.y + contentBox.height / 2),
+    contentBox,
+    canvasWidth,
+    canvasHeight
+  );
+
+  if (Math.abs(move.dx) < 1 && Math.abs(move.dy) < 1) {
+    return;
+  }
+
+  for (const element of movable) {
+    moveElement(element, move.dx, move.dy);
+  }
+}
+
+function flattenLeaves(elements: FigureElement[]): FigureElement[] {
+  const flattened: FigureElement[] = [];
+
+  for (const element of elements) {
+    if (element.type === "group") {
+      flattened.push(...flattenLeaves(element.children));
+    } else {
+      flattened.push(element);
+    }
+  }
+
+  return flattened;
+}
+
+function elementBox(element: FigureElement): Box {
+  if (element.type === "rect") {
+    return { x: element.x, y: element.y, width: element.width, height: element.height };
+  }
+
+  if (element.type === "text") {
+    return { x: element.x, y: element.y, width: element.width ?? 240, height: element.height ?? 80 };
+  }
+
+  if (element.type === "line" || element.type === "arrow") {
+    const x = Math.min(element.x1, element.x2);
+    const y = Math.min(element.y1, element.y2);
+    return {
+      x,
+      y,
+      width: Math.abs(element.x2 - element.x1),
+      height: Math.abs(element.y2 - element.y1)
+    };
+  }
+
+  return unionBoxes(element.children.map(elementBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
+}
+
+function unionBoxes(boxes: Box[]): Box | undefined {
+  if (!boxes.length) {
+    return undefined;
+  }
+
+  const minX = Math.min(...boxes.map((box) => box.x));
+  const minY = Math.min(...boxes.map((box) => box.y));
+  const maxX = Math.max(...boxes.map((box) => box.x + box.width));
+  const maxY = Math.max(...boxes.map((box) => box.y + box.height));
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
+function containsBox(container: Box, child: Box, tolerance = 0): boolean {
+  return (
+    child.x >= container.x - tolerance &&
+    child.y >= container.y - tolerance &&
+    child.x + child.width <= container.x + container.width + tolerance &&
+    child.y + child.height <= container.y + container.height + tolerance
+  );
+}
+
+function constrainedDelta(dx: number, dy: number, box: Box, canvasWidth: number, canvasHeight: number) {
+  let constrainedX = dx;
+  let constrainedY = dy;
+
+  if (box.x + constrainedX < 0) {
+    constrainedX = -box.x;
+  }
+
+  if (box.x + box.width + constrainedX > canvasWidth) {
+    constrainedX = canvasWidth - (box.x + box.width);
+  }
+
+  if (box.y + constrainedY < 0) {
+    constrainedY = -box.y;
+  }
+
+  if (box.y + box.height + constrainedY > canvasHeight) {
+    constrainedY = canvasHeight - (box.y + box.height);
+  }
+
+  return { dx: constrainedX, dy: constrainedY };
+}
+
+function moveElement(element: FigureElement, dx: number, dy: number): void {
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+    return;
+  }
+
+  if (element.type === "group") {
+    for (const child of element.children) {
+      moveElement(child, dx, dy);
+    }
+    return;
+  }
+
+  if (element.type === "rect" || element.type === "text") {
+    element.x = round(element.x + dx);
+    element.y = round(element.y + dy);
+    return;
+  }
+
+  element.x1 = round(element.x1 + dx);
+  element.y1 = round(element.y1 + dy);
+  element.x2 = round(element.x2 + dx);
+  element.y2 = round(element.y2 + dy);
+}
+
+function isFullCanvasRect(rect: RectElement, canvasWidth: number, canvasHeight: number): boolean {
+  return rect.x <= 1 && rect.y <= 1 && rect.width >= canvasWidth - 2 && rect.height >= canvasHeight - 2;
+}
+
+function isLikelyTitleText(text: TextElement): boolean {
+  const label = `${text.id} ${text.name ?? ""}`.toLowerCase();
+  return text.y <= 140 && (label.includes("title") || label.includes("标题"));
+}
+
+function isRectElement(element: FigureElement): element is RectElement {
+  return element.type === "rect";
+}
+
+function isTextElement(element: FigureElement): element is TextElement {
+  return element.type === "text";
 }
 
 function normalizeElement(
@@ -282,4 +557,3 @@ function formatPath(path: Path): string {
 function round(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
-
