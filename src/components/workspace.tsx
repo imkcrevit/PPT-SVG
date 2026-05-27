@@ -276,6 +276,11 @@ export function Workspace({ locale }: WorkspaceProps) {
               PPT
             </a>
           </li>
+          <li>
+            <a href="https://github.com/imkcrevit/PPT-SVG" target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </li>
         </ul>
       </nav>
 
