@@ -15,6 +15,13 @@ interface OpenRouterResponse {
   };
 }
 
+interface OpenRouterCallOptions {
+  model?: string;
+  temperature?: number;
+  maxCompletionTokens?: number;
+  responseFormat?: "json_object" | null;
+}
+
 export class OpenRouterError extends Error {
   constructor(
     message: string,
@@ -24,9 +31,9 @@ export class OpenRouterError extends Error {
   }
 }
 
-export async function callOpenRouter(messages: ChatMessage[]): Promise<string> {
+export async function callOpenRouter(messages: ChatMessage[], options: OpenRouterCallOptions = {}): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const model = process.env.OPENROUTER_MODEL;
+  const model = options.model || process.env.OPENROUTER_MODEL;
 
   if (!apiKey) {
     throw new OpenRouterError("OPENROUTER_API_KEY is not configured.", 500);
@@ -36,24 +43,35 @@ export async function callOpenRouter(messages: ChatMessage[]): Promise<string> {
     throw new OpenRouterError("OPENROUTER_MODEL is not configured.", 500);
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      ...(process.env.OPENROUTER_SITE_URL ? { "HTTP-Referer": process.env.OPENROUTER_SITE_URL } : {}),
-      ...(process.env.OPENROUTER_APP_NAME ? { "X-Title": process.env.OPENROUTER_APP_NAME } : {})
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.25,
-      max_completion_tokens: 4000,
-      response_format: {
-        type: "json_object"
-      }
-    })
-  });
+  let response: Response;
+
+  try {
+    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(process.env.OPENROUTER_SITE_URL ? { "HTTP-Referer": process.env.OPENROUTER_SITE_URL } : {}),
+        ...(process.env.OPENROUTER_APP_NAME ? { "X-Title": process.env.OPENROUTER_APP_NAME } : {})
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: options.temperature ?? 0.25,
+        max_completion_tokens: options.maxCompletionTokens ?? 4000,
+        ...(options.responseFormat === null
+          ? {}
+          : {
+              response_format: {
+                type: options.responseFormat ?? "json_object"
+              }
+            })
+      })
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new OpenRouterError(`OpenRouter request could not be loaded: ${detail}`, 502);
+  }
 
   const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;
 
@@ -76,6 +94,10 @@ export async function callOpenRouter(messages: ChatMessage[]): Promise<string> {
 
 export function getConfiguredModelLabel(): string {
   return process.env.OPENROUTER_MODEL || "OPENROUTER_MODEL";
+}
+
+export function getConfiguredVisionModelLabel(): string {
+  return process.env.OPENROUTER_VISION_MODEL || getConfiguredModelLabel();
 }
 
 function flattenContent(content: OpenRouterContent | undefined): string {

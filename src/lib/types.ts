@@ -96,6 +96,7 @@ export interface GenerateFigureRequest {
   skillId: SkillId;
   userDescription: string;
   language: Locale;
+  sessionId?: string;
   conversationId?: string;
   conversationTurn?: number;
   attachments?: UploadedAttachment[];

@@ -37,9 +37,9 @@ function renderElement(element: FigureElement): string {
 function renderText(element: TextElement, opacity: string): string {
   const fontSize = element.fontSize ?? 22;
   const width = element.width ?? 240;
-  const height = element.height ?? fontSize * 1.18;
   const lineHeight = fontSize * 1.18;
-  const lines = wrapSvgText(element.text, width, fontSize);
+  const height = element.height ?? wrapSvgText(element.text, width, fontSize).length * lineHeight;
+  const lines = limitLinesToHeight(wrapSvgText(element.text, width, fontSize), height, lineHeight);
   const anchor = element.textAnchor ?? "middle";
   const anchorX = anchor === "start" ? element.x : anchor === "end" ? element.x + width : element.x + width / 2;
   const blockHeight = lines.length * lineHeight;
@@ -53,6 +53,18 @@ function renderText(element: TextElement, opacity: string): string {
     .join("");
 
   return `<text data-node-id="${element.id}" x="${round(anchorX)}" y="${round(firstLineY)}" fill="${element.fill ?? "#2F3337"}" font-size="${fontSize}" font-weight="${element.fontWeight ?? 500}" text-anchor="${anchor}" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"${opacity}>${tspans}</text>`;
+}
+
+function limitLinesToHeight(lines: string[], height: number, lineHeight: number): string[] {
+  const maxLines = Math.max(1, Math.min(4, Math.floor(height / lineHeight)));
+  const visibleLines = lines.slice(0, maxLines);
+
+  if (lines.length > maxLines) {
+    const lastIndex = visibleLines.length - 1;
+    visibleLines[lastIndex] = `${visibleLines[lastIndex].replace(/\.*$/, "")}...`;
+  }
+
+  return visibleLines.length ? visibleLines : [""];
 }
 
 function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity: string): string {

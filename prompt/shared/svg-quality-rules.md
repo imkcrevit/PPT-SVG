@@ -15,5 +15,6 @@ The JSON will be rendered into SVG. Optimize for high-quality vector output:
 - Prefer balanced spacing, aligned edges, and consistent stroke widths.
 - For text placed inside or over a background shape, make the text box share the shape's visual center. Set text `x`, `y`, `width`, and `height` so the label is horizontally and vertically centered within the background shape, and prefer `textAnchor: "middle"`.
 - Step numbers and main text content should align to the center of their background area on both axes.
+- Keep every text box and shape fully within its corresponding background area and within the canvas. Reduce font size or shorten wording before any text touches or crosses a shape boundary.
 - For layouts with a large background panel, center the panel on the canvas, then center all cards, labels, connectors, and supporting content within that panel as one group.
 - For layouts without a large background panel, center the full non-title visual group on the canvas.

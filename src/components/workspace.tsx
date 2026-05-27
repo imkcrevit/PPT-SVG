@@ -19,7 +19,18 @@ interface WorkspaceProps {
 interface GenerateApiResponse {
   figure: Figure;
   fit: FitAssessment;
+  layoutReview?: {
+    ok?: boolean;
+    score?: number;
+    summary?: string;
+    issues?: Array<{
+      severity?: string;
+      message?: string;
+    }>;
+    unavailable?: boolean;
+  };
   requestId?: string;
+  sessionId?: string;
   conversationTurn?: number;
   model?: string;
   artifacts?: {
@@ -30,6 +41,25 @@ interface GenerateApiResponse {
   error?: string;
   details?: string[];
 }
+
+type GenerateAgentEvent =
+  | {
+      type: "status";
+      code?: string;
+      message?: string;
+      pass?: number;
+      maxPasses?: number;
+      issues?: string[];
+    }
+  | {
+      type: "final";
+      payload: GenerateApiResponse;
+    }
+  | {
+      type: "error";
+      error?: string;
+      details?: string[];
+    };
 
 interface AttachmentApiResponse {
   attachment?: UploadedAttachment;
@@ -92,7 +122,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const conversationIdRef = useRef(crypto.randomUUID());
+  const sessionIdRef = useRef(crypto.randomUUID());
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
   const conversationTurnCount = chatEntries.filter((entry) => entry.role === "user").length;
   const remainingTurns = Math.max(0, MAX_CONVERSATION_TURNS - conversationTurnCount);
@@ -165,7 +195,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setSelectedIds([]);
 
     try {
-      const generateUrl = appUrl("/api/generate");
+      const generateUrl = appUrl("/api/generate-agent");
       const response = await fetch(generateUrl, {
         method: "POST",
         headers: {
@@ -175,7 +205,8 @@ export function Workspace({ locale }: WorkspaceProps) {
           skillId,
           userDescription: userMessage,
           language: locale,
-          conversationId: conversationIdRef.current,
+          sessionId: sessionIdRef.current,
+          conversationId: sessionIdRef.current,
           conversationTurn: turn,
           referenceFigure: referencedRender && figure ? { source: "current-render", figure, fit } : undefined,
           clientLog: {
@@ -185,19 +216,35 @@ export function Workspace({ locale }: WorkspaceProps) {
           attachments: attachment ? [attachment] : []
         })
       });
-      const responseText = await response.text();
-      let payload: GenerateApiResponse;
-
-      try {
-        payload = JSON.parse(responseText) as GenerateApiResponse;
-      } catch {
-        throw new Error(`${response.status} ${response.statusText || "Invalid response"} from ${generateUrl}`);
-      }
 
       if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as GenerateApiResponse;
         const message = [payload.error, ...(payload.details ?? [])].filter(Boolean).join(" ");
         throw new Error(isJsonSyntaxError(message) ? t.malformedModelJson : message);
       }
+
+      const payload = await readGenerateAgentStream(response, (event) => {
+        if (event.type !== "status" || !event.message) {
+          return;
+        }
+
+        const shouldShowIssues = event.code === "adjusting" || event.code === "review_stopped";
+        const message =
+          shouldShowIssues && event.issues?.length
+            ? `${event.message} ${event.issues.slice(0, 2).join(" ")}`
+            : event.message;
+        setGenerationStatus(message);
+        setChatEntries((entries) =>
+          entries.map((entry) =>
+            entry.id === pendingMessageId
+              ? {
+                  ...entry,
+                  content: message
+                }
+              : entry
+          )
+        );
+      });
 
       setGenerationStatus(t.generateRendering);
       setFigure(payload.figure);
@@ -211,7 +258,12 @@ export function Workspace({ locale }: WorkspaceProps) {
           entry.id === pendingMessageId
             ? {
                 ...entry,
-                content: `${t.chatRendered}: ${payload.figure.metadata.title}`,
+                content: [
+                  `${t.chatRendered}: ${payload.figure.metadata.title}`,
+                  payload.layoutReview?.summary ? payload.layoutReview.summary : ""
+                ]
+                  .filter(Boolean)
+                  .join(" "),
                 status: "done",
                 requestId: payload.requestId
               }
@@ -232,7 +284,8 @@ export function Workspace({ locale }: WorkspaceProps) {
         ...logs
       ]);
     } catch (generationError) {
-      const message = generationError instanceof Error ? generationError.message : t.errorTitle;
+      const rawMessage = generationError instanceof Error ? generationError.message : t.errorTitle;
+      const message = isNetworkLoadError(rawMessage) ? t.generateNetworkFailed : rawMessage;
       setError(message);
       setChatEntries((entries) =>
         entries.map((entry) =>
@@ -272,7 +325,8 @@ export function Workspace({ locale }: WorkspaceProps) {
           userDescription: description.trim(),
           language: locale,
           skillId,
-          conversationId: conversationIdRef.current,
+          sessionId: sessionIdRef.current,
+          conversationId: sessionIdRef.current,
           conversationTurn: conversationTurnCount + 1,
           referenceFigure: shouldReferenceCurrentRender && figure ? { source: "current-render", figure, fit } : undefined
         })
@@ -293,7 +347,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   }
 
   function startNewConversation() {
-    conversationIdRef.current = crypto.randomUUID();
+    sessionIdRef.current = crypto.randomUUID();
     setDescription("");
     setChatEntries([]);
     setRenderHistory([]);
@@ -329,7 +383,8 @@ export function Workspace({ locale }: WorkspaceProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("conversationId", conversationIdRef.current);
+      formData.append("sessionId", sessionIdRef.current);
+      formData.append("conversationId", sessionIdRef.current);
 
       const response = await fetch(appUrl("/api/attachments"), {
         method: "POST",
@@ -861,6 +916,60 @@ export function Workspace({ locale }: WorkspaceProps) {
       </main>
     </>
   );
+}
+
+function isNetworkLoadError(message: string): boolean {
+  return /^(load failed|failed to fetch|networkerror when attempting to fetch resource)$/i.test(message.trim());
+}
+
+async function readGenerateAgentStream(
+  response: Response,
+  onEvent: (event: GenerateAgentEvent) => void
+): Promise<GenerateApiResponse> {
+  if (!response.body) {
+    throw new Error("Generation agent did not return a readable stream.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalPayload: GenerateApiResponse | undefined;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.trim()) {
+        continue;
+      }
+
+      const event = JSON.parse(line) as GenerateAgentEvent;
+      onEvent(event);
+
+      if (event.type === "error") {
+        const message = [event.error, ...(event.details ?? [])].filter(Boolean).join(" ");
+        throw new Error(message || "Generation agent failed.");
+      }
+
+      if (event.type === "final") {
+        finalPayload = event.payload;
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  if (!finalPayload) {
+    throw new Error("Generation agent finished without a final figure.");
+  }
+
+  return finalPayload;
 }
 
 function UsageGuide({ labels }: { labels: typeof dictionaries.en }) {

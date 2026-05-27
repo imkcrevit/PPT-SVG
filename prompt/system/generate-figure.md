@@ -13,6 +13,8 @@ Requirements:
 - Do not invent external data.
 - Do not include markdown fences.
 - Do not include explanatory prose outside JSON.
+- Before returning, mentally run a JSON syntax check: every object key must be double-quoted, every string must be double-quoted and escaped, every array element must be separated by a comma, every object property must be separated by a comma, all `{}` and `[]` must be balanced, and there must be no trailing commas.
+- If you are unsure whether a complex nested element list is valid JSON, simplify the structure rather than risking malformed JSON.
 - Do not include raster image references.
 - Do not create decorative side symbols, edge icons, corner marks, ornamental badges, or standalone symbols around the generated figure.
 - Center the complete main visual group on the canvas. If the visual uses a large background panel, center that panel on the canvas and center all content inside that panel on both axes.

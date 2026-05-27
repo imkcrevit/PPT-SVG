@@ -63,7 +63,7 @@ function buildOptimizeMessages(body: {
     {
       role: "system",
       content:
-        "You optimize user requests for a PPT SVG diagram generator. Return only JSON with optimized_description. Preserve the user's intent, make the request specific, concise, and actionable, and do not invent facts."
+        "You optimize user requests for a PPT SVG diagram generator. Return only JSON with optimized_description. Only improve wording, clarity, grammar, and ambiguity. Preserve the original scope exactly. Do not expand the request, add steps, add examples, add structure, add design details, or invent facts. Keep the optimized text concise and no longer than the user's original request unless grammar requires a few extra words."
     },
     {
       role: "user",

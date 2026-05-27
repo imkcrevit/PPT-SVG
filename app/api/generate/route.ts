@@ -6,6 +6,7 @@ import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
 import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
 import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
+import { normalizeSessionId } from "@/lib/session";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
@@ -53,11 +54,13 @@ export async function POST(request: Request) {
       );
     }
 
+    const sessionId = normalizeSessionId(body.sessionId ?? body.conversationId);
     const generationRequest: GenerateFigureRequest = {
       skillId: body.skillId,
       userDescription: body.userDescription.trim(),
       language: body.language,
-      conversationId: typeof body.conversationId === "string" ? body.conversationId : undefined,
+      sessionId,
+      conversationId: typeof body.conversationId === "string" && body.conversationId.trim() ? body.conversationId.trim() : sessionId,
       conversationTurn,
       attachments: normalizeAttachments(body.attachments),
       pptContext: body.pptContext,
@@ -68,6 +71,7 @@ export async function POST(request: Request) {
     console.info(`[generate:${requestId}] started`, {
       skillId: generationRequest.skillId,
       language: generationRequest.language,
+      sessionId: generationRequest.sessionId,
       conversationId: generationRequest.conversationId,
       conversationTurn: generationRequest.conversationTurn,
       descriptionLength: generationRequest.userDescription.length,
@@ -87,7 +91,7 @@ export async function POST(request: Request) {
         };
 
     if (validation.ok && validation.response) {
-      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId);
+      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId);
       await recordCompletedConversation({
         request: generationRequest,
         requestId,
@@ -104,6 +108,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         ...validation.response,
         requestId,
+        sessionId,
         conversationTurn,
         model: getConfiguredModelLabel(),
         artifacts,
@@ -147,7 +152,8 @@ export async function POST(request: Request) {
     const artifacts = await persistGeneratedArtifacts(
       repairedValidation.response.figure,
       repairedValidation.response.fit,
-      requestId
+      requestId,
+      sessionId
     );
     await recordCompletedConversation({
       request: generationRequest,
@@ -165,6 +171,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...repairedValidation.response,
       requestId,
+      sessionId,
       conversationTurn,
       model: getConfiguredModelLabel(),
       artifacts,
@@ -336,6 +343,7 @@ async function recordCompletedConversation({
   durationMs: number;
 }) {
   await recordConversation({
+    sessionId: request.sessionId,
     conversationId: request.conversationId,
     conversationTurn: request.conversationTurn,
     requestId,

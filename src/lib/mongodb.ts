@@ -5,11 +5,13 @@ import type { Figure, FitAssessment, UploadedAttachment } from "@/lib/types";
 let clientPromise: Promise<MongoClient> | undefined;
 
 interface AttachmentRecord {
+  sessionId?: string;
   conversationId?: string;
   attachment: UploadedAttachment;
 }
 
 interface ConversationRecord {
+  sessionId?: string;
   conversationId?: string;
   conversationTurn?: number;
   requestId: string;
@@ -29,6 +31,7 @@ interface ConversationRecord {
   };
   figure?: Figure;
   fit?: FitAssessment;
+  layoutReview?: unknown;
   artifacts?: unknown;
   model?: string;
   status: "completed" | "failed";

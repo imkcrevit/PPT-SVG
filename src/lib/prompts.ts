@@ -1,11 +1,23 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { GenerateFigureRequest, InternalSkill } from "@/lib/types";
+import type { GenerateFigureRequest, GenerateFigureResponse, InternalSkill } from "@/lib/types";
+
+export type ChatContentPart =
+  | {
+      type: "text";
+      text: string;
+    }
+  | {
+      type: "image_url";
+      image_url: {
+        url: string;
+      };
+    };
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: string | ChatContentPart[];
 }
 
 const PROMPT_ROOT = path.resolve(process.cwd(), "prompt");
@@ -60,6 +72,7 @@ export async function buildGenerateMessages(
           canvas: skill.defaultCanvas,
           user_description: request.userDescription,
           conversation: {
+            session_id: request.sessionId ?? request.conversationId ?? null,
             id: request.conversationId ?? null,
             turn: request.conversationTurn ?? 1,
             max_turns: 5,
@@ -154,6 +167,83 @@ export async function buildRepairMessages(rawOutput: string, validationErrors: s
         {
           invalid_output: rawOutput,
           validation_errors: validationErrors
+        },
+        null,
+        2
+      )
+    }
+  ];
+}
+
+export async function buildVisualRevisionMessages(
+  request: GenerateFigureRequest,
+  skill: InternalSkill,
+  currentResponse: GenerateFigureResponse,
+  visualReview: {
+    ok: boolean;
+    score: number;
+    summary: string;
+    deterministicIssues: string[];
+    issues: Array<{
+      severity: string;
+      message: string;
+      evidence?: string;
+      elementId?: string;
+    }>;
+  },
+  compressedContext: string,
+  attempt: number
+): Promise<ChatMessage[]> {
+  assertSkillPromptPath(skill.promptFile);
+
+  const [systemPrompt, contractPrompt, qualityPrompt, skillPrompt] = await Promise.all([
+    loadPrompt("system/generate-figure.md"),
+    loadPrompt("shared/figure-json-contract.md"),
+    loadPrompt("shared/svg-quality-rules.md"),
+    loadPrompt(skill.promptFile)
+  ]);
+
+  return [
+    {
+      role: "system",
+      content: [
+        systemPrompt,
+        contractPrompt,
+        qualityPrompt,
+        skillPrompt,
+        [
+          "You are regenerating a PPT-SVG figure after a visual QA agent found layout defects.",
+          "Return a complete replacement JSON object, not a patch.",
+          "Preserve the user's original intent, language, skill, and core content, but change coordinates, nesting, text box sizes, font sizes, spacing, and structure as needed to fix the QA feedback.",
+          "Prioritize centered large panels, centered nested card groups, readable text, and no overflow."
+        ].join("\n")
+      ].join("\n\n---\n\n")
+    },
+    {
+      role: "user",
+      content: JSON.stringify(
+        {
+          selected_skill: skill.id,
+          output_language: request.language,
+          regeneration_attempt: attempt,
+          canvas: skill.defaultCanvas,
+          user_description: request.userDescription,
+          compressed_context: compressedContext || null,
+          conversation: {
+            session_id: request.sessionId ?? request.conversationId ?? null,
+            id: request.conversationId ?? null,
+            turn: request.conversationTurn ?? 1
+          },
+          current_response: currentResponse,
+          visual_review_feedback: {
+            ok: visualReview.ok,
+            score: visualReview.score,
+            summary: visualReview.summary,
+            issues: visualReview.issues,
+            deterministic_layout_issues: visualReview.deterministicIssues
+          },
+          regeneration_instruction:
+            "Regenerate the full Figure JSON so the visual QA issues are fixed. Keep visible text in the active output language. Do not mention the QA process inside the diagram."
         },
         null,
         2
