@@ -21,6 +21,10 @@ export function findElement(elements: FigureElement[], id: string): FigureElemen
   return undefined;
 }
 
+export function findElements(elements: FigureElement[], ids: string[]): FigureElement[] {
+  return ids.map((id) => findElement(elements, id)).filter((element): element is FigureElement => Boolean(element));
+}
+
 export function updateElement(
   elements: FigureElement[],
   id: string,
@@ -41,4 +45,3 @@ export function updateElement(
     return element;
   });
 }
-

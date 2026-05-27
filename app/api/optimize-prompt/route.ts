@@ -1,0 +1,86 @@
+import { NextResponse } from "next/server";
+
+import { isLocale } from "@/lib/i18n";
+import { parseJsonObject } from "@/lib/json";
+import { callOpenRouter, OpenRouterError } from "@/lib/openrouter";
+import { isSkillId } from "@/lib/skills";
+import type { ChatMessage } from "@/lib/prompts";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as {
+      userDescription?: string;
+      language?: string;
+      skillId?: string;
+      conversationTurn?: number;
+      referenceFigure?: unknown;
+    };
+
+    if (!body.userDescription?.trim()) {
+      return NextResponse.json({ error: "userDescription is required." }, { status: 400 });
+    }
+
+    if (!body.language || !isLocale(body.language)) {
+      return NextResponse.json({ error: "Invalid language." }, { status: 400 });
+    }
+
+    if (!body.skillId || !isSkillId(body.skillId)) {
+      return NextResponse.json({ error: "Invalid skillId." }, { status: 400 });
+    }
+
+    const rawOutput = await callOpenRouter(buildOptimizeMessages(body));
+    const parsed = parseJsonObject(rawOutput) as Record<string, unknown>;
+    const optimizedDescription =
+      typeof parsed.optimized_description === "string" ? parsed.optimized_description.trim() : "";
+
+    if (!optimizedDescription) {
+      return NextResponse.json({ error: "The optimizer did not return an optimized description." }, { status: 502 });
+    }
+
+    return NextResponse.json({ optimizedDescription });
+  } catch (error) {
+    if (error instanceof OpenRouterError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    const message = error instanceof Error ? error.message : "Unexpected prompt optimization error.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+function buildOptimizeMessages(body: {
+  userDescription?: string;
+  language?: string;
+  skillId?: string;
+  conversationTurn?: number;
+  referenceFigure?: unknown;
+}): ChatMessage[] {
+  const outputLanguage = body.language === "zh" ? "Simplified Chinese" : "English";
+
+  return [
+    {
+      role: "system",
+      content:
+        "You optimize user requests for a PPT SVG diagram generator. Return only JSON with optimized_description. Preserve the user's intent, make the request specific, concise, and actionable, and do not invent facts."
+    },
+    {
+      role: "user",
+      content: JSON.stringify(
+        {
+          output_language: outputLanguage,
+          selected_skill: body.skillId,
+          conversation_turn: body.conversationTurn ?? 1,
+          user_description: body.userDescription,
+          has_reference_current_render: Boolean(body.referenceFigure),
+          required_json_shape: {
+            optimized_description: "string"
+          }
+        },
+        null,
+        2
+      )
+    }
+  ];
+}

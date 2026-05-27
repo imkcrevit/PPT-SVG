@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import { appUrl } from "@/lib/app-url";
-import { cloneFigure, findElement, updateElement } from "@/lib/figure-utils";
+import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { dictionaries } from "@/lib/i18n";
 import { INTERNAL_SKILLS } from "@/lib/skills";
@@ -36,6 +36,11 @@ interface AttachmentApiResponse {
   error?: string;
 }
 
+interface OptimizeApiResponse {
+  optimizedDescription?: string;
+  error?: string;
+}
+
 const ACCEPTED_CONTEXT_EXTENSIONS = [".pdf", ".md", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".pptx"];
 const MAX_CONVERSATION_TURNS = 5;
 
@@ -49,24 +54,25 @@ interface ChatEntry {
   requestId?: string;
 }
 
-interface GenerationLogEntry {
+interface RenderHistoryEntry {
   id: string;
   turn: number;
   requestId: string;
   title: string;
   fitScore: number;
   referencedRender: boolean;
-  svgPath?: string;
-  jsonPath?: string;
-  logPath?: string;
+  figure: Figure;
+  fit: FitAssessment;
 }
 
 export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
   const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+  const [optimizedPromptReady, setOptimizedPromptReady] = useState(false);
   const [chatEntries, setChatEntries] = useState<ChatEntry[]>([]);
-  const [generationLogs, setGenerationLogs] = useState<GenerationLogEntry[]>([]);
+  const [renderHistory, setRenderHistory] = useState<RenderHistoryEntry[]>([]);
   const [referenceCurrentRender, setReferenceCurrentRender] = useState(true);
   const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
   const [uploadError, setUploadError] = useState("");
@@ -75,6 +81,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [fit, setFit] = useState<FitAssessment | null>(null);
   const [model, setModel] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"preview" | "json">("preview");
   const [jsonDraft, setJsonDraft] = useState("");
   const [jsonError, setJsonError] = useState("");
@@ -95,6 +102,10 @@ export function Workspace({ locale }: WorkspaceProps) {
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
     [figure, selectedId]
+  );
+  const selectedElements = useMemo(
+    () => (figure ? findElements(figure.elements, selectedIds) : []),
+    [figure, selectedIds]
   );
   const jsonPayload = useMemo(() => (figure ? JSON.stringify({ figure, fit }, null, 2) : ""), [figure, fit]);
 
@@ -151,6 +162,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setGenerationStartedAt(Date.now());
     setGenerationSeconds(0);
     setSelectedId("");
+    setSelectedIds([]);
 
     try {
       const generateUrl = appUrl("/api/generate");
@@ -193,6 +205,7 @@ export function Workspace({ locale }: WorkspaceProps) {
       setModel(payload.model ?? "");
       setHistory([]);
       setActiveTab("preview");
+      setOptimizedPromptReady(false);
       setChatEntries((entries) =>
         entries.map((entry) =>
           entry.id === pendingMessageId
@@ -205,7 +218,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             : entry
         )
       );
-      setGenerationLogs((logs) => [
+      setRenderHistory((logs) => [
         {
           id: payload.requestId ?? pendingMessageId,
           turn,
@@ -213,9 +226,8 @@ export function Workspace({ locale }: WorkspaceProps) {
           title: payload.figure.metadata.title,
           fitScore: payload.fit.score,
           referencedRender,
-          svgPath: payload.artifacts?.svgPath,
-          jsonPath: payload.artifacts?.jsonPath,
-          logPath: payload.artifacts?.logPath
+          figure: cloneFigure(payload.figure),
+          fit: payload.fit
         },
         ...logs
       ]);
@@ -241,20 +253,61 @@ export function Workspace({ locale }: WorkspaceProps) {
     }
   }
 
+  async function handleOptimizePrompt() {
+    if (!description.trim()) {
+      setError(t.emptyPrompt);
+      return;
+    }
+
+    setIsOptimizingPrompt(true);
+    setError("");
+
+    try {
+      const response = await fetch(appUrl("/api/optimize-prompt"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userDescription: description.trim(),
+          language: locale,
+          skillId,
+          conversationId: conversationIdRef.current,
+          conversationTurn: conversationTurnCount + 1,
+          referenceFigure: shouldReferenceCurrentRender && figure ? { source: "current-render", figure, fit } : undefined
+        })
+      });
+      const payload = (await response.json()) as OptimizeApiResponse;
+
+      if (!response.ok || !payload.optimizedDescription) {
+        throw new Error(payload.error || t.optimizeFailed);
+      }
+
+      setDescription(payload.optimizedDescription);
+      setOptimizedPromptReady(true);
+    } catch (optimizeError) {
+      setError(optimizeError instanceof Error ? optimizeError.message : t.optimizeFailed);
+    } finally {
+      setIsOptimizingPrompt(false);
+    }
+  }
+
   function startNewConversation() {
     conversationIdRef.current = crypto.randomUUID();
     setDescription("");
     setChatEntries([]);
-    setGenerationLogs([]);
+    setRenderHistory([]);
     setFigure(null);
     setFit(null);
     setSelectedId("");
+    setSelectedIds([]);
     setJsonDraft("");
     setJsonError("");
     setHistory([]);
     setError("");
     setAttachment(null);
     setActiveTab("preview");
+    setOptimizedPromptReady(false);
   }
 
   async function handleFile(file?: File) {
@@ -309,6 +362,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setFigure(previous);
     setHistory(rest);
     setSelectedId("");
+    setSelectedIds([]);
     setActiveTab("preview");
   }
 
@@ -344,21 +398,48 @@ export function Workspace({ locale }: WorkspaceProps) {
     setFigure(validation.response.figure);
     setFit(hasEditedFit ? validation.response.fit : fit);
     setSelectedId("");
+    setSelectedIds([]);
     setJsonDraft(JSON.stringify({ figure: validation.response.figure, fit: hasEditedFit ? validation.response.fit : fit }, null, 2));
     setJsonError("");
     setActiveTab("preview");
   }
 
   function patchSelected(updater: (element: FigureElement) => FigureElement) {
-    if (!figure || !selectedId) {
+    if (!figure || !selectedIds.length) {
       return;
     }
 
     pushHistory(figure);
+    const updatedElements = selectedIds.reduce(
+      (elements, id) => updateElement(elements, id, updater),
+      figure.elements
+    );
     setFigure({
       ...figure,
-      elements: updateElement(figure.elements, selectedId, updater)
+      elements: updatedElements
     });
+  }
+
+  function handleSelectId(id: string) {
+    setSelectedId(id);
+    setSelectedIds(id ? [id] : []);
+  }
+
+  function handleSelectIds(ids: string[]) {
+    setSelectedIds(ids);
+    setSelectedId(ids[0] ?? "");
+  }
+
+  function viewHistory(entry: RenderHistoryEntry) {
+    if (figure) {
+      pushHistory(figure);
+    }
+
+    setFigure(cloneFigure(entry.figure));
+    setFit(entry.fit);
+    setSelectedId("");
+    setSelectedIds([]);
+    setActiveTab("preview");
   }
 
   function downloadSvg() {
@@ -546,7 +627,10 @@ export function Workspace({ locale }: WorkspaceProps) {
                 <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.promptLabel}</span>
                 <textarea
                   value={description}
-                  onChange={(event) => setDescription(event.target.value)}
+                  onChange={(event) => {
+                    setDescription(event.target.value);
+                    setOptimizedPromptReady(false);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
                       event.preventDefault();
@@ -558,6 +642,11 @@ export function Workspace({ locale }: WorkspaceProps) {
                   disabled={conversationTurnCount >= MAX_CONVERSATION_TURNS}
                   className="w-full resize-none border border-line bg-bg px-3 py-2.5 text-sm leading-6 text-ink transition placeholder:text-faint hover:border-accent/40 disabled:bg-bg2 disabled:text-faint"
                 />
+                {optimizedPromptReady ? (
+                  <div className="mt-2 border border-accent/30 bg-bg2 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-accent2">
+                    {t.optimizedPromptReady}
+                  </div>
+                ) : null}
               </label>
 
               <label className="flex items-start gap-3 border border-line bg-bg2 px-3 py-2.5 text-sm leading-5 text-mid">
@@ -607,16 +696,27 @@ export function Workspace({ locale }: WorkspaceProps) {
                 {uploadError ? <p className="mt-2 text-sm text-coral">{uploadError}</p> : null}
               </div>
 
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={isGenerating || isUploading || conversationTurnCount >= MAX_CONVERSATION_TURNS}
-                className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden bg-ink px-4 text-sm font-semibold text-white transition disabled:bg-faint"
-              >
-                <span className="absolute inset-y-0 left-0 w-0 bg-accent transition-all duration-300 group-hover:w-full" />
-                <Send className="relative" size={16} />
-                <span className="relative">{isGenerating ? t.generating : t.generate}</span>
-              </button>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <button
+                  type="button"
+                  onClick={handleOptimizePrompt}
+                  disabled={isGenerating || isUploading || isOptimizingPrompt || conversationTurnCount >= MAX_CONVERSATION_TURNS}
+                  className="flex h-11 items-center justify-center gap-2 border border-line bg-panel px-4 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
+                >
+                  <MessageSquarePlus size={16} />
+                  <span className="truncate">{isOptimizingPrompt ? t.optimizingPrompt : t.optimizePrompt}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={isGenerating || isUploading || isOptimizingPrompt || conversationTurnCount >= MAX_CONVERSATION_TURNS}
+                  className="group relative flex h-11 items-center justify-center gap-2 overflow-hidden bg-ink px-4 text-sm font-semibold text-white transition disabled:bg-faint"
+                >
+                  <span className="absolute inset-y-0 left-0 w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+                  <Send className="relative" size={16} />
+                  <span className="relative">{isGenerating ? t.generating : t.submitPrompt}</span>
+                </button>
+              </div>
 
               {thinkingStatus ? (
                 <div className="animate-pulse border border-line bg-bg2 px-3 py-2.5 text-sm leading-5 text-mid">
@@ -687,7 +787,12 @@ export function Workspace({ locale }: WorkspaceProps) {
                 ) : figure ? (
                   activeTab === "preview" ? (
                     <div className="aspect-video w-full max-w-[1080px] overflow-hidden border border-line bg-panel">
-                      <FigureSvg figure={figure} selectedId={selectedId} onSelect={setSelectedId} />
+                      <FigureSvg
+                        figure={figure}
+                        selectedIds={selectedIds}
+                        onSelect={handleSelectId}
+                        onSelectIds={handleSelectIds}
+                      />
                     </div>
                   ) : (
                     <div className="flex h-full max-h-[420px] w-full max-w-[1080px] flex-col gap-2 sm:max-h-[560px] lg:max-h-[650px]">
@@ -735,9 +840,15 @@ export function Workspace({ locale }: WorkspaceProps) {
                   </div>
                 ) : null}
 
-                <ElementPanel element={selectedElement} labels={t} onPatch={patchSelected} />
+                <ElementPanel
+                  element={selectedElement}
+                  elements={selectedElements}
+                  selectedCount={selectedIds.length}
+                  labels={t}
+                  onPatch={patchSelected}
+                />
 
-                <GenerationLog labels={t} logs={generationLogs} />
+                <RenderHistory labels={t} logs={renderHistory} onView={viewHistory} />
 
                 <div className="mt-5 border-t border-line pt-4 font-mono text-[10px] leading-5 text-faint">{t.pptxDisabled}</div>
               </aside>
@@ -810,21 +921,37 @@ function isJsonSyntaxError(message: string): boolean {
   );
 }
 
-function GenerationLog({ labels, logs }: { labels: typeof dictionaries.en; logs: GenerationLogEntry[] }) {
+function RenderHistory({
+  labels,
+  logs,
+  onView
+}: {
+  labels: typeof dictionaries.en;
+  logs: RenderHistoryEntry[];
+  onView: (entry: RenderHistoryEntry) => void;
+}) {
   return (
     <div className="mt-5 border-t border-line pt-4">
       <div className="mb-3 flex items-center gap-2">
         <Database size={15} className="text-accent2" />
-        <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.logTitle}</h2>
+        <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.historyTitle}</h2>
       </div>
 
       {logs.length ? (
         <div className="space-y-3">
           {logs.map((log) => (
-            <div key={log.id} className="border border-line bg-bg2 p-3 text-xs leading-5 text-mid">
+            <button
+              key={log.id}
+              type="button"
+              onClick={() => onView(log)}
+              className="block w-full border border-line bg-bg2 p-2 text-left text-xs leading-5 text-mid transition hover:border-accent/40 hover:bg-bg"
+            >
+              <div className="aspect-video overflow-hidden border border-line bg-panel">
+                <FigureSvg figure={log.figure} svgId={`history-${log.id}`} />
+              </div>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate font-semibold text-ink">{log.title}</div>
+                  <div className="mt-2 truncate font-semibold text-ink">{log.title}</div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
                     #{log.turn} / {log.requestId}
                   </div>
@@ -832,20 +959,13 @@ function GenerationLog({ labels, logs }: { labels: typeof dictionaries.en; logs:
                 <div className="font-mono text-[10px] text-accent2">{Math.round(log.fitScore * 100)}%</div>
               </div>
               <div className="mt-2 font-mono text-[10px] text-faint">
-                {log.referencedRender ? labels.logReferencedRender : labels.logNewRender}
+                {log.referencedRender ? labels.historyReferencedRender : labels.historyNewRender}
               </div>
-              {log.svgPath || log.jsonPath || log.logPath ? (
-                <div className="mt-2 space-y-1 break-all font-mono text-[10px] text-faint">
-                  {log.svgPath ? <div>svg: {log.svgPath}</div> : null}
-                  {log.jsonPath ? <div>json: {log.jsonPath}</div> : null}
-                  {log.logPath ? <div>log: {log.logPath}</div> : null}
-                </div>
-              ) : null}
-            </div>
+            </button>
           ))}
         </div>
       ) : (
-        <p className="text-sm leading-5 text-mid">{labels.logEmpty}</p>
+        <p className="text-sm leading-5 text-mid">{labels.historyEmpty}</p>
       )}
     </div>
   );
@@ -853,14 +973,18 @@ function GenerationLog({ labels, logs }: { labels: typeof dictionaries.en; logs:
 
 function ElementPanel({
   element,
+  elements,
+  selectedCount,
   labels,
   onPatch
 }: {
   element?: FigureElement;
+  elements: FigureElement[];
+  selectedCount: number;
   labels: typeof dictionaries.en;
   onPatch: (updater: (element: FigureElement) => FigureElement) => void;
 }) {
-  if (!element) {
+  if (!selectedCount) {
     return (
       <div>
         <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.selectedElement}</h2>
@@ -869,11 +993,18 @@ function ElementPanel({
     );
   }
 
+  const fillElement = elements.find((item) => "fill" in item);
+  const strokeElement = elements.find((item) => "stroke" in item);
+  const canEditText = selectedCount === 1 && element?.type === "text";
+
   return (
     <div>
-      <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.selectedElement}</h2>
+      <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">
+        {selectedCount > 1 ? `${labels.selectedElements}: ${selectedCount}` : labels.selectedElement}
+      </h2>
+      {selectedCount > 1 ? <p className="mt-2 text-sm leading-5 text-mid">{labels.multiSelectHint}</p> : null}
       <div className="mt-3 space-y-4">
-        {element.type === "text" ? (
+        {canEditText ? (
           <label className="block">
             <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{labels.text}</span>
             <input
@@ -886,12 +1017,12 @@ function ElementPanel({
           </label>
         ) : null}
 
-        {"fill" in element ? (
+        {fillElement && "fill" in fillElement ? (
           <label className="block">
             <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{labels.fill}</span>
             <input
               type="color"
-              value={element.fill === "none" ? "#ffffff" : element.fill}
+              value={fillElement.fill === "none" ? "#ffffff" : fillElement.fill}
               onChange={(event) =>
                 onPatch((current) => ("fill" in current ? { ...current, fill: event.target.value } : current))
               }
@@ -900,12 +1031,12 @@ function ElementPanel({
           </label>
         ) : null}
 
-        {"stroke" in element ? (
+        {strokeElement && "stroke" in strokeElement ? (
           <label className="block">
             <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{labels.stroke}</span>
             <input
               type="color"
-              value={element.stroke}
+              value={strokeElement.stroke}
               onChange={(event) =>
                 onPatch((current) => ("stroke" in current ? { ...current, stroke: event.target.value } : current))
               }
