@@ -97,10 +97,20 @@ export interface GenerateFigureRequest {
   userDescription: string;
   language: Locale;
   conversationId?: string;
+  conversationTurn?: number;
   attachments?: UploadedAttachment[];
   pptContext?: {
     fileName?: string;
     extractedText?: string;
+  };
+  referenceFigure?: {
+    source: "current-render";
+    figure: Figure;
+    fit?: FitAssessment | null;
+  };
+  clientLog?: {
+    messageId?: string;
+    sentAt?: string;
   };
 }
 

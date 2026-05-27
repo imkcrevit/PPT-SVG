@@ -8,9 +8,11 @@ import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/
 import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
-import type { GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
+import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+const MAX_CONVERSATION_TURNS = 5;
 
 type ParseResult = { ok: true; value: unknown } | { ok: false; error: string };
 
@@ -42,20 +44,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unknown internal skill." }, { status: 400 });
     }
 
+    const conversationTurn = normalizeConversationTurn(body.conversationTurn);
+    if (conversationTurn > MAX_CONVERSATION_TURNS) {
+      console.warn(`[generate:${requestId}] rejected over turn limit`, { conversationTurn });
+      return NextResponse.json(
+        { error: `Each conversation supports at most ${MAX_CONVERSATION_TURNS} generation turns.` },
+        { status: 400 }
+      );
+    }
+
     const generationRequest: GenerateFigureRequest = {
       skillId: body.skillId,
       userDescription: body.userDescription.trim(),
       language: body.language,
       conversationId: typeof body.conversationId === "string" ? body.conversationId : undefined,
+      conversationTurn,
       attachments: normalizeAttachments(body.attachments),
-      pptContext: body.pptContext
+      pptContext: body.pptContext,
+      referenceFigure: normalizeReferenceFigure(body.referenceFigure),
+      clientLog: normalizeClientLog(body.clientLog)
     };
 
     console.info(`[generate:${requestId}] started`, {
       skillId: generationRequest.skillId,
       language: generationRequest.language,
+      conversationId: generationRequest.conversationId,
+      conversationTurn: generationRequest.conversationTurn,
       descriptionLength: generationRequest.userDescription.length,
       hasPptContext: Boolean(generationRequest.pptContext),
+      hasReferenceFigure: Boolean(generationRequest.referenceFigure),
       attachmentCount: generationRequest.attachments?.length ?? 0
     });
 
@@ -86,6 +103,8 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({
         ...validation.response,
+        requestId,
+        conversationTurn,
         model: getConfiguredModelLabel(),
         artifacts,
         context: { compressed: compressedContext }
@@ -145,6 +164,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({
       ...repairedValidation.response,
+      requestId,
+      conversationTurn,
       model: getConfiguredModelLabel(),
       artifacts,
       context: { compressed: compressedContext }
@@ -201,6 +222,14 @@ async function compressContext(request: GenerateFigureRequest): Promise<string> 
 
   return [
     request.userDescription,
+    request.referenceFigure
+      ? `Reference current render: ${JSON.stringify({
+          title: request.referenceFigure.figure.metadata.title,
+          description: request.referenceFigure.figure.metadata.description,
+          fit: request.referenceFigure.fit,
+          figure: request.referenceFigure.figure
+        })}`
+      : "",
     ...(request.attachments?.map(
       (attachment) =>
         `Attachment: ${attachment.originalName} (${attachment.extension}, sha256=${attachment.hash}, path=${attachment.path})${attachment.extractedText ? `\n${attachment.extractedText}` : ""}`
@@ -208,6 +237,14 @@ async function compressContext(request: GenerateFigureRequest): Promise<string> 
   ]
     .join("\n\n")
     .slice(0, 6000);
+}
+
+function normalizeConversationTurn(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(value));
 }
 
 function normalizeAttachments(value: unknown): UploadedAttachment[] {
@@ -249,6 +286,40 @@ function normalizeAttachments(value: unknown): UploadedAttachment[] {
     .filter((attachment): attachment is UploadedAttachment => Boolean(attachment));
 }
 
+function normalizeReferenceFigure(value: unknown): GenerateFigureRequest["referenceFigure"] {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  if (record.source !== "current-render" || !record.figure || typeof record.figure !== "object") {
+    return undefined;
+  }
+
+  return {
+    source: "current-render",
+    figure: record.figure as Figure,
+    fit:
+      record.fit && typeof record.fit === "object"
+        ? (record.fit as FitAssessment)
+        : record.fit === null
+          ? null
+          : undefined
+  };
+}
+
+function normalizeClientLog(value: unknown): GenerateFigureRequest["clientLog"] {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  return {
+    messageId: typeof record.messageId === "string" ? record.messageId : undefined,
+    sentAt: typeof record.sentAt === "string" ? record.sentAt : undefined
+  };
+}
+
 async function recordCompletedConversation({
   request,
   requestId,
@@ -266,12 +337,15 @@ async function recordCompletedConversation({
 }) {
   await recordConversation({
     conversationId: request.conversationId,
+    conversationTurn: request.conversationTurn,
     requestId,
     language: request.language,
     skillId: request.skillId,
     userDescription: request.userDescription,
     compressedContext,
     attachments: request.attachments ?? [],
+    referenceFigure: request.referenceFigure,
+    clientLog: request.clientLog,
     figure: response.figure,
     fit: response.fit,
     artifacts,

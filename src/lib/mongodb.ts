@@ -11,12 +11,22 @@ interface AttachmentRecord {
 
 interface ConversationRecord {
   conversationId?: string;
+  conversationTurn?: number;
   requestId: string;
   language: string;
   skillId: string;
   userDescription: string;
   compressedContext?: string;
   attachments: UploadedAttachment[];
+  referenceFigure?: {
+    source: "current-render";
+    figure: Figure;
+    fit?: FitAssessment | null;
+  };
+  clientLog?: {
+    messageId?: string;
+    sentAt?: string;
+  };
   figure?: Figure;
   fit?: FitAssessment;
   artifacts?: unknown;

@@ -59,7 +59,21 @@ export async function buildGenerateMessages(
               : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
           canvas: skill.defaultCanvas,
           user_description: request.userDescription,
+          conversation: {
+            id: request.conversationId ?? null,
+            turn: request.conversationTurn ?? 1,
+            max_turns: 5,
+            instruction:
+              "If reference_current_render is present, treat it as the currently rendered right-side SVG data. Use it as source material for revisions instead of starting over, unless the user explicitly asks for a new diagram."
+          },
           compressed_context: compressedContext || null,
+          reference_current_render: request.referenceFigure
+            ? {
+                source: request.referenceFigure.source,
+                fit: request.referenceFigure.fit ?? null,
+                figure: request.referenceFigure.figure
+              }
+            : null,
           attachments:
             request.attachments?.map((attachment) => ({
               original_name: attachment.originalName,
@@ -93,6 +107,7 @@ export async function buildContextCompressionMessages(request: GenerateFigureReq
         {
           output_language: request.language,
           user_description: request.userDescription,
+          conversation_turn: request.conversationTurn ?? 1,
           attachments:
             request.attachments?.map((attachment) => ({
               original_name: attachment.originalName,
@@ -103,7 +118,16 @@ export async function buildContextCompressionMessages(request: GenerateFigureReq
               stored_path: attachment.path,
               extracted_text: attachment.extractedText || null
             })) ?? [],
-          ppt_context: request.pptContext ?? null
+          ppt_context: request.pptContext ?? null,
+          reference_current_render: request.referenceFigure
+            ? {
+                source: request.referenceFigure.source,
+                title: request.referenceFigure.figure.metadata.title,
+                description: request.referenceFigure.figure.metadata.description,
+                fit: request.referenceFigure.fit ?? null,
+                figure: request.referenceFigure.figure
+              }
+            : null
         },
         null,
         2

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCircle2, ExternalLink, Loader2, Undo2 } from "lucide-react";
+import { Check, CheckCircle2, Database, ExternalLink, Loader2, MessageSquarePlus, Send, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -19,7 +19,14 @@ interface WorkspaceProps {
 interface GenerateApiResponse {
   figure: Figure;
   fit: FitAssessment;
+  requestId?: string;
+  conversationTurn?: number;
   model?: string;
+  artifacts?: {
+    svgPath?: string;
+    jsonPath?: string;
+    logPath?: string;
+  };
   error?: string;
   details?: string[];
 }
@@ -30,11 +37,37 @@ interface AttachmentApiResponse {
 }
 
 const ACCEPTED_CONTEXT_EXTENSIONS = [".pdf", ".md", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".pptx"];
+const MAX_CONVERSATION_TURNS = 5;
+
+interface ChatEntry {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  turn: number;
+  status?: "pending" | "done" | "error";
+  referencedRender?: boolean;
+  requestId?: string;
+}
+
+interface GenerationLogEntry {
+  id: string;
+  turn: number;
+  requestId: string;
+  title: string;
+  fitScore: number;
+  referencedRender: boolean;
+  svgPath?: string;
+  jsonPath?: string;
+  logPath?: string;
+}
 
 export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
   const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
+  const [chatEntries, setChatEntries] = useState<ChatEntry[]>([]);
+  const [generationLogs, setGenerationLogs] = useState<GenerationLogEntry[]>([]);
+  const [referenceCurrentRender, setReferenceCurrentRender] = useState(true);
   const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -54,6 +87,10 @@ export function Workspace({ locale }: WorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const conversationIdRef = useRef(crypto.randomUUID());
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
+  const conversationTurnCount = chatEntries.filter((entry) => entry.role === "user").length;
+  const remainingTurns = Math.max(0, MAX_CONVERSATION_TURNS - conversationTurnCount);
+  const canReferenceCurrentRender = Boolean(figure);
+  const shouldReferenceCurrentRender = referenceCurrentRender && canReferenceCurrentRender;
 
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
@@ -78,6 +115,36 @@ export function Workspace({ locale }: WorkspaceProps) {
       return;
     }
 
+    if (conversationTurnCount >= MAX_CONVERSATION_TURNS) {
+      setError(t.turnLimitReached);
+      return;
+    }
+
+    const userMessage = description.trim();
+    const turn = conversationTurnCount + 1;
+    const userMessageId = crypto.randomUUID();
+    const pendingMessageId = crypto.randomUUID();
+    const referencedRender = shouldReferenceCurrentRender;
+
+    setChatEntries((entries) => [
+      ...entries,
+      {
+        id: userMessageId,
+        role: "user",
+        content: userMessage,
+        turn,
+        referencedRender
+      },
+      {
+        id: pendingMessageId,
+        role: "assistant",
+        content: t.chatPending,
+        turn,
+        status: "pending",
+        referencedRender
+      }
+    ]);
+    setDescription("");
     setIsGenerating(true);
     setError("");
     setGenerationStatus(t.generateThinking);
@@ -94,9 +161,15 @@ export function Workspace({ locale }: WorkspaceProps) {
         },
         body: JSON.stringify({
           skillId,
-          userDescription: description,
+          userDescription: userMessage,
           language: locale,
           conversationId: conversationIdRef.current,
+          conversationTurn: turn,
+          referenceFigure: referencedRender && figure ? { source: "current-render", figure, fit } : undefined,
+          clientLog: {
+            messageId: userMessageId,
+            sentAt: new Date().toISOString()
+          },
           attachments: attachment ? [attachment] : []
         })
       });
@@ -120,14 +193,68 @@ export function Workspace({ locale }: WorkspaceProps) {
       setModel(payload.model ?? "");
       setHistory([]);
       setActiveTab("preview");
+      setChatEntries((entries) =>
+        entries.map((entry) =>
+          entry.id === pendingMessageId
+            ? {
+                ...entry,
+                content: `${t.chatRendered}: ${payload.figure.metadata.title}`,
+                status: "done",
+                requestId: payload.requestId
+              }
+            : entry
+        )
+      );
+      setGenerationLogs((logs) => [
+        {
+          id: payload.requestId ?? pendingMessageId,
+          turn,
+          requestId: payload.requestId ?? "-",
+          title: payload.figure.metadata.title,
+          fitScore: payload.fit.score,
+          referencedRender,
+          svgPath: payload.artifacts?.svgPath,
+          jsonPath: payload.artifacts?.jsonPath,
+          logPath: payload.artifacts?.logPath
+        },
+        ...logs
+      ]);
     } catch (generationError) {
-      setError(generationError instanceof Error ? generationError.message : t.errorTitle);
+      const message = generationError instanceof Error ? generationError.message : t.errorTitle;
+      setError(message);
+      setChatEntries((entries) =>
+        entries.map((entry) =>
+          entry.id === pendingMessageId
+            ? {
+                ...entry,
+                content: message,
+                status: "error"
+              }
+            : entry
+        )
+      );
     } finally {
       setIsGenerating(false);
       setGenerationStatus("");
       setGenerationStartedAt(null);
       setGenerationSeconds(0);
     }
+  }
+
+  function startNewConversation() {
+    conversationIdRef.current = crypto.randomUUID();
+    setDescription("");
+    setChatEntries([]);
+    setGenerationLogs([]);
+    setFigure(null);
+    setFit(null);
+    setSelectedId("");
+    setJsonDraft("");
+    setJsonError("");
+    setHistory([]);
+    setError("");
+    setAttachment(null);
+    setActiveTab("preview");
   }
 
   async function handleFile(file?: File) {
@@ -330,11 +457,28 @@ export function Workspace({ locale }: WorkspaceProps) {
           <section className="border border-line bg-panel">
             <div className="flex items-center gap-3 border-b border-line px-4 py-3">
               <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">01</span>
-              <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{t.generate}</h2>
+              <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{t.chatTitle}</h2>
               <div className="h-px flex-1 bg-line" />
+              <button
+                type="button"
+                onClick={startNewConversation}
+                title={t.newConversation}
+                className="flex h-8 w-8 items-center justify-center border border-line bg-panel text-mid transition hover:border-accent/40 hover:text-accent2"
+              >
+                <MessageSquarePlus size={15} />
+              </button>
             </div>
 
             <div className="space-y-4 p-4">
+              <div className="flex items-center justify-between border border-line bg-bg2 px-3 py-2">
+                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  {t.conversationCount}: {conversationTurnCount}/{MAX_CONVERSATION_TURNS}
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent2">
+                  {remainingTurns} {t.turnsLeft}
+                </div>
+              </div>
+
               <label className="block">
                 <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.skillLabel}</span>
                 <select
@@ -358,15 +502,78 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </div>
               </div>
 
+              <div>
+                <div className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">
+                  {t.chatHistory}
+                </div>
+                <div className="max-h-[260px] min-h-[180px] space-y-3 overflow-y-auto border border-line bg-bg px-3 py-3">
+                  {chatEntries.length ? (
+                    chatEntries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className={`flex ${entry.role === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[92%] border px-3 py-2 text-sm leading-5 ${
+                            entry.role === "user"
+                              ? "border-accent/30 bg-panel text-ink"
+                              : entry.status === "error"
+                                ? "border-coral/40 bg-bg2 text-accent2"
+                                : "border-line bg-bg2 text-mid"
+                          }`}
+                        >
+                          <div className="mb-1 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+                            <span>{entry.role === "user" ? t.chatYou : t.chatAssistant}</span>
+                            <span>#{entry.turn}</span>
+                            {entry.referencedRender ? <span>{t.referenceBadge}</span> : null}
+                          </div>
+                          <div className="whitespace-pre-wrap break-words">{entry.content}</div>
+                          {entry.requestId ? (
+                            <div className="mt-1 font-mono text-[10px] text-faint">{entry.requestId}</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex h-full min-h-[150px] items-center justify-center text-center font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                      {t.chatEmpty}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <label className="block">
                 <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.promptLabel}</span>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  placeholder={t.promptPlaceholder}
-                  rows={6}
-                  className="w-full resize-none border border-line bg-bg px-3 py-2.5 text-sm leading-6 text-ink transition placeholder:text-faint hover:border-accent/40"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                      event.preventDefault();
+                      void handleGenerate();
+                    }
+                  }}
+                  placeholder={conversationTurnCount ? t.chatFollowupPlaceholder : t.promptPlaceholder}
+                  rows={4}
+                  disabled={conversationTurnCount >= MAX_CONVERSATION_TURNS}
+                  className="w-full resize-none border border-line bg-bg px-3 py-2.5 text-sm leading-6 text-ink transition placeholder:text-faint hover:border-accent/40 disabled:bg-bg2 disabled:text-faint"
                 />
+              </label>
+
+              <label className="flex items-start gap-3 border border-line bg-bg2 px-3 py-2.5 text-sm leading-5 text-mid">
+                <input
+                  type="checkbox"
+                  checked={shouldReferenceCurrentRender}
+                  disabled={!canReferenceCurrentRender || conversationTurnCount >= MAX_CONVERSATION_TURNS}
+                  onChange={(event) => setReferenceCurrentRender(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-[var(--accent)]"
+                />
+                <span>
+                  <span className="block font-semibold text-ink">{t.referenceCurrentRender}</span>
+                  <span className="block text-xs leading-5 text-faint">
+                    {canReferenceCurrentRender ? t.referenceCurrentRenderHint : t.referenceCurrentRenderDisabled}
+                  </span>
+                </span>
               </label>
 
               <div>
@@ -403,10 +610,11 @@ export function Workspace({ locale }: WorkspaceProps) {
               <button
                 type="button"
                 onClick={handleGenerate}
-                disabled={isGenerating || isUploading}
+                disabled={isGenerating || isUploading || conversationTurnCount >= MAX_CONVERSATION_TURNS}
                 className="group relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden bg-ink px-4 text-sm font-semibold text-white transition disabled:bg-faint"
               >
                 <span className="absolute inset-y-0 left-0 w-0 bg-accent transition-all duration-300 group-hover:w-full" />
+                <Send className="relative" size={16} />
                 <span className="relative">{isGenerating ? t.generating : t.generate}</span>
               </button>
 
@@ -529,6 +737,8 @@ export function Workspace({ locale }: WorkspaceProps) {
 
                 <ElementPanel element={selectedElement} labels={t} onPatch={patchSelected} />
 
+                <GenerationLog labels={t} logs={generationLogs} />
+
                 <div className="mt-5 border-t border-line pt-4 font-mono text-[10px] leading-5 text-faint">{t.pptxDisabled}</div>
               </aside>
             </div>
@@ -597,6 +807,47 @@ function isJsonSyntaxError(message: string): boolean {
     /Unexpected .+ in JSON at position \d+/i.test(message) ||
     message.includes("Model returned invalid JSON") ||
     message.includes("Repair response was invalid JSON")
+  );
+}
+
+function GenerationLog({ labels, logs }: { labels: typeof dictionaries.en; logs: GenerationLogEntry[] }) {
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Database size={15} className="text-accent2" />
+        <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.logTitle}</h2>
+      </div>
+
+      {logs.length ? (
+        <div className="space-y-3">
+          {logs.map((log) => (
+            <div key={log.id} className="border border-line bg-bg2 p-3 text-xs leading-5 text-mid">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-ink">{log.title}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+                    #{log.turn} / {log.requestId}
+                  </div>
+                </div>
+                <div className="font-mono text-[10px] text-accent2">{Math.round(log.fitScore * 100)}%</div>
+              </div>
+              <div className="mt-2 font-mono text-[10px] text-faint">
+                {log.referencedRender ? labels.logReferencedRender : labels.logNewRender}
+              </div>
+              {log.svgPath || log.jsonPath || log.logPath ? (
+                <div className="mt-2 space-y-1 break-all font-mono text-[10px] text-faint">
+                  {log.svgPath ? <div>svg: {log.svgPath}</div> : null}
+                  {log.jsonPath ? <div>json: {log.jsonPath}</div> : null}
+                  {log.logPath ? <div>log: {log.logPath}</div> : null}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm leading-5 text-mid">{labels.logEmpty}</p>
+      )}
+    </div>
   );
 }
 
