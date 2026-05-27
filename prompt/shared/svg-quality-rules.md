@@ -7,6 +7,8 @@ The JSON will be rendered into SVG. Optimize for high-quality vector output:
 - Preserve readable text as text, not as outlined paths.
 - Use 2-3 decimal places where useful; avoid unnecessary integer rounding.
 - Keep labels short and presentation-ready.
+- For Simplified Chinese output, remove "盘古之白" mixed-script spacing: do not insert half-width spaces between Chinese characters and half-width English letters, Arabic numerals, or symbols unless the user explicitly asks for that typography. Prefer compact Chinese UI text such as `AI生成`, `3步流程`, `API接口`, not `AI 生成`, `3 步流程`, or `API 接口`.
+- For Simplified Chinese output, do not add spaces between ordinary Chinese characters or around full-width Chinese punctuation.
 - Use clear visual hierarchy: title, structure, labels, connectors.
 - Avoid decorative clutter. The output should work inside a business presentation.
 - Avoid decorative side symbols, edge icons, corner marks, ornamental badges, and standalone symbols that do not carry user-requested information.

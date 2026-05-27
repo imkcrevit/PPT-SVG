@@ -66,16 +66,6 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/architecture.md",
     defaultCanvas: DEFAULT_CANVAS
-  },
-  {
-    id: "pangu-white",
-    name: { en: "Pangu White", zh: "盘古之白" },
-    description: {
-      en: "Minimal white presentation visuals with strict text hierarchy.",
-      zh: "盘古之白风格的演示图形，强调白底克制、中文文本层级和排版。"
-    },
-    promptFile: "skills/pangu-white.md",
-    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 
