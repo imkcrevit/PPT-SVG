@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCircle2, Loader2, Undo2 } from "lucide-react";
+import { Check, CheckCircle2, ExternalLink, Loader2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -299,23 +299,35 @@ export function Workspace({ locale }: WorkspaceProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
-            <Link
-              href="/en"
-              className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
-                locale === "en" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
-              }`}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <a
+              href="https://github.com/imkcrevit/PPT-SVG"
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-9 items-center justify-center gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:text-accent2"
+              aria-label="Open PPT-SVG on GitHub"
             >
-              {t.languageEnglish}
-            </Link>
-            <Link
-              href="/zh"
-              className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
-                locale === "zh" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
-              }`}
-            >
-              {t.languageChinese}
-            </Link>
+              <ExternalLink size={15} />
+              <span>GitHub</span>
+            </a>
+            <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
+              <Link
+                href="/en"
+                className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
+                  locale === "en" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
+                }`}
+              >
+                {t.languageEnglish}
+              </Link>
+              <Link
+                href="/zh"
+                className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
+                  locale === "zh" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
+                }`}
+              >
+                {t.languageChinese}
+              </Link>
+            </div>
           </div>
         </header>
 
