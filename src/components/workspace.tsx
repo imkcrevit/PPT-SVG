@@ -276,11 +276,6 @@ export function Workspace({ locale }: WorkspaceProps) {
               PPT
             </a>
           </li>
-          <li>
-            <a href="https://github.com/imkcrevit/PPT-SVG" target="_blank" rel="noreferrer">
-              GitHub
-            </a>
-          </li>
         </ul>
       </nav>
 
@@ -539,9 +534,60 @@ export function Workspace({ locale }: WorkspaceProps) {
             </div>
           </section>
         </div>
+
+        <UsageGuide labels={t} />
       </div>
       </main>
     </>
+  );
+}
+
+function UsageGuide({ labels }: { labels: typeof dictionaries.en }) {
+  const pptSteps = [labels.pptStep1, labels.pptStep2, labels.pptStep3, labels.pptStep4, labels.pptStep5];
+  const svgReasons = [labels.svgReason1, labels.svgReason2, labels.svgReason3, labels.svgReason4];
+
+  return (
+    <section className="border border-line bg-panel">
+      <div className="flex flex-col gap-2 border-b border-line px-4 py-3 sm:flex-row sm:items-end sm:justify-between sm:px-5">
+        <div>
+          <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">02 / GUIDE</div>
+          <h2 className="mt-1 text-base font-semibold tracking-[0.04em] text-ink">{labels.usageHeading}</h2>
+        </div>
+        <p className="max-w-xl text-sm leading-5 text-mid">{labels.usageSubtitle}</p>
+      </div>
+
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="border-b border-line p-4 sm:p-5 lg:border-b-0 lg:border-r">
+          <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
+            {labels.pptWorkflowTitle}
+          </h3>
+          <ol className="mt-4 space-y-3">
+            {pptSteps.map((step, index) => (
+              <li key={step} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 text-sm leading-6 text-mid">
+                <span className="flex h-7 w-7 items-center justify-center border border-line bg-bg2 font-mono text-[11px] text-accent2">
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="p-4 sm:p-5">
+          <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
+            {labels.svgReasonTitle}
+          </h3>
+          <ul className="mt-4 space-y-3">
+            {svgReasons.map((reason) => (
+              <li key={reason} className="flex gap-3 text-sm leading-6 text-mid">
+                <CheckCircle2 className="mt-1 shrink-0 text-mint" size={16} />
+                <span>{reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
 

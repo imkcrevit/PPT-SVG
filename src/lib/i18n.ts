@@ -41,7 +41,20 @@ export const dictionaries = {
     fill: "Fill",
     stroke: "Stroke",
     undo: "Undo",
-    pptxDisabled: "PPTX export is disabled in the UI for V1."
+    pptxDisabled: "PPTX export is disabled in the UI for V1.",
+    usageHeading: "Use in PowerPoint",
+    usageSubtitle: "Keep the SVG sharp while making the final deck self-contained.",
+    pptWorkflowTitle: "Link, check, then break the link",
+    pptStep1: "Download the generated SVG from this page.",
+    pptStep2: "In PowerPoint, choose Insert > Pictures > This Device, select the SVG, then use Link to File or Insert and Link.",
+    pptStep3: "Place and scale the graphic on the slide. SVG stays crisp at any size.",
+    pptStep4: "After confirming the slide, open File > Info > Edit Links to Files, select the SVG link, and choose Break Link.",
+    pptStep5: "Save the deck. The image is now embedded, so the PPT can be shared without the original SVG path.",
+    svgReasonTitle: "Why SVG",
+    svgReason1: "Vector output keeps text, lines, and arrows sharp on large screens and exported PDFs.",
+    svgReason2: "The file is small and transparent-friendly, which makes it easy to layer on slide backgrounds.",
+    svgReason3: "PowerPoint can treat SVG as an Office graphic, so it can be converted to shapes when deeper editing is needed.",
+    svgReason4: "The structured SVG source is easier to regenerate, inspect, and revise than a flattened screenshot."
   },
   zh: {
     appName: "PPT-SVG",
@@ -79,7 +92,20 @@ export const dictionaries = {
     fill: "填充",
     stroke: "描边",
     undo: "撤销",
-    pptxDisabled: "V1 暂不在 UI 中启用 PPTX 导出。"
+    pptxDisabled: "V1 暂不在 UI 中启用 PPTX 导出。",
+    usageHeading: "在 PowerPoint 中使用",
+    usageSubtitle: "先保持 SVG 的清晰度，再把最终 PPT 做成不依赖本地文件路径的版本。",
+    pptWorkflowTitle: "链接到 PPT，确认后解绑",
+    pptStep1: "在本页面生成图形后，点击“下载 SVG”。",
+    pptStep2: "在 PowerPoint 中选择“插入 > 图片 > 此设备”，选中 SVG 文件，再用“链接到文件”或“插入并链接”。",
+    pptStep3: "把图形放到对应幻灯片并调整大小。SVG 是矢量图，放大后线条和文字仍然清晰。",
+    pptStep4: "确认版式无误后，进入“文件 > 信息 > 编辑指向文件的链接”，选中该 SVG 链接，点击“断开链接”。",
+    pptStep5: "保存 PPT。此时图形已嵌入文件，分享给别人时不再依赖原始 SVG 的本地路径。",
+    svgReasonTitle: "为什么使用 SVG",
+    svgReason1: "SVG 是矢量格式，投影、放大或导出 PDF 时，文字、线条和箭头更清晰。",
+    svgReason2: "文件通常更小，并且天然支持透明背景，方便叠加到不同幻灯片底色上。",
+    svgReason3: "PowerPoint 可以把 SVG 当作 Office 图形处理，需要深度编辑时可转换为形状。",
+    svgReason4: "结构化 SVG 比截图更容易重新生成、检查和局部修改。"
   }
 } satisfies Record<Locale, Record<string, string>>;
 
