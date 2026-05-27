@@ -96,10 +96,23 @@ export interface GenerateFigureRequest {
   skillId: SkillId;
   userDescription: string;
   language: Locale;
+  conversationId?: string;
+  attachments?: UploadedAttachment[];
   pptContext?: {
     fileName?: string;
     extractedText?: string;
   };
+}
+
+export interface UploadedAttachment {
+  id: string;
+  originalName: string;
+  hash: string;
+  extension: string;
+  mimeType: string;
+  size: number;
+  path: string;
+  extractedText?: string;
 }
 
 export interface InternalSkill {

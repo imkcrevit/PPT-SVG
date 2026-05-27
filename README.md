@@ -21,9 +21,12 @@ OPENROUTER_API_KEY=your_openrouter_key
 OPENROUTER_MODEL=google/gemini-2.5-flash
 OPENROUTER_SITE_URL=http://localhost:3000
 OPENROUTER_APP_NAME=PPT-SVG
+MONGODB_URI=
+MONGODB_DB=ppt_svg
 ```
 
 `OPENROUTER_MODEL` controls the active model. Use any OpenRouter chat model, including Gemini, GPT, DeepSeek, and Claude model IDs.
+`MONGODB_URI` is optional. When configured, conversations and hash-coded attachment paths are recorded in MongoDB.
 
 ## V1 Scope
 

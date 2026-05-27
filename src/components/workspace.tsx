@@ -9,7 +9,7 @@ import { appUrl } from "@/lib/app-url";
 import { cloneFigure, findElement, updateElement } from "@/lib/figure-utils";
 import { dictionaries } from "@/lib/i18n";
 import { INTERNAL_SKILLS } from "@/lib/skills";
-import type { Figure, FigureElement, FitAssessment, Locale, SkillId } from "@/lib/types";
+import type { Figure, FigureElement, FitAssessment, Locale, SkillId, UploadedAttachment } from "@/lib/types";
 
 interface WorkspaceProps {
   locale: Locale;
@@ -23,12 +23,20 @@ interface GenerateApiResponse {
   details?: string[];
 }
 
+interface AttachmentApiResponse {
+  attachment?: UploadedAttachment;
+  error?: string;
+}
+
+const ACCEPTED_CONTEXT_EXTENSIONS = [".pdf", ".md", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".pptx"];
+
 export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
   const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
-  const [pptFileName, setPptFileName] = useState("");
+  const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
   const [uploadError, setUploadError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [figure, setFigure] = useState<Figure | null>(null);
   const [fit, setFit] = useState<FitAssessment | null>(null);
   const [model, setModel] = useState("");
@@ -41,6 +49,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const conversationIdRef = useRef(crypto.randomUUID());
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
 
   const selectedElement = useMemo(
@@ -83,7 +92,8 @@ export function Workspace({ locale }: WorkspaceProps) {
           skillId,
           userDescription: description,
           language: locale,
-          pptContext: pptFileName ? { fileName: pptFileName } : undefined
+          conversationId: conversationIdRef.current,
+          attachments: attachment ? [attachment] : []
         })
       });
       const responseText = await response.text();
@@ -96,7 +106,8 @@ export function Workspace({ locale }: WorkspaceProps) {
       }
 
       if (!response.ok) {
-        throw new Error([payload.error, ...(payload.details ?? [])].filter(Boolean).join(" "));
+        const message = [payload.error, ...(payload.details ?? [])].filter(Boolean).join(" ");
+        throw new Error(isJsonSyntaxError(message) ? t.malformedModelJson : message);
       }
 
       setGenerationStatus(t.generateRendering);
@@ -115,20 +126,43 @@ export function Workspace({ locale }: WorkspaceProps) {
     }
   }
 
-  function handleFile(file?: File) {
+  async function handleFile(file?: File) {
     setUploadError("");
 
     if (!file) {
       return;
     }
 
-    if (!file.name.toLowerCase().endsWith(".pptx")) {
+    if (!ACCEPTED_CONTEXT_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension))) {
       setUploadError(t.invalidPpt);
-      setPptFileName("");
+      setAttachment(null);
       return;
     }
 
-    setPptFileName(file.name);
+    setIsUploading(true);
+    setAttachment(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("conversationId", conversationIdRef.current);
+
+      const response = await fetch(appUrl("/api/attachments"), {
+        method: "POST",
+        body: formData
+      });
+      const payload = (await response.json()) as AttachmentApiResponse;
+
+      if (!response.ok || !payload.attachment) {
+        throw new Error(payload.error || t.invalidPpt);
+      }
+
+      setAttachment(payload.attachment);
+    } catch (uploadFailure) {
+      setUploadError(uploadFailure instanceof Error ? uploadFailure.message : t.invalidPpt);
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   function pushHistory(current: Figure) {
@@ -255,21 +289,28 @@ export function Workspace({ locale }: WorkspaceProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
                   onDrop={(event) => {
                     event.preventDefault();
-                    handleFile(event.dataTransfer.files[0]);
+                    void handleFile(event.dataTransfer.files[0]);
                   }}
                   onDragOver={(event) => event.preventDefault()}
                   className="flex min-h-20 w-full items-center justify-center rounded-md border border-dashed border-slate-300 bg-panel px-3 py-4 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-white"
                 >
-                  <span className="truncate">{pptFileName ? `${t.pptReady}: ${pptFileName}` : t.pptIdle}</span>
+                  <span className="truncate">
+                    {isUploading
+                      ? t.uploading
+                      : attachment
+                        ? `${t.pptReady}: ${attachment.originalName}`
+                        : t.pptIdle}
+                  </span>
                 </button>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pptx"
+                  accept={ACCEPTED_CONTEXT_EXTENSIONS.join(",")}
                   className="hidden"
-                  onChange={(event) => handleFile(event.target.files?.[0])}
+                  onChange={(event) => void handleFile(event.target.files?.[0])}
                 />
                 {uploadError ? <p className="mt-2 text-sm text-coral">{uploadError}</p> : null}
               </div>
@@ -277,7 +318,7 @@ export function Workspace({ locale }: WorkspaceProps) {
               <button
                 type="button"
                 onClick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isGenerating || isUploading}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:bg-slate-400"
               >
                 {isGenerating ? t.generating : t.generate}
@@ -389,6 +430,15 @@ export function Workspace({ locale }: WorkspaceProps) {
         </div>
       </div>
     </main>
+  );
+}
+
+function isJsonSyntaxError(message: string): boolean {
+  return (
+    /Expected .+ in JSON at position \d+/i.test(message) ||
+    /Unexpected .+ in JSON at position \d+/i.test(message) ||
+    message.includes("Model returned invalid JSON") ||
+    message.includes("Repair response was invalid JSON")
   );
 }
 

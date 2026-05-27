@@ -14,7 +14,9 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.16.0",
+    "mongodb": "^7.2.0",
     "next": "^16.2.6",
     "pptxgenjs": "^3.12.0",
     "react": "^19.2.6",

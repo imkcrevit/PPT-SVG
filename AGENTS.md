@@ -36,7 +36,11 @@ All manual and automated local launches must start through `./scripts/start.sh` 
 
 All internal skill prompts must live under `prompt/skills/*.md` and be loaded through `src/lib/prompts.ts`; do not hardcode skill prompts outside `PPT-SVG/prompt`.
 
+The context compression agent prompt lives at `prompt/system/compress-context.md`. It must produce dense downstream context from the user prompt and attachment metadata/text before figure generation.
+
 Generated SVG figure colors do not need to match the main website UI. Keep diagrams business-appropriate and avoid decorative side symbols, edge icons, corner marks, ornamental badges, and standalone symbols unless the user explicitly asks for them.
+
+Attachments must be stored under hash-coded file names in `/tmp/ppt-svg/uploads/<YYYY-MM-DD>/`. When `MONGODB_URI` is configured, record conversations and attachment file paths in MongoDB.
 
 The active UI locale controls output language: `zh` must produce Simplified Chinese labels, titles, notes, and metadata; `en` must produce English. Only switch language when the user explicitly requests another language.
 

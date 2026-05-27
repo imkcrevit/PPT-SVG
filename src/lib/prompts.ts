@@ -29,7 +29,8 @@ function assertSkillPromptPath(promptFile: string): void {
 
 export async function buildGenerateMessages(
   request: GenerateFigureRequest,
-  skill: InternalSkill
+  skill: InternalSkill,
+  compressedContext?: string
 ): Promise<ChatMessage[]> {
   assertSkillPromptPath(skill.promptFile);
 
@@ -58,6 +59,50 @@ export async function buildGenerateMessages(
               : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
           canvas: skill.defaultCanvas,
           user_description: request.userDescription,
+          compressed_context: compressedContext || null,
+          attachments:
+            request.attachments?.map((attachment) => ({
+              original_name: attachment.originalName,
+              hash: attachment.hash,
+              extension: attachment.extension,
+              mime_type: attachment.mimeType,
+              size: attachment.size,
+              stored_path: attachment.path,
+              extracted_text: attachment.extractedText || null
+            })) ?? [],
+          ppt_context: request.pptContext ?? null
+        },
+        null,
+        2
+      )
+    }
+  ];
+}
+
+export async function buildContextCompressionMessages(request: GenerateFigureRequest): Promise<ChatMessage[]> {
+  const systemPrompt = await loadPrompt("system/compress-context.md");
+
+  return [
+    {
+      role: "system",
+      content: systemPrompt
+    },
+    {
+      role: "user",
+      content: JSON.stringify(
+        {
+          output_language: request.language,
+          user_description: request.userDescription,
+          attachments:
+            request.attachments?.map((attachment) => ({
+              original_name: attachment.originalName,
+              hash: attachment.hash,
+              extension: attachment.extension,
+              mime_type: attachment.mimeType,
+              size: attachment.size,
+              stored_path: attachment.path,
+              extracted_text: attachment.extractedText || null
+            })) ?? [],
           ppt_context: request.pptContext ?? null
         },
         null,
