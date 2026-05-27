@@ -5,16 +5,25 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "Roboto", "Noto Sans CJK SC", "Arial", "sans-serif"]
+        sans: ["Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "monospace"]
       },
       colors: {
-        ink: "#2F3337",
-        panel: "#F6F6F6",
-        line: "#E1E3E6",
-        cobalt: "#6B7280",
-        mint: "#737A82",
+        bg: "#FDFDFB",
+        bg2: "#F7F7F4",
+        bg3: "#EFEEE9",
+        ink: "#1D1D1B",
+        mid: "#5F615C",
+        faint: "#8B8D86",
+        panel: "#FFFFFF",
+        line: "rgba(29,29,27,0.10)",
+        subtle: "#EEEEEA",
+        accent: "#C45F3C",
+        accent2: "#A94B2F",
+        cobalt: "#C45F3C",
+        mint: "#A94B2F",
         amber: "#B7791F",
-        coral: "#D95C4A"
+        coral: "#C45F3C"
       }
     }
   },
