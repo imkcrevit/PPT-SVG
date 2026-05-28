@@ -49,6 +49,22 @@ export function validateAndNormalizeSemanticDiagram(
 
   reportParentCycles(nodes, errors);
 
+  const axesRec =
+    diagramRecord.axes && typeof diagramRecord.axes === "object" && !Array.isArray(diagramRecord.axes)
+      ? (diagramRecord.axes as Record<string, unknown>)
+      : undefined;
+  const axes = axesRec
+    ? {
+        xLabel: typeof axesRec.xLabel === "string" ? sanitizeDisplayText(axesRec.xLabel).slice(0, 40) : undefined,
+        yLabel: typeof axesRec.yLabel === "string" ? sanitizeDisplayText(axesRec.yLabel).slice(0, 40) : undefined
+      }
+    : undefined;
+  const lanesList = Array.isArray(diagramRecord.lanes)
+    ? (diagramRecord.lanes as unknown[])
+        .filter((lane): lane is string => typeof lane === "string")
+        .map((lane) => sanitizeDisplayText(lane).slice(0, 40))
+    : undefined;
+
   const diagram: SemanticDiagram = {
     type,
     title: readString(diagramRecord.title, ["diagram", "title"], errors, "Generated figure").slice(0, 80),
@@ -58,7 +74,9 @@ export function validateAndNormalizeSemanticDiagram(
     direction,
     nodes,
     edges,
-    layers: layers.length ? layers : undefined
+    layers: layers.length ? layers : undefined,
+    axes,
+    lanes: lanesList && lanesList.length ? lanesList : undefined
   };
 
   return {
@@ -122,6 +140,14 @@ function normalizeNodes(
     const label = readString(record.label, [...path, "label"], errors, `Node ${index + 1}`).slice(0, 80);
     const detail = typeof record.detail === "string" ? sanitizeDisplayText(record.detail).slice(0, 420) : undefined;
     const emphasis = record.emphasis === "primary" || record.emphasis === "muted" || record.emphasis === "normal" ? record.emphasis : undefined;
+    const lane = typeof record.lane === "string" ? sanitizeDisplayText(record.lane).slice(0, 40) || undefined : undefined;
+    const start = typeof record.start === "number" || typeof record.start === "string" ? record.start : undefined;
+    const end = typeof record.end === "number" || typeof record.end === "string" ? record.end : undefined;
+    const scoreRec =
+      record.score && typeof record.score === "object" && !Array.isArray(record.score)
+        ? (record.score as Record<string, unknown>)
+        : undefined;
+    const score = scoreRec && typeof scoreRec.x === "number" && typeof scoreRec.y === "number" ? { x: scoreRec.x, y: scoreRec.y } : undefined;
 
     nodes.push({
       id,
@@ -129,7 +155,11 @@ function normalizeNodes(
       detail: detail || undefined,
       parent: null,
       emphasis,
-      dashed: record.dashed === true
+      dashed: record.dashed === true,
+      lane,
+      start,
+      end,
+      score
     });
 
     if (typeof record.parent === "string" && record.parent.trim()) {
