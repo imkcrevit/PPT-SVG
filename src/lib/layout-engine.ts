@@ -1,0 +1,657 @@
+import type { Figure, FigureElement } from "@/lib/types";
+import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
+
+// Deterministic semantic-to-geometry compiler.
+//
+// Input : nodes with `parent` + optional detail/dashed and edges with from/to.
+// Output: the existing geometric Figure consumed by SVG/PPTX renderers.
+//
+// This keeps containment as data instead of fragile coordinate math: child boxes
+// are placed inside parent boxes, and edges resolve node ids to anchors.
+
+const PAD = 18;
+const HEADER_H = 34;
+const GAP = 22;
+const LAYER_GAP = 60;
+const MIN_W = 110;
+const MAX_W = 320;
+const CANVAS_MARGIN = 48;
+const TITLE_H = 56;
+
+const TITLE_FONT = 15;
+const DETAIL_FONT = 12;
+const TITLE_LH = TITLE_FONT * 1.28;
+const DETAIL_LH = DETAIL_FONT * 1.32;
+const BOX_PAD_Y = 12;
+const BOX_PAD_X = 16;
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface Pt {
+  x: number;
+  y: number;
+}
+
+interface LayoutNode {
+  node: SemanticNode;
+  children: LayoutNode[];
+  box: Box;
+  rows: LayoutNode[][];
+  depth: number;
+  rootId: string;
+  titleLines: number;
+  detailLines: number;
+}
+
+const ACCENTS = [
+  { stroke: "#5B6B86", tint: "#FBF6EC" },
+  { stroke: "#6B5BD2", tint: "#EFEBFB" },
+  { stroke: "#7A5AC4", tint: "#F0EAFA" },
+  { stroke: "#2E9E76", tint: "#E7F5EF" },
+  { stroke: "#2F6FED", tint: "#EAF1FE" },
+  { stroke: "#E08A1E", tint: "#FDF1DF" },
+  { stroke: "#D6457C", tint: "#FCE8F0" },
+  { stroke: "#C0453C", tint: "#FBE9E7" }
+];
+const TEXT = "#1D2433";
+const SUBTEXT = "#6B7280";
+const EDGE = "#52607A";
+
+function visualLen(value: string): number {
+  let length = 0;
+
+  for (const char of value) {
+    length += /[\u3000-\u9fff\uff00-\uffef]/.test(char) ? 1 : 0.58;
+  }
+
+  return length;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function measureLeaf(layoutNode: LayoutNode): void {
+  const title = layoutNode.node.label ?? "";
+  const detail = layoutNode.node.detail ?? "";
+  const titleWidth = visualLen(title) * TITLE_FONT * 0.62;
+  const detailWidth = visualLen(detail) * DETAIL_FONT * 0.62;
+  const width = clamp(Math.max(titleWidth, detailWidth) * 1.12 + BOX_PAD_X * 2, MIN_W, MAX_W);
+  const titleCharsPerLine = Math.max(3, Math.floor((width - BOX_PAD_X * 2) / (TITLE_FONT * 0.62)));
+  const detailCharsPerLine = Math.max(3, Math.floor((width - BOX_PAD_X * 2) / (DETAIL_FONT * 0.62)));
+  const titleLines = Math.max(1, Math.ceil(visualLen(title) / titleCharsPerLine));
+  const detailLines = detail ? Math.max(1, Math.ceil(visualLen(detail) / detailCharsPerLine)) : 0;
+  const contentHeight = titleLines * TITLE_LH + (detailLines ? 4 + detailLines * DETAIL_LH : 0);
+
+  layoutNode.titleLines = titleLines;
+  layoutNode.detailLines = detailLines;
+  layoutNode.box.width = Math.round(width);
+  layoutNode.box.height = Math.round(Math.max(52, contentHeight + BOX_PAD_Y * 2));
+}
+
+function chooseCols(count: number): number {
+  if (count <= 1) {
+    return 1;
+  }
+
+  if (count <= 2) {
+    return 2;
+  }
+
+  if (count <= 6) {
+    return 3;
+  }
+
+  if (count <= 12) {
+    return 4;
+  }
+
+  return 5;
+}
+
+function buildTree(diagram: SemanticDiagram): LayoutNode[] {
+  const byId = new Map<string, LayoutNode>();
+
+  for (const node of diagram.nodes) {
+    byId.set(node.id, {
+      node,
+      children: [],
+      box: { x: 0, y: 0, width: 0, height: 0 },
+      rows: [],
+      depth: 0,
+      rootId: node.id,
+      titleLines: 1,
+      detailLines: 0
+    });
+  }
+
+  const roots: LayoutNode[] = [];
+  for (const layoutNode of byId.values()) {
+    const parent = layoutNode.node.parent;
+
+    if (parent && byId.has(parent)) {
+      byId.get(parent)?.children.push(layoutNode);
+    } else {
+      roots.push(layoutNode);
+    }
+  }
+
+  for (const root of roots) {
+    tagTree(root, 0, root.node.id);
+  }
+
+  return roots;
+}
+
+function tagTree(layoutNode: LayoutNode, depth: number, rootId: string): void {
+  layoutNode.depth = depth;
+  layoutNode.rootId = rootId;
+
+  for (const child of layoutNode.children) {
+    tagTree(child, depth + 1, rootId);
+  }
+}
+
+function measure(layoutNode: LayoutNode, direction: "horizontal" | "vertical"): void {
+  if (layoutNode.children.length === 0) {
+    measureLeaf(layoutNode);
+    return;
+  }
+
+  for (const child of layoutNode.children) {
+    measure(child, direction);
+  }
+
+  const cols = direction === "vertical" ? 1 : chooseCols(layoutNode.children.length);
+  const rows: LayoutNode[][] = [];
+
+  for (let index = 0; index < layoutNode.children.length; index += cols) {
+    rows.push(layoutNode.children.slice(index, index + cols));
+  }
+
+  layoutNode.rows = rows;
+
+  let innerWidth = 0;
+  let innerHeight = 0;
+
+  rows.forEach((row, index) => {
+    const rowWidth = row.reduce((sum, child) => sum + child.box.width, 0) + GAP * (row.length - 1);
+    const rowHeight = Math.max(...row.map((child) => child.box.height));
+    innerWidth = Math.max(innerWidth, rowWidth);
+    innerHeight += rowHeight + (index > 0 ? GAP : 0);
+  });
+
+  layoutNode.box.width = innerWidth + PAD * 2;
+  layoutNode.box.height = innerHeight + PAD * 2 + HEADER_H;
+}
+
+function place(layoutNode: LayoutNode, x: number, y: number): void {
+  layoutNode.box.x = x;
+  layoutNode.box.y = y;
+
+  if (layoutNode.children.length === 0) {
+    return;
+  }
+
+  const innerWidth = layoutNode.box.width - PAD * 2;
+  let cursorY = y + HEADER_H + PAD;
+
+  for (const row of layoutNode.rows) {
+    const rowWidth = row.reduce((sum, child) => sum + child.box.width, 0) + GAP * (row.length - 1);
+    const rowHeight = Math.max(...row.map((child) => child.box.height));
+    let cursorX = x + PAD + (innerWidth - rowWidth) / 2;
+
+    for (const child of row) {
+      place(child, cursorX, cursorY + (rowHeight - child.box.height) / 2);
+      cursorX += child.box.width + GAP;
+    }
+
+    cursorY += rowHeight + GAP;
+  }
+}
+
+interface Band {
+  name?: string;
+  roots: LayoutNode[];
+}
+
+function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: Band[]; totalW: number; totalH: number } {
+  const rootById = new Map(roots.map((root) => [root.node.id, root]));
+  let bands: Band[] = [];
+
+  if (diagram.type === "architecture" && diagram.layers?.length) {
+    const used = new Set<string>();
+
+    for (const layer of diagram.layers) {
+      const layerRoots = layer.nodeIds.map((id) => rootById.get(id)).filter((root): root is LayoutNode => Boolean(root));
+      layerRoots.forEach((root) => used.add(root.node.id));
+      bands.push({ name: layer.name, roots: layerRoots });
+    }
+
+    const leftover = roots.filter((root) => !used.has(root.node.id));
+    if (leftover.length) {
+      bands.push({ roots: leftover });
+    }
+  } else if (diagram.type === "flow" && diagram.direction !== "vertical") {
+    bands = [{ roots }];
+  } else if (diagram.direction === "vertical") {
+    bands = roots.map((root) => ({ roots: [root] }));
+  } else {
+    const cols = chooseCols(roots.length);
+
+    for (let index = 0; index < roots.length; index += cols) {
+      bands.push({ roots: roots.slice(index, index + cols) });
+    }
+  }
+
+  const bandWidths = bands.map(
+    (band) => band.roots.reduce((sum, root) => sum + root.box.width, 0) + GAP * Math.max(0, band.roots.length - 1)
+  );
+  const totalW = Math.max(...bandWidths, 1);
+  let cursorY = 0;
+
+  bands.forEach((band, index) => {
+    const bandHeight = Math.max(...band.roots.map((root) => root.box.height), 1);
+    let cursorX = (totalW - bandWidths[index]) / 2;
+
+    for (const root of band.roots) {
+      place(root, cursorX, cursorY + (bandHeight - root.box.height) / 2);
+      cursorX += root.box.width + GAP;
+    }
+
+    cursorY += bandHeight + LAYER_GAP;
+  });
+
+  return { bands, totalW, totalH: cursorY - LAYER_GAP };
+}
+
+function center(box: Box): Pt {
+  return {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2
+  };
+}
+
+function intersects(a: Box, b: Box): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function routeEdge(source: Box, target: Box, obstacles: Box[]): Pt[] {
+  const sourceCenter = center(source);
+  const targetCenter = center(target);
+  const vertical = Math.abs(targetCenter.y - sourceCenter.y) > Math.abs(targetCenter.x - sourceCenter.x) + 1;
+
+  if (vertical) {
+    const down = targetCenter.y > sourceCenter.y;
+    const sourceY = down ? source.y + source.height : source.y;
+    const targetY = down ? target.y : target.y + target.height;
+    const channelY = (sourceY + targetY) / 2;
+
+    if (Math.abs(sourceCenter.x - targetCenter.x) < 2) {
+      return [
+        { x: sourceCenter.x, y: sourceY },
+        { x: targetCenter.x, y: targetY }
+      ];
+    }
+
+    return [
+      { x: sourceCenter.x, y: sourceY },
+      { x: sourceCenter.x, y: channelY },
+      { x: targetCenter.x, y: channelY },
+      { x: targetCenter.x, y: targetY }
+    ];
+  }
+
+  const right = targetCenter.x > sourceCenter.x;
+  const sourceX = right ? source.x + source.width : source.x;
+  const targetX = right ? target.x : target.x + target.width;
+  const corridor: Box = {
+    x: Math.min(sourceX, targetX),
+    y: Math.min(source.y, target.y),
+    width: Math.abs(targetX - sourceX),
+    height: Math.max(source.y + source.height, target.y + target.height) - Math.min(source.y, target.y)
+  };
+  const blocked = obstacles.some((obstacle) => intersects(corridor, obstacle));
+
+  if (!blocked) {
+    if (Math.abs(sourceCenter.y - targetCenter.y) < 2) {
+      return [
+        { x: sourceX, y: sourceCenter.y },
+        { x: targetX, y: targetCenter.y }
+      ];
+    }
+
+    const centerX = (sourceX + targetX) / 2;
+    return [
+      { x: sourceX, y: sourceCenter.y },
+      { x: centerX, y: sourceCenter.y },
+      { x: centerX, y: targetCenter.y },
+      { x: targetX, y: targetCenter.y }
+    ];
+  }
+
+  const laneY = Math.max(source.y + source.height, target.y + target.height) + GAP;
+  return [
+    { x: sourceCenter.x, y: source.y + source.height },
+    { x: sourceCenter.x, y: laneY },
+    { x: targetCenter.x, y: laneY },
+    { x: targetCenter.x, y: target.y + target.height }
+  ];
+}
+
+export function layoutDiagram(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+  const width = 1280;
+  const height = 720;
+  const direction = diagram.direction ?? "horizontal";
+
+  const roots = buildTree(diagram);
+  roots.forEach((root) => measure(root, direction));
+  const { bands, totalW, totalH } = arrangeRoots(roots, diagram);
+
+  const colorGroupByRoot = new Map<string, number>();
+  if (diagram.type === "architecture" && diagram.layers?.length) {
+    bands.forEach((band, index) => band.roots.forEach((root) => colorGroupByRoot.set(root.node.id, index)));
+  } else {
+    roots.forEach((root, index) => colorGroupByRoot.set(root.node.id, index));
+  }
+
+  const accentFor = (layoutNode: LayoutNode) => ACCENTS[(colorGroupByRoot.get(layoutNode.rootId) ?? 0) % ACCENTS.length];
+  const usableW = width - CANVAS_MARGIN * 2;
+  const usableH = height - CANVAS_MARGIN * 2 - TITLE_H;
+  const scale = Math.min(1, usableW / totalW, usableH / totalH);
+  const offsetX = (width - totalW * scale) / 2;
+  const offsetY = CANVAS_MARGIN + TITLE_H + (usableH - totalH * scale) / 2;
+  const x = (value: number) => Math.round(offsetX + value * scale);
+  const y = (value: number) => Math.round(offsetY + value * scale);
+  const scaled = (value: number) => Math.max(1, Math.round(value * scale));
+  const scaledFont = (base: number, min: number) => Math.max(min, Math.round(base * scale));
+
+  const elements: FigureElement[] = [
+    {
+      id: "figure-title-text",
+      type: "text",
+      name: "title",
+      x: CANVAS_MARGIN,
+      y: CANVAS_MARGIN - 8,
+      width: width - CANVAS_MARGIN * 2,
+      height: TITLE_H,
+      text: diagram.title,
+      fontSize: 30,
+      fontWeight: 700,
+      fill: TEXT,
+      textAnchor: "middle"
+    }
+  ];
+
+  if (diagram.type === "architecture" && diagram.layers?.length) {
+    bands.forEach((band, index) => {
+      if (!band.name || band.roots.length === 0) {
+        return;
+      }
+
+      const top = Math.min(...band.roots.map((root) => root.box.y));
+      const bottom = Math.max(...band.roots.map((root) => root.box.y + root.box.height));
+
+      elements.push({
+        id: `band-${index}`,
+        type: "rect",
+        name: band.name,
+        x: x(0) - 8,
+        y: y(top) - 8,
+        width: scaled(totalW) + 16,
+        height: scaled(bottom - top) + 16,
+        rx: 14,
+        fill: ACCENTS[index % ACCENTS.length].tint,
+        stroke: "none",
+        strokeWidth: 0
+      });
+      elements.push({
+        id: `band-label-${index}`,
+        type: "text",
+        name: `${band.name} label`,
+        x: x(0) - 8,
+        y: y(top) - 32,
+        width: scaled(totalW),
+        height: 22,
+        text: band.name,
+        fontSize: scaledFont(14, 11),
+        fontWeight: 700,
+        fill: "#5B6577",
+        textAnchor: "start"
+      });
+    });
+  }
+
+  const emitNode = (layoutNode: LayoutNode): FigureElement => {
+    const box = layoutNode.box;
+    const isContainer = layoutNode.children.length > 0;
+    const accent = accentFor(layoutNode);
+    const emphasis = layoutNode.node.emphasis ?? "normal";
+    const fill = isContainer ? "#FFFFFF" : emphasis === "primary" ? accent.tint : emphasis === "muted" ? "#F4F5F7" : "#FFFFFF";
+    const parts: FigureElement[] = [
+      {
+        id: `${layoutNode.node.id}-rect`,
+        type: "rect",
+        name: layoutNode.node.label,
+        x: x(box.x),
+        y: y(box.y),
+        width: scaled(box.width),
+        height: scaled(box.height),
+        rx: 12,
+        fill,
+        stroke: accent.stroke,
+        strokeWidth: isContainer ? 1.5 : 2,
+        dash: layoutNode.node.dashed === true
+      }
+    ];
+
+    if (isContainer) {
+      parts.push({
+        id: `${layoutNode.node.id}-label`,
+        type: "text",
+        name: `${layoutNode.node.label} label`,
+        x: x(box.x),
+        y: y(box.y),
+        width: scaled(box.width),
+        height: scaled(HEADER_H),
+        text: layoutNode.node.label,
+        fontSize: scaledFont(16, 11),
+        fontWeight: 700,
+        fill: TEXT,
+        textAnchor: "middle"
+      });
+    } else {
+      const titleH = layoutNode.titleLines * TITLE_LH;
+      const detailH = layoutNode.detailLines ? layoutNode.detailLines * DETAIL_LH : 0;
+      const gap = layoutNode.detailLines ? 4 : 0;
+      const contentH = titleH + gap + detailH;
+      const top = box.y + (box.height - contentH) / 2;
+
+      parts.push({
+        id: `${layoutNode.node.id}-title`,
+        type: "text",
+        name: `${layoutNode.node.label} title`,
+        x: x(box.x),
+        y: y(top),
+        width: scaled(box.width),
+        height: scaled(titleH),
+        text: layoutNode.node.label,
+        fontSize: scaledFont(TITLE_FONT, 10),
+        fontWeight: 700,
+        fill: TEXT,
+        textAnchor: "middle"
+      });
+
+      if (layoutNode.node.detail) {
+        parts.push({
+          id: `${layoutNode.node.id}-detail`,
+          type: "text",
+          name: `${layoutNode.node.label} detail`,
+          x: x(box.x),
+          y: y(top + titleH + gap),
+          width: scaled(box.width),
+          height: scaled(detailH),
+          text: layoutNode.node.detail,
+          fontSize: scaledFont(DETAIL_FONT, 9),
+          fontWeight: 500,
+          fill: SUBTEXT,
+          textAnchor: "middle"
+        });
+      }
+    }
+
+    return {
+      id: `${layoutNode.node.id}-group`,
+      type: "group",
+      name: layoutNode.node.label,
+      children: [...parts, ...layoutNode.children.map(emitNode)]
+    };
+  };
+
+  roots.forEach((root) => elements.push(emitNode(root)));
+
+  const boxById = new Map<string, Box>();
+  const ancestors = new Map<string, Set<string>>();
+  const allBoxes: Array<{ id: string; box: Box }> = [];
+  const collect = (layoutNode: LayoutNode, chain: string[]) => {
+    boxById.set(layoutNode.node.id, layoutNode.box);
+    ancestors.set(layoutNode.node.id, new Set(chain));
+    allBoxes.push({ id: layoutNode.node.id, box: layoutNode.box });
+    layoutNode.children.forEach((child) => collect(child, [...chain, layoutNode.node.id]));
+  };
+  roots.forEach((root) => collect(root, []));
+
+  const descendantsOf = (id: string): Set<string> => {
+    const descendants = new Set<string>();
+
+    for (const [nodeId, nodeAncestors] of ancestors) {
+      if (nodeAncestors.has(id)) {
+        descendants.add(nodeId);
+      }
+    }
+
+    return descendants;
+  };
+
+  diagram.edges.forEach((edge, index) => {
+    const source = boxById.get(edge.from);
+    const target = boxById.get(edge.to);
+
+    if (!source || !target) {
+      return;
+    }
+
+    const exclude = new Set<string>([edge.from, edge.to]);
+    for (const ancestor of ancestors.get(edge.from) ?? []) {
+      exclude.add(ancestor);
+    }
+    for (const ancestor of ancestors.get(edge.to) ?? []) {
+      exclude.add(ancestor);
+    }
+    for (const descendant of descendantsOf(edge.from)) {
+      exclude.add(descendant);
+    }
+    for (const descendant of descendantsOf(edge.to)) {
+      exclude.add(descendant);
+    }
+
+    const obstacles = allBoxes.filter((candidate) => !exclude.has(candidate.id)).map((candidate) => candidate.box);
+    const points = routeEdge(source, target, obstacles);
+    const dash = edge.dashed === true;
+
+    for (let pointIndex = 0; pointIndex < points.length - 2; pointIndex += 1) {
+      elements.push({
+        id: `edge-${index}-seg-${pointIndex}`,
+        type: "line",
+        name: `${edge.from} -> ${edge.to}`,
+        x1: x(points[pointIndex].x),
+        y1: y(points[pointIndex].y),
+        x2: x(points[pointIndex + 1].x),
+        y2: y(points[pointIndex + 1].y),
+        stroke: EDGE,
+        strokeWidth: 2,
+        dash
+      });
+    }
+
+    const beforeHead = points[points.length - 2];
+    const head = points[points.length - 1];
+    elements.push({
+      id: `edge-${index}-head`,
+      type: "arrow",
+      name: `${edge.from} -> ${edge.to}`,
+      x1: x(beforeHead.x),
+      y1: y(beforeHead.y),
+      x2: x(head.x),
+      y2: y(head.y),
+      stroke: EDGE,
+      strokeWidth: 2,
+      dash
+    });
+
+    if (edge.label) {
+      let best = {
+        mx: (points[0].x + points[1].x) / 2,
+        my: (points[0].y + points[1].y) / 2,
+        len: 0
+      };
+
+      for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex += 1) {
+        const length = Math.abs(points[pointIndex + 1].x - points[pointIndex].x);
+
+        if (length > best.len) {
+          best = {
+            mx: (points[pointIndex].x + points[pointIndex + 1].x) / 2,
+            my: (points[pointIndex].y + points[pointIndex + 1].y) / 2,
+            len: length
+          };
+        }
+      }
+
+      const plateW = Math.max(34, visualLen(edge.label) * 13 + 12);
+      elements.push({
+        id: `edge-${index}-label-bg`,
+        type: "rect",
+        name: `${edge.from} -> ${edge.to} label bg`,
+        x: x(best.mx) - Math.round((plateW * scale) / 2),
+        y: y(best.my) - 12,
+        width: scaled(plateW),
+        height: 22,
+        rx: 4,
+        fill: "#FFFFFF",
+        stroke: "none",
+        strokeWidth: 0
+      });
+      elements.push({
+        id: `edge-${index}-label`,
+        type: "text",
+        name: `${edge.from} -> ${edge.to} label`,
+        x: x(best.mx) - Math.round((plateW * scale) / 2),
+        y: y(best.my) - 12,
+        width: scaled(plateW),
+        height: 22,
+        text: edge.label,
+        fontSize: scaledFont(12, 9),
+        fontWeight: 500,
+        fill: SUBTEXT,
+        textAnchor: "middle"
+      });
+    }
+  });
+
+  return {
+    canvas: { width, height, background: canvasBg },
+    metadata: {
+      title: diagram.title,
+      description: diagram.description ?? diagram.title,
+      skillId: diagram.type,
+      language: diagram.language
+    },
+    elements
+  };
+}

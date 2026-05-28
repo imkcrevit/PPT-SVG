@@ -91,7 +91,7 @@ function buildOptimizeMessages(body: {
     {
       role: "system",
       content:
-        "You optimize user requests for a PPT SVG diagram generator. Return only JSON with optimized_description. Only improve wording, clarity, grammar, and ambiguity. Preserve the original scope exactly. Do not expand the request, add steps, add examples, add structure, add design details, or invent facts. Keep the optimized text concise and no longer than the user's original request unless grammar requires a few extra words."
+        "You optimize user requests for a PPT SVG diagram generator. Return only JSON with optimized_description. Only improve wording, clarity, grammar, and ambiguity. Preserve the original scope exactly. Do not expand the request, add steps, add examples, add structure, add design details, or invent facts. Keep the optimized text concise and no longer than the user's original request unless grammar requires a few extra words. Preserve every explicit item, sequence, relationship, label, constraint, and revision. Do not drop the first or last item in chains such as A -> B -> C. Preserve scoped entities and qualifiers: A系统中的B子系统 must not become only B子系统. Preserve named intermediaries such as X中间件 in relationships like B通过X访问C. If the user's purpose is unclear, keep that uncertainty explicit instead of choosing a default purpose."
     },
     {
       role: "user",

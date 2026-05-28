@@ -1,22 +1,22 @@
-# Internal Skill: Timeline
+# Internal Skill: Timeline (Semantic)
 
-Create a clear horizontal timeline.
+Create a clear timeline as a semantic graph.
 
-Layout:
-- Use 3 to 7 milestones.
-- Place milestones on a single horizontal axis.
-- Use short dates or phases above or below the axis.
-- Use concise milestone labels.
-- Keep the sequence visually even and easy to scan.
+## Structure
 
-Good uses:
-- roadmap
-- release plan
-- project phases
-- historical sequence
-- implementation schedule
+- Set `type` to `timeline`.
+- Set `direction` to `horizontal` by default.
+- Create one top-level node per milestone, phase, release, date, or event.
+- Connect milestones in order with `edges`.
+- Put dates/phases in `label` when short; use `detail` for supporting milestone text.
 
-Global requirements:
-- Follow the active output language exactly: `zh` outputs Simplified Chinese; `en` outputs English.
-- Do not add decorative side symbols, edge icons, corner marks, ornamental badges, or standalone symbols.
-- Center milestone numbers, dates, and labels horizontally and vertically within their background shapes.
+## Good Uses
+
+roadmap, release plan, project phases, historical sequence, implementation schedule.
+
+## Requirements
+
+- Output language follows the active environment: `zh` Simplified Chinese, `en` English.
+- Preserve the user's exact milestone order and named dates.
+- Use `dashed: true` for tentative future milestones only when the user implies uncertainty.
+- Do not output coordinates, sizes, colors, or shapes.

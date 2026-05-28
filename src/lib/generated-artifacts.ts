@@ -13,12 +13,18 @@ export interface GeneratedArtifactPaths {
   logPath: string;
 }
 
+export interface GeneratedArtifactMetadata {
+  userDescription?: string;
+  conversationTurn?: number;
+}
+
 export async function persistGeneratedArtifacts(
   figure: Figure,
   fit: FitAssessment,
   requestId: string,
   sessionId: string,
-  layoutReview?: unknown
+  layoutReview?: unknown,
+  metadata: GeneratedArtifactMetadata = {}
 ): Promise<GeneratedArtifactPaths> {
   const date = new Date().toISOString().slice(0, 10);
   const sessionDirectory = path.join("/tmp", "ppt-svg", "sessions", sessionId);
@@ -29,7 +35,7 @@ export async function persistGeneratedArtifacts(
   const latestJsonPath = path.join(sessionDirectory, "latest.json");
   const logPath = path.join(sessionDirectory, "generation-log.jsonl");
   const svg = renderFigureSvg(figure);
-  const json = `${JSON.stringify({ sessionId, requestId, figure, fit, layoutReview }, null, 2)}\n`;
+  const json = `${JSON.stringify({ sessionId, requestId, ...metadata, figure, fit, layoutReview }, null, 2)}\n`;
 
   await mkdir(directory, { recursive: true });
   await Promise.all([
@@ -49,6 +55,8 @@ export async function persistGeneratedArtifacts(
         layoutReviewOk: readLayoutReviewOk(layoutReview),
         layoutReviewScore: readLayoutReviewScore(layoutReview),
         sessionId,
+        userDescription: metadata.userDescription,
+        conversationTurn: metadata.conversationTurn,
         svgPath,
         jsonPath
       })}\n`,
@@ -62,6 +70,8 @@ export async function persistGeneratedArtifacts(
 export async function readLatestGeneratedArtifact(sessionId: string): Promise<{
   sessionId?: string;
   requestId?: string;
+  userDescription?: string;
+  conversationTurn?: number;
   figure?: Figure;
   fit?: FitAssessment;
   layoutReview?: unknown;
@@ -71,6 +81,8 @@ export async function readLatestGeneratedArtifact(sessionId: string): Promise<{
   return JSON.parse(raw) as {
     sessionId?: string;
     requestId?: string;
+    userDescription?: string;
+    conversationTurn?: number;
     figure?: Figure;
     fit?: FitAssessment;
     layoutReview?: unknown;

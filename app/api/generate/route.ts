@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
@@ -15,6 +14,7 @@ import {
   validateGenerationPayload
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
+import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
@@ -114,14 +114,17 @@ export async function POST(request: Request) {
     const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext));
     const parsed = tryParseJsonObject(rawOutput);
     const validation = parsed.ok
-      ? validateAndNormalizeFigureResponse(parsed.value, body.skillId, body.language)
+      ? validateAndNormalizeSemanticResponse(parsed.value, body.skillId, body.language)
       : {
           ok: false,
           errors: [`Model returned invalid JSON: ${parsed.error}`]
         };
 
     if (validation.ok && validation.response) {
-      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId);
+      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId, undefined, {
+        userDescription: generationRequest.userDescription,
+        conversationTurn
+      });
       await recordCompletedConversation({
         request: generationRequest,
         requestId,
@@ -163,7 +166,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const repairedValidation = validateAndNormalizeFigureResponse(repairedParsed.value, body.skillId, body.language);
+    const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, body.skillId, body.language);
 
     if (!repairedValidation.ok || !repairedValidation.response) {
       console.warn(`[generate:${requestId}] repair failed`, {
@@ -183,7 +186,12 @@ export async function POST(request: Request) {
       repairedValidation.response.figure,
       repairedValidation.response.fit,
       requestId,
-      sessionId
+      sessionId,
+      undefined,
+      {
+        userDescription: generationRequest.userDescription,
+        conversationTurn
+      }
     );
     await recordCompletedConversation({
       request: generationRequest,

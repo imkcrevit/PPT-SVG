@@ -1,22 +1,22 @@
-# Internal Skill: Freeform
+# Internal Skill: Freeform (Semantic)
 
 Create the clearest presentation visual for the user's request without forcing a fixed diagram type.
 
-Layout:
-- Choose the structure that best matches the content: flow, matrix, timeline, hierarchy, architecture, comparison, cycle, funnel, map, framework, dashboard-like summary, or another SVG-friendly composition.
-- Prefer clarity over novelty; make the visual immediately understandable on a PowerPoint slide.
-- Use concise labels, strong alignment, consistent spacing, and a balanced composition.
-- Use the available JSON element types creatively through rectangles, text, lines, arrows, and groups.
-- Include a concise title if useful.
+## Structure
 
-Good uses:
-- requests that do not fit the predefined diagram types
-- ambiguous or exploratory visual briefs
-- custom frameworks
-- conceptual models
-- AI-selected layouts
+- Choose the semantic structure that best matches the content: flow, matrix, timeline, hierarchy, architecture, comparison, cycle, funnel, map, framework, or summary.
+- Set `type` to the closest available type: `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, or `architecture`.
+- Prefer clarity over novelty; make the node hierarchy and edges immediately understandable on a PowerPoint slide.
+- Use concise labels. Put supporting explanation in `detail`.
+- Use `parent` to express containment and `edges` to express relationships.
 
-Global requirements:
-- Follow the active output language exactly: `zh` outputs Simplified Chinese; `en` outputs English.
+## Good Uses
+
+requests that do not fit predefined diagram types, ambiguous visual briefs, custom frameworks, conceptual models, AI-selected layouts.
+
+## Requirements
+
+- Output language follows the active environment: `zh` Simplified Chinese, `en` English.
+- Preserve all explicit user entities and relationships.
 - Do not add decorative side symbols, edge icons, corner marks, ornamental badges, or standalone symbols.
-- Center text, step numbers, and labels horizontally and vertically within their background shapes.
+- Do not output coordinates, sizes, colors, or shapes.

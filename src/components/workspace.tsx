@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   ChevronDown,
   Database,
+  Download,
   ExternalLink,
+  FileDown,
   Loader2,
   MessageSquarePlus,
   PanelRightClose,
@@ -104,10 +106,22 @@ interface RenderHistoryEntry {
   turn: number;
   requestId: string;
   title: string;
+  userDescription: string;
   fitScore: number;
   referencedRender: boolean;
   figure: Figure;
   fit: FitAssessment;
+}
+
+interface ClarificationChoice {
+  id: string;
+  label: string;
+  instruction: string;
+}
+
+interface ClarificationRequest {
+  originalDescription: string;
+  choices: ClarificationChoice[];
 }
 
 export function Workspace({ locale }: WorkspaceProps) {
@@ -123,6 +137,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [figure, setFigure] = useState<Figure | null>(null);
+  const [currentRenderTurn, setCurrentRenderTurn] = useState(0);
   const [fit, setFit] = useState<FitAssessment | null>(null);
   const [model, setModel] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -136,6 +151,8 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
+  const [clarificationRequest, setClarificationRequest] = useState<ClarificationRequest | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(crypto.randomUUID());
@@ -154,6 +171,10 @@ export function Workspace({ locale }: WorkspaceProps) {
     () => (figure ? findElements(figure.elements, selectedIds) : []),
     [figure, selectedIds]
   );
+  const sessionInputEntries = useMemo(
+    () => chatEntries.filter((entry) => entry.role === "user").slice(-MAX_CONVERSATION_TURNS),
+    [chatEntries]
+  );
   const jsonPayload = useMemo(() => (figure ? JSON.stringify({ figure, fit }, null, 2) : ""), [figure, fit]);
 
   useEffect(() => {
@@ -162,7 +183,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     }
 
     const intervalId = window.setInterval(() => {
-      setGenerationSeconds(Math.max(0, Math.floor((Date.now() - generationStartedAt) / 1000)));
+      setGenerationSeconds(Math.max(0, Math.floor((window.performance.now() - generationStartedAt) / 1000)));
     }, 1000);
     return () => window.clearInterval(intervalId);
   }, [generationStartedAt]);
@@ -174,8 +195,10 @@ export function Workspace({ locale }: WorkspaceProps) {
     });
   }, [chatEntries, generationStatus]);
 
-  async function handleGenerate() {
-    if (!description.trim()) {
+  async function handleGenerate(startedAtMs: number) {
+    const userMessage = description.trim();
+
+    if (!userMessage) {
       setError(t.emptyPrompt);
       return;
     }
@@ -185,12 +208,25 @@ export function Workspace({ locale }: WorkspaceProps) {
       return;
     }
 
-    const userMessage = description.trim();
+    if (shouldAskForIntentClarification(userMessage, skillId, Boolean(attachment), shouldReferenceCurrentRender)) {
+      setError("");
+      setClarificationRequest({
+        originalDescription: userMessage,
+        choices: buildClarificationChoices(t)
+      });
+      return;
+    }
+
+    await handleSubmitGeneration(userMessage, startedAtMs);
+  }
+
+  async function handleSubmitGeneration(userMessage: string, startedAtMs: number) {
     const turn = conversationTurnCount + 1;
     const userMessageId = crypto.randomUUID();
     const pendingMessageId = crypto.randomUUID();
     const referencedRender = shouldReferenceCurrentRender;
 
+    setClarificationRequest(null);
     setChatEntries((entries) => [
       ...entries,
       {
@@ -213,7 +249,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setIsGenerating(true);
     setError("");
     setGenerationStatus(t.generateThinking);
-    setGenerationStartedAt(Date.now());
+    setGenerationStartedAt(startedAtMs);
     setGenerationSeconds(0);
     setSelectedId("");
     setSelectedIds([]);
@@ -272,6 +308,7 @@ export function Workspace({ locale }: WorkspaceProps) {
 
       setGenerationStatus(t.generateRendering);
       setFigure(payload.figure);
+      setCurrentRenderTurn(turn);
       setFit(payload.fit);
       setModel(payload.model ?? "");
       setHistory([]);
@@ -300,6 +337,7 @@ export function Workspace({ locale }: WorkspaceProps) {
           turn,
           requestId: payload.requestId ?? "-",
           title: payload.figure.metadata.title,
+          userDescription: userMessage,
           fitScore: payload.fit.score,
           referencedRender,
           figure: cloneFigure(payload.figure),
@@ -328,6 +366,16 @@ export function Workspace({ locale }: WorkspaceProps) {
       setGenerationStartedAt(null);
       setGenerationSeconds(0);
     }
+  }
+
+  async function handleClarificationChoice(choice: ClarificationChoice, startedAtMs: number) {
+    if (!clarificationRequest) {
+      return;
+    }
+
+    const clarifiedMessage = `${clarificationRequest.originalDescription}\n\n${t.clarificationChoicePrefix}: ${choice.instruction}`;
+    setDescription("");
+    await handleSubmitGeneration(clarifiedMessage, startedAtMs);
   }
 
   async function handleOptimizePrompt() {
@@ -363,6 +411,7 @@ export function Workspace({ locale }: WorkspaceProps) {
 
       setDescription(payload.optimizedDescription);
       setOptimizedPromptReady(true);
+      setClarificationRequest(null);
     } catch (optimizeError) {
       setError(optimizeError instanceof Error ? optimizeError.message : t.optimizeFailed);
     } finally {
@@ -373,9 +422,11 @@ export function Workspace({ locale }: WorkspaceProps) {
   function startNewConversation() {
     sessionIdRef.current = crypto.randomUUID();
     setDescription("");
+    setClarificationRequest(null);
     setChatEntries([]);
     setRenderHistory([]);
     setFigure(null);
+    setCurrentRenderTurn(0);
     setFit(null);
     setSelectedId("");
     setSelectedIds([]);
@@ -532,6 +583,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     }
 
     setFigure(cloneFigure(entry.figure));
+    setCurrentRenderTurn(entry.turn);
     setFit(entry.fit);
     setSelectedId("");
     setSelectedIds([]);
@@ -554,6 +606,43 @@ export function Workspace({ locale }: WorkspaceProps) {
     link.download = `${figure?.metadata.title || "ppt-svg"}.svg`.replace(/[^\w.-]+/g, "-");
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadPptx() {
+    if (!figure || isDownloadingPptx) {
+      return;
+    }
+
+    setError("");
+    setIsDownloadingPptx(true);
+
+    try {
+      const response = await fetch(appUrl("/api/export/pptx"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ figure, fit })
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string; details?: string[] };
+        const message = [payload.error, ...(payload.details ?? [])].filter(Boolean).join(" ");
+        throw new Error(message || t.pptxExportFailed);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `session-${currentRenderTurn || conversationTurnCount || 1}.pptx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      setError(downloadError instanceof Error ? downloadError.message : t.pptxExportFailed);
+    } finally {
+      setIsDownloadingPptx(false);
+    }
   }
 
   return (
@@ -756,11 +845,12 @@ export function Workspace({ locale }: WorkspaceProps) {
                   onChange={(event) => {
                     setDescription(event.target.value);
                     setOptimizedPromptReady(false);
+                    setClarificationRequest(null);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
                       event.preventDefault();
-                      void handleGenerate();
+                      void handleGenerate(event.timeStamp);
                     }
                   }}
                   placeholder={conversationTurnCount ? t.chatFollowupPlaceholder : t.promptPlaceholder}
@@ -768,6 +858,27 @@ export function Workspace({ locale }: WorkspaceProps) {
                   disabled={conversationTurnCount >= MAX_CONVERSATION_TURNS}
                   className="chat-composer-input"
                 />
+                {clarificationRequest ? (
+                  <div className="mt-2 border border-line bg-bg2 p-2">
+                    <div className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-accent">
+                      {t.clarificationTitle}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-mid">{t.clarificationHint}</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {clarificationRequest.choices.map((choice) => (
+                        <button
+                          key={choice.id}
+                          type="button"
+                          onClick={(event) => void handleClarificationChoice(choice, event.timeStamp)}
+                          disabled={isGenerating || isUploading || isOptimizingPrompt}
+                          className="border border-line bg-panel px-3 py-2 text-left text-xs font-semibold text-ink transition hover:border-accent/40 hover:bg-bg disabled:opacity-40"
+                        >
+                          {choice.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {optimizedPromptReady ? (
                   <div className="chat-composer-note">
                     {t.optimizedPromptReady}
@@ -787,7 +898,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={handleGenerate}
+                  onClick={(event) => void handleGenerate(event.timeStamp)}
                   disabled={isGenerating || isUploading || isOptimizingPrompt || conversationTurnCount >= MAX_CONVERSATION_TURNS}
                   className="chat-primary-action"
                 >
@@ -834,7 +945,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </button>
               </div>
 
-              <div className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-2 sm:flex">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={handleUndo}
@@ -848,9 +959,21 @@ export function Workspace({ locale }: WorkspaceProps) {
                   type="button"
                   onClick={downloadSvg}
                   disabled={!figure}
-                  className="flex h-9 min-w-0 items-center justify-center border border-line bg-panel px-3 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
+                  title={t.downloadSvgTitle}
+                  className="flex h-9 min-w-0 items-center justify-center gap-2 border border-line bg-panel px-3 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
                 >
+                  <Download size={16} />
                   <span className="truncate">{t.downloadSvg}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void downloadPptx()}
+                  disabled={!figure || isDownloadingPptx}
+                  title={t.downloadPptxTitle}
+                  className="flex h-9 min-w-0 items-center justify-center gap-2 border border-line bg-ink px-3 text-sm font-semibold text-white transition hover:bg-accent disabled:opacity-40"
+                >
+                  {isDownloadingPptx ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                  <span className="truncate">{isDownloadingPptx ? t.downloadingPptx : t.downloadPptx}</span>
                 </button>
               </div>
             </div>
@@ -951,6 +1074,15 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </DeckBlock>
 
                 <DeckBlock
+                  title={t.sessionInputsTitle}
+                  kicker="Input"
+                  badge={sessionInputEntries.length ? String(sessionInputEntries.length) : undefined}
+                  defaultOpen={!isEditDeckOpen && sessionInputEntries.length > 0}
+                >
+                  <SessionInputs labels={t} entries={sessionInputEntries} />
+                </DeckBlock>
+
+                <DeckBlock
                   title={t.historyTitle}
                   kicker="Deck"
                   badge={renderHistory.length ? String(renderHistory.length) : undefined}
@@ -987,6 +1119,59 @@ export function Workspace({ locale }: WorkspaceProps) {
 
 function isNetworkLoadError(message: string): boolean {
   return /^(load failed|failed to fetch|networkerror when attempting to fetch resource)$/i.test(message.trim());
+}
+
+function shouldAskForIntentClarification(
+  userDescription: string,
+  skillId: SkillId,
+  hasAttachment: boolean,
+  referencesCurrentRender: boolean
+): boolean {
+  if (skillId !== "freeform" || hasAttachment || referencesCurrentRender) {
+    return false;
+  }
+
+  const normalized = userDescription.trim();
+  if (!normalized) {
+    return false;
+  }
+
+  const hasPurposeCue =
+    /(-+>|=>|→|流程|步骤|阶段|时间线|矩阵|架构|对比|比较|分类|优先级|路线图|金字塔|漏斗|循环|图|diagram|flow|workflow|process|timeline|matrix|architecture|compare|comparison|roadmap|pyramid|funnel|cycle|vs\.?|[,，、;；:：\n]|\d)/i.test(
+      normalized
+    );
+  if (hasPurposeCue) {
+    return false;
+  }
+
+  const latinTokens = normalized.match(/[a-zA-Z0-9]+/g) ?? [];
+  const cjkChars = normalized.match(/[\u4e00-\u9fff]/g) ?? [];
+  return latinTokens.length <= 3 && cjkChars.length <= 8;
+}
+
+function buildClarificationChoices(labels: typeof dictionaries.en): ClarificationChoice[] {
+  return [
+    {
+      id: "flow",
+      label: labels.clarificationFlow,
+      instruction: labels.clarificationFlowInstruction
+    },
+    {
+      id: "timeline",
+      label: labels.clarificationTimeline,
+      instruction: labels.clarificationTimelineInstruction
+    },
+    {
+      id: "comparison",
+      label: labels.clarificationComparison,
+      instruction: labels.clarificationComparisonInstruction
+    },
+    {
+      id: "architecture",
+      label: labels.clarificationArchitecture,
+      instruction: labels.clarificationArchitectureInstruction
+    }
+  ];
 }
 
 function formatFileSize(bytes: number): string {
@@ -1103,6 +1288,27 @@ function FitDeck({ fit, labels }: { fit: FitAssessment | null; labels: typeof di
   );
 }
 
+function SessionInputs({ labels, entries }: { labels: typeof dictionaries.en; entries: ChatEntry[] }) {
+  if (!entries.length) {
+    return <p className="text-sm leading-5 text-mid">{labels.sessionInputsEmpty}</p>;
+  }
+
+  return (
+    <div className="grid gap-2">
+      {entries.map((entry) => (
+        <div key={entry.id} className="border border-line bg-panel p-2">
+          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+            {labels.sessionInputTurn} #{entry.turn}
+          </div>
+          <p className="mt-1 line-clamp-3 text-sm leading-5 text-mid" title={entry.content}>
+            {entry.content}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function RenderHistory({
   labels,
   logs,
@@ -1135,6 +1341,12 @@ function RenderHistory({
                   </div>
                 </div>
                 <div className="font-mono text-[10px] text-accent2">{Math.round(log.fitScore * 100)}%</div>
+              </div>
+              <div className="mt-2 border-l-2 border-accent/40 pl-2 text-left">
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">{labels.historyInputLabel}</div>
+                <p className="line-clamp-2 text-xs leading-5 text-mid" title={log.userDescription}>
+                  {log.userDescription}
+                </p>
               </div>
               <div className="mt-2 font-mono text-[10px] text-faint">
                 {log.referencedRender ? labels.historyReferencedRender : labels.historyNewRender}

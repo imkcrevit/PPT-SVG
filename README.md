@@ -32,8 +32,8 @@ MONGODB_DB=ppt_svg
 
 - Internal skills: flow, matrix, timeline, pyramid, architecture.
 - Prompt files live in `/prompt` and are loaded by the server.
-- SVG is the primary enabled export.
-- PPTX generation exists as experimental backend code and is not enabled in the main UI.
+- SVG export serializes the current browser preview as a standalone vector file.
+- PPTX export writes the generated figure to the first slide as editable PowerPoint shapes.
 - External skills, GitHub skill URLs, AI-created skills, and uploaded `SKILL.md` files are intentionally out of the first UI surface.
 
 ## Scripts

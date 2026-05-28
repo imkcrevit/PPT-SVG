@@ -17,6 +17,7 @@ import {
   validateGenerationPayload
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
+import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
 import { reviewFigureLayoutVisually, type VisualLayoutReviewResult } from "@/lib/visual-layout-review-agent";
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
           send(statusEvent(language, "compressing", "Compressing context.", 0));
           const compressedContext = await compressContext(generationRequest, safeTimeoutMs(startedAt, CONTEXT_COMPRESSION_TIMEOUT_MS));
 
-          send(statusEvent(language, "generating", "Generating SVG JSON.", 0));
+          send(statusEvent(language, "generating", "Generating semantic diagram JSON.", 0));
           const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext), {
             timeoutMs: requireTimeoutMs(startedAt, GENERATION_TIMEOUT_MS),
             maxCompletionTokens: GENERATION_MAX_COMPLETION_TOKENS
@@ -132,7 +133,10 @@ export async function POST(request: Request) {
           const finalResponse = applyVisualReviewToResponse(visuallyReviewed.response, visuallyReviewed.visualReview, language);
 
           send(statusEvent(language, "persisting", "Saving session artifacts.", MAX_LAYOUT_AGENT_PASSES));
-          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, visuallyReviewed.visualReview);
+          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, visuallyReviewed.visualReview, {
+            userDescription: generationRequest.userDescription,
+            conversationTurn: generationRequest.conversationTurn
+          });
           await recordCompletedConversation({
             request: generationRequest,
             requestId,
@@ -377,7 +381,7 @@ async function validateOrRepair(
 ): Promise<ValidatedGeneration> {
   const parsed = tryParseJsonObject(rawOutput);
   const validation = parsed.ok
-    ? validateAndNormalizeFigureResponse(parsed.value, request.skillId, request.language)
+    ? validateAndNormalizeSemanticResponse(parsed.value, request.skillId, request.language)
     : {
         ok: false,
         errors: [`Model returned invalid JSON: ${parsed.error}`]
@@ -426,7 +430,7 @@ async function validateOrRepair(
     };
   }
 
-  const repairedValidation = validateAndNormalizeFigureResponse(repairedParsed.value, request.skillId, request.language);
+  const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, request.skillId, request.language);
   if (!repairedValidation.ok || !repairedValidation.response) {
     console.warn(`[generate:${requestId}] repair validation failed`, {
       errors: repairedValidation.errors.slice(0, 10),
@@ -734,7 +738,7 @@ function statusEvent(language: "en" | "zh", code: string, english: string, pass:
   const zh: Record<string, string> = {
     queued: "Agent 已收到请求。",
     compressing: "正在压缩上下文。",
-    generating: "正在生成 SVG JSON。",
+    generating: "正在生成语义图 JSON。",
     repairing: "正在修复生成的 JSON。",
     repair_fallback: "JSON 修复失败，正在使用紧凑保底图。",
     reviewing: "正在渲染并判定布局。",

@@ -71,6 +71,16 @@ export async function buildGenerateMessages(
               : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
           canvas: skill.defaultCanvas,
           user_description: request.userDescription,
+          intent_fidelity_policy: {
+            preserve: "Preserve every explicit user-provided item, sequence, relationship, label, constraint, and revision.",
+            preserve_scoped_entities:
+              "Keep scoped or qualified entities intact. For example, 'A系统中的B子系统' means both A系统 and B子系统 must remain visible, not just B子系统.",
+            preserve_intermediaries:
+              "Keep explicit access mechanisms and intermediaries such as middleware, gateway, API, queue, protocol, or database names.",
+            no_fabrication: "Do not invent unstated goals, metrics, actors, dates, stages, product names, or causal relationships.",
+            no_silent_defaults:
+              "If purpose is unclear, do not silently choose a business goal. Use only explicit text and lower fit, because the client should ask the user to choose a purpose before generation."
+          },
           conversation: {
             session_id: request.sessionId ?? request.conversationId ?? null,
             id: request.conversationId ?? null,
@@ -120,6 +130,12 @@ export async function buildContextCompressionMessages(request: GenerateFigureReq
         {
           output_language: request.language,
           user_description: request.userDescription,
+          intent_fidelity_policy: {
+            preserve: "Keep all explicit user facts and ordered items, including the first and last items in chains.",
+            preserve_scoped_entities: "Keep parent-child qualifiers such as 'A系统中的B子系统'; do not compress them to the child alone.",
+            preserve_intermediaries: "Keep named intermediaries and access mechanisms such as '通过X中间件访问'.",
+            no_fabrication: "Record gaps in missing_context instead of filling them with assumptions."
+          },
           conversation_turn: request.conversationTurn ?? 1,
           attachments:
             request.attachments?.map((attachment) => ({
@@ -214,8 +230,9 @@ export async function buildVisualRevisionMessages(
         [
           "You are regenerating a PPT-SVG figure after a visual QA agent found layout defects.",
           "Return a complete replacement JSON object, not a patch.",
-          "Preserve the user's original intent, language, skill, and core content, but change coordinates, nesting, text box sizes, font sizes, spacing, and structure as needed to fix the QA feedback.",
-          "Prioritize centered large panels, centered nested card groups, readable text, and no overflow."
+          "Preserve the user's original intent, language, skill, scoped entities, ordering, relationships, labels, constraints, intermediaries, and core content. Do not drop parent qualifiers such as A系统 in A系统中的B子系统, and do not fabricate content while fixing layout.",
+          "Adjust the semantic structure, decomposition, parent relationships, edge labels, and detail text as needed to fix the QA feedback.",
+          "Do not output coordinates, text box sizes, font sizes, spacing, colors, canvas, or shape fields; the deterministic layout engine handles geometry."
         ].join("\n")
       ].join("\n\n---\n\n")
     },
@@ -243,7 +260,7 @@ export async function buildVisualRevisionMessages(
             deterministic_layout_issues: visualReview.deterministicIssues
           },
           regeneration_instruction:
-            "Regenerate the full Figure JSON so the visual QA issues are fixed. Keep visible text in the active output language. Do not mention the QA process inside the diagram."
+            "Regenerate the full semantic diagram JSON so the visual QA issues are fixed. Keep visible text in the active output language. Do not mention the QA process inside the diagram."
         },
         null,
         2

@@ -39,6 +39,7 @@ export interface RectElement extends Omit<BaseElement, "type"> {
   fill: string;
   stroke?: string;
   strokeWidth?: number;
+  dash?: boolean;
 }
 
 export interface TextElement extends Omit<BaseElement, "type"> {
@@ -62,6 +63,7 @@ export interface LineElement extends Omit<BaseElement, "type"> {
   y2: number;
   stroke: string;
   strokeWidth?: number;
+  dash?: boolean;
 }
 
 export interface ArrowElement extends Omit<BaseElement, "type"> {
@@ -72,6 +74,7 @@ export interface ArrowElement extends Omit<BaseElement, "type"> {
   y2: number;
   stroke: string;
   strokeWidth?: number;
+  dash?: boolean;
 }
 
 export type FigureElement = GroupElement | RectElement | TextElement | LineElement | ArrowElement;

@@ -21,7 +21,7 @@ function renderElement(element: FigureElement): string {
   }
 
   if (element.type === "rect") {
-    return `<rect data-node-id="${element.id}" x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" rx="${element.rx ?? 0}" fill="${element.fill}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${opacity} />`;
+    return `<rect data-node-id="${element.id}" x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" rx="${element.rx ?? 0}" fill="${element.fill}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
   }
 
   if (element.type === "text") {
@@ -29,7 +29,7 @@ function renderElement(element: FigureElement): string {
   }
 
   if (element.type === "line") {
-    return `<line data-node-id="${element.id}" x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${element.stroke}" stroke-width="${element.strokeWidth ?? 2}" stroke-linecap="round"${opacity} />`;
+    return `<line data-node-id="${element.id}" x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${element.stroke}" stroke-width="${element.strokeWidth ?? 2}" stroke-linecap="round"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
   }
 
   return renderArrow(element, opacity);
@@ -64,7 +64,7 @@ function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity
 
   return [
     `<g data-node-id="${element.id}"${opacity}>`,
-    `<line x1="${element.x1}" y1="${element.y1}" x2="${round(lineEnd.x)}" y2="${round(lineEnd.y)}" stroke="${element.stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" />`,
+    `<line x1="${element.x1}" y1="${element.y1}" x2="${round(lineEnd.x)}" y2="${round(lineEnd.y)}" stroke="${element.stroke}" stroke-width="${strokeWidth}" stroke-linecap="round"${element.dash ? ' stroke-dasharray="7 5"' : ""} />`,
     `<polygon points="${points}" fill="${element.stroke}" />`,
     "</g>"
   ].join("\n");

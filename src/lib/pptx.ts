@@ -4,6 +4,7 @@ import type { Figure, FigureElement } from "@/lib/types";
 
 const SLIDE_WIDTH_IN = 13.333;
 const SLIDE_HEIGHT_IN = 7.5;
+const PPTX_DEFAULT_FONT_FACE = "Microsoft YaHei";
 
 export async function figureToPptx(figure: Figure): Promise<Buffer> {
   const deck = new pptxgen();
@@ -12,6 +13,10 @@ export async function figureToPptx(figure: Figure): Promise<Buffer> {
   deck.subject = figure.metadata.description;
   deck.title = figure.metadata.title;
   deck.company = "PPT-SVG";
+  deck.theme = {
+    headFontFace: PPTX_DEFAULT_FONT_FACE,
+    bodyFontFace: PPTX_DEFAULT_FONT_FACE
+  };
 
   const slide = deck.addSlide();
   slide.background = { color: stripHash(figure.canvas.background) };
@@ -46,7 +51,8 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       line: {
         color: stripHash(element.stroke ?? "#1D2433"),
         transparency: element.stroke ? 0 : 100,
-        width: element.strokeWidth ?? 1.5
+        width: element.strokeWidth ?? 1.5,
+        dashType: element.dash ? ("dash" as const) : ("solid" as const)
       }
     });
     return;
@@ -58,7 +64,7 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       y: pyToIn(element.y, figure.canvas.height),
       w: pxToIn(element.width ?? 240, figure.canvas.width),
       h: pyToIn(element.height ?? 70, figure.canvas.height),
-      fontFace: figure.metadata.language === "zh" ? "Noto Sans CJK SC" : "Inter",
+      fontFace: PPTX_DEFAULT_FONT_FACE,
       fontSize: element.fontSize ?? 22,
       bold: (element.fontWeight ?? 500) >= 600,
       color: stripHash(element.fill ?? "#1D2433"),
@@ -79,7 +85,8 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
     line: {
       color: stripHash(element.stroke),
       width: element.strokeWidth ?? 2,
-      endArrowType: element.type === "arrow" ? ("triangle" as const) : undefined
+      endArrowType: element.type === "arrow" ? ("triangle" as const) : undefined,
+      dashType: element.dash ? ("dash" as const) : ("solid" as const)
     }
   };
 

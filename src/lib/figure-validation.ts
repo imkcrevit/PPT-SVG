@@ -811,7 +811,8 @@ function normalizeElement(
       rx: typeof record.rx === "number" ? clampNumber(record.rx, 0, 80, 0) : 0,
       fill: readColor(record.fill, "#FFFFFF"),
       stroke: typeof record.stroke === "string" ? readColor(record.stroke, "#1D2433") : undefined,
-      strokeWidth: typeof record.strokeWidth === "number" ? clampNumber(record.strokeWidth, 0, 12, 1.5) : 1.5
+      strokeWidth: typeof record.strokeWidth === "number" ? clampNumber(record.strokeWidth, 0, 12, 1.5) : 1.5,
+      dash: record.dash === true
     };
     return rect;
   }
@@ -846,7 +847,8 @@ function normalizeElement(
       x2: readNumber(record.x2, [...path, "x2"], errors, 120, 0, canvasWidth),
       y2: readNumber(record.y2, [...path, "y2"], errors, 120, 0, canvasHeight),
       stroke: readColor(record.stroke, "#1D2433"),
-      strokeWidth: typeof record.strokeWidth === "number" ? clampNumber(record.strokeWidth, 0.5, 12, 2) : 2
+      strokeWidth: typeof record.strokeWidth === "number" ? clampNumber(record.strokeWidth, 0.5, 12, 2) : 2,
+      dash: record.dash === true
     };
     return base;
   }
