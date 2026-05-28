@@ -1,5 +1,6 @@
 import { isLocale } from "@/lib/i18n";
 import { isSkillId } from "@/lib/skills";
+import { estimateTextBlockHeight, sanitizeDisplayText } from "@/lib/text-layout";
 import type {
   ArrowElement,
   Figure,
@@ -105,7 +106,7 @@ export function validateAndNormalizeFigureResponse(
       1,
       0.85
     ),
-    note: typeof fitRecord?.note === "string" ? fitRecord.note.slice(0, 180) : ""
+    note: typeof fitRecord?.note === "string" ? sanitizeDisplayText(fitRecord.note).slice(0, 180) : ""
   };
 
   return {
@@ -568,34 +569,7 @@ function intersectionArea(a: Box, b: Box): number {
 function estimateTextHeight(text: TextElement): number {
   const fontSize = text.fontSize ?? 22;
   const width = text.width ?? 240;
-  const lineHeight = fontSize * 1.18;
-  return round(wrapSvgText(text.text, width, fontSize).length * lineHeight);
-}
-
-function wrapSvgText(text: string, width: number, fontSize: number): string[] {
-  const maxChars = Math.max(4, Math.floor(width / (fontSize * 0.58)));
-  const hasSpaces = /\s/.test(text);
-  const tokens = hasSpaces ? text.split(/\s+/) : Array.from(text);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const token of tokens) {
-    const separator = hasSpaces && current ? " " : "";
-    const next = `${current}${separator}${token}`;
-
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = token;
-    } else {
-      current = next;
-    }
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  return lines.slice(0, 4).length ? lines.slice(0, 4) : [text];
+  return estimateTextBlockHeight(text.text, width, fontSize);
 }
 
 function unionBoxes(boxes: Box[]): Box | undefined {
@@ -807,7 +781,7 @@ function normalizeElement(
 
   const type = readString(record.type, [...path, "type"], errors, "");
   const id = uniqueId(readString(record.id, [...path, "id"], errors, `${type || "element"}-${path.join("-")}`), seenIds);
-  const name = typeof record.name === "string" ? record.name : undefined;
+  const name = typeof record.name === "string" ? sanitizeDisplayText(record.name) || undefined : undefined;
   const opacity = typeof record.opacity === "number" ? clampNumber(record.opacity, 0, 1, 1) : undefined;
 
   if (type === "group") {
@@ -900,8 +874,10 @@ function readArray(value: unknown, path: Path, errors: string[]): unknown[] | un
 }
 
 function readString(value: unknown, path: Path, errors: string[], fallback: string): string {
-  if (typeof value === "string" && value.trim()) {
-    return value.trim();
+  const sanitized = typeof value === "string" ? sanitizeDisplayText(value) : "";
+
+  if (sanitized) {
+    return sanitized;
   }
 
   errors.push(`${formatPath(path)} must be a non-empty string.`);

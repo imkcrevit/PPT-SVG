@@ -37,8 +37,18 @@ interface RenderedPng {
   bytes: number;
 }
 
-export async function reviewFigureLayoutVisually(figure: Figure): Promise<VisualLayoutReviewResult> {
+export async function reviewFigureLayoutVisually(
+  figure: Figure,
+  options: {
+    timeoutMs?: number;
+  } = {}
+): Promise<VisualLayoutReviewResult> {
   const deterministicIssues = reviewFigureLayout(figure).issues;
+
+  if (figure.metadata.language === "zh") {
+    return buildDeterministicOnlyReview(figure, deterministicIssues);
+  }
+
   let rendered: RenderedPng | undefined;
 
   try {
@@ -46,7 +56,8 @@ export async function reviewFigureLayoutVisually(figure: Figure): Promise<Visual
     const rawOutput = await callOpenRouter(buildVisualReviewMessages(figure, rendered, deterministicIssues), {
       model: process.env.OPENROUTER_VISION_MODEL || process.env.OPENROUTER_MODEL,
       temperature: 0,
-      maxCompletionTokens: 1200
+      maxCompletionTokens: 900,
+      timeoutMs: options.timeoutMs
     });
     const parsed = parseJsonObject(rawOutput);
     return normalizeVisualReview(parsed, deterministicIssues, rendered);
@@ -75,6 +86,26 @@ export async function reviewFigureLayoutVisually(figure: Figure): Promise<Visual
       unavailable: true
     };
   }
+}
+
+function buildDeterministicOnlyReview(figure: Figure, deterministicIssues: string[]): VisualLayoutReviewResult {
+  const ok = deterministicIssues.length === 0;
+  const summary = ok
+    ? "已跳过中文多模态视觉检查，确定性布局检查通过。"
+    : "已跳过中文多模态视觉检查，确定性布局检查发现问题。";
+
+  return {
+    ok,
+    score: ok ? 0.9 : 0.72,
+    summary,
+    issues: deterministicIssues.slice(0, 8).map((message) => ({
+      severity: "warning",
+      message: message.slice(0, 180)
+    })),
+    model: getConfiguredVisionModelLabel(),
+    deterministicIssues,
+    unavailable: true
+  };
 }
 
 async function renderFigurePngDataUrl(figure: Figure): Promise<RenderedPng> {

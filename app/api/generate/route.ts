@@ -6,6 +6,14 @@ import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
 import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
 import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
+import {
+  beginGenerationGuard,
+  checkGenerationAbuse,
+  enforceGenerationContentLength,
+  sanitizeUploadedAttachments,
+  securityJson,
+  validateGenerationPayload
+} from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
@@ -20,9 +28,20 @@ type ParseResult = { ok: true; value: unknown } | { ok: false; error: string };
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID().slice(0, 8);
   const startedAt = Date.now();
+  let releaseGeneration: (() => void) | undefined;
+  const contentLengthDecision = enforceGenerationContentLength(request);
+
+  if (!contentLengthDecision.ok) {
+    return securityJson(contentLengthDecision);
+  }
 
   try {
     const body = (await request.json()) as Partial<GenerateFigureRequest>;
+    const payloadDecision = validateGenerationPayload(body);
+
+    if (!payloadDecision.ok) {
+      return securityJson(payloadDecision);
+    }
 
     if (!body.skillId || !isSkillId(body.skillId)) {
       console.warn(`[generate:${requestId}] rejected invalid skillId`, { skillId: body.skillId });
@@ -55,6 +74,17 @@ export async function POST(request: Request) {
     }
 
     const sessionId = normalizeSessionId(body.sessionId ?? body.conversationId);
+    const abuseDecision = checkGenerationAbuse(request, sessionId);
+    if (!abuseDecision.ok) {
+      return securityJson(abuseDecision);
+    }
+
+    const generationGuard = beginGenerationGuard(request, sessionId);
+    if (!generationGuard.ok) {
+      return securityJson(generationGuard);
+    }
+    releaseGeneration = generationGuard.release;
+
     const generationRequest: GenerateFigureRequest = {
       skillId: body.skillId,
       userDescription: body.userDescription.trim(),
@@ -198,8 +228,10 @@ export async function POST(request: Request) {
       error: message,
       durationMs: Date.now() - startedAt
     });
-    console.error(`[generate:${requestId}] failed`, { durationMs: Date.now() - startedAt, message });
+      console.error(`[generate:${requestId}] failed`, { durationMs: Date.now() - startedAt, message });
     return NextResponse.json({ error: message }, { status: 500 });
+  } finally {
+    releaseGeneration?.();
   }
 }
 
@@ -255,42 +287,7 @@ function normalizeConversationTurn(value: unknown): number {
 }
 
 function normalizeAttachments(value: unknown): UploadedAttachment[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .map((item): UploadedAttachment | undefined => {
-      if (!item || typeof item !== "object") {
-        return undefined;
-      }
-
-      const record = item as Record<string, unknown>;
-
-      if (
-        typeof record.id !== "string" ||
-        typeof record.originalName !== "string" ||
-        typeof record.hash !== "string" ||
-        typeof record.extension !== "string" ||
-        typeof record.mimeType !== "string" ||
-        typeof record.size !== "number" ||
-        typeof record.path !== "string"
-      ) {
-        return undefined;
-      }
-
-      return {
-        id: record.id,
-        originalName: record.originalName,
-        hash: record.hash,
-        extension: record.extension,
-        mimeType: record.mimeType,
-        size: record.size,
-        path: record.path,
-        extractedText: typeof record.extractedText === "string" ? record.extractedText : undefined
-      };
-    })
-    .filter((attachment): attachment is UploadedAttachment => Boolean(attachment));
+  return sanitizeUploadedAttachments(value);
 }
 
 function normalizeReferenceFigure(value: unknown): GenerateFigureRequest["referenceFigure"] {

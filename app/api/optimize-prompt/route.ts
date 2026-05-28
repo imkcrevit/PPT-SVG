@@ -3,20 +3,40 @@ import { NextResponse } from "next/server";
 import { isLocale } from "@/lib/i18n";
 import { parseJsonObject } from "@/lib/json";
 import { callOpenRouter, OpenRouterError } from "@/lib/openrouter";
+import {
+  checkOptimizeAbuse,
+  enforceGenerationContentLength,
+  securityJson,
+  validateGenerationPayload
+} from "@/lib/request-security";
+import { normalizeSessionId } from "@/lib/session";
 import { isSkillId } from "@/lib/skills";
 import type { ChatMessage } from "@/lib/prompts";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const contentLengthDecision = enforceGenerationContentLength(request);
+
+  if (!contentLengthDecision.ok) {
+    return securityJson(contentLengthDecision);
+  }
+
   try {
     const body = (await request.json()) as {
       userDescription?: string;
       language?: string;
       skillId?: string;
+      sessionId?: string;
+      conversationId?: string;
       conversationTurn?: number;
       referenceFigure?: unknown;
     };
+    const payloadDecision = validateGenerationPayload(body);
+
+    if (!payloadDecision.ok) {
+      return securityJson(payloadDecision);
+    }
 
     if (!body.userDescription?.trim()) {
       return NextResponse.json({ error: "userDescription is required." }, { status: 400 });
@@ -28,6 +48,12 @@ export async function POST(request: Request) {
 
     if (!body.skillId || !isSkillId(body.skillId)) {
       return NextResponse.json({ error: "Invalid skillId." }, { status: 400 });
+    }
+
+    const sessionId = normalizeSessionId(body.sessionId ?? body.conversationId);
+    const abuseDecision = checkOptimizeAbuse(request, sessionId);
+    if (!abuseDecision.ok) {
+      return securityJson(abuseDecision);
     }
 
     const rawOutput = await callOpenRouter(buildOptimizeMessages(body));
@@ -54,6 +80,8 @@ function buildOptimizeMessages(body: {
   userDescription?: string;
   language?: string;
   skillId?: string;
+  sessionId?: string;
+  conversationId?: string;
   conversationTurn?: number;
   referenceFigure?: unknown;
 }): ChatMessage[] {

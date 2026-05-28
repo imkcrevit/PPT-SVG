@@ -102,6 +102,7 @@ Rules:
 - Keep all geometry within the canvas.
 - Every element id must be unique, lowercase, and stable.
 - Text should be concise enough to fit in its box.
+- Keep the response compact: no more than 42 total elements, including nested children. For system architecture diagrams, use summarized nodes and only the most important connectors.
 - Text inside a background rectangle/card should use a text box centered within that shape on both axes; use `textAnchor: "middle"` unless a clear exception is needed.
 - Numbers, step indexes, and content labels must be horizontally and vertically centered against their own background shapes. If a number and a label share one background, align the combined text group to the visual center of that background.
 - Text boxes must remain fully inside their corresponding background shape and the canvas. If text is long, reduce font size, shorten the label, or split it into fewer concise lines instead of letting it overflow.

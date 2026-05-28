@@ -4,14 +4,13 @@ export function parseJsonObject(content: string): unknown {
   try {
     return JSON.parse(trimmed);
   } catch {
-    const firstBrace = trimmed.indexOf("{");
-    const lastBrace = trimmed.lastIndexOf("}");
+    const objectSource = extractFirstJsonObject(trimmed);
 
-    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    if (!objectSource) {
       throw new Error("Model response did not contain a JSON object.");
     }
 
-    return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+    return JSON.parse(objectSource);
   }
 }
 
@@ -26,3 +25,51 @@ function stripCodeFence(value: string): string {
     .trim();
 }
 
+function extractFirstJsonObject(value: string): string | undefined {
+  const start = value.indexOf("{");
+
+  if (start === -1) {
+    return undefined;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < value.length; index += 1) {
+    const char = value[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = inString;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === "{") {
+      depth += 1;
+    }
+
+    if (char === "}") {
+      depth -= 1;
+
+      if (depth === 0) {
+        return value.slice(start, index + 1);
+      }
+    }
+  }
+
+  return undefined;
+}

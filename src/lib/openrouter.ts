@@ -20,6 +20,7 @@ interface OpenRouterCallOptions {
   temperature?: number;
   maxCompletionTokens?: number;
   responseFormat?: "json_object" | null;
+  timeoutMs?: number;
 }
 
 export class OpenRouterError extends Error {
@@ -45,9 +46,16 @@ export async function callOpenRouter(messages: ChatMessage[], options: OpenRoute
 
   let response: Response;
 
+  const controller = new AbortController();
+  const timeoutId =
+    options.timeoutMs && options.timeoutMs > 0
+      ? setTimeout(() => controller.abort(), options.timeoutMs)
+      : undefined;
+
   try {
     response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -70,7 +78,17 @@ export async function callOpenRouter(messages: ChatMessage[], options: OpenRoute
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    throw new OpenRouterError(`OpenRouter request could not be loaded: ${detail}`, 502);
+    const timedOut = error instanceof Error && error.name === "AbortError";
+    throw new OpenRouterError(
+      timedOut && options.timeoutMs
+        ? `OpenRouter request timed out after ${Math.round(options.timeoutMs / 1000)}s.`
+        : `OpenRouter request could not be loaded: ${detail}`,
+      timedOut ? 504 : 502
+    );
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 
   const payload = (await response.json().catch(() => ({}))) as OpenRouterResponse;

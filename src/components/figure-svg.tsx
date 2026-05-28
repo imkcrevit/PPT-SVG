@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { MouseEvent, PointerEvent, ReactNode } from "react";
 
+import { limitLinesToHeight, sanitizeXmlText, wrapSvgText } from "@/lib/text-layout";
 import type { Figure, FigureElement, TextElement } from "@/lib/types";
 
 interface FigureSvgProps {
@@ -91,9 +92,9 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <metadata>{JSON.stringify(figure.metadata)}</metadata>
-      <title id={`${svgId}-title`}>{figure.metadata.title}</title>
-      <desc id={`${svgId}-desc`}>{figure.metadata.description}</desc>
+      <metadata>{sanitizeXmlText(JSON.stringify(figure.metadata))}</metadata>
+      <title id={`${svgId}-title`}>{sanitizeXmlText(figure.metadata.title)}</title>
+      <desc id={`${svgId}-desc`}>{sanitizeXmlText(figure.metadata.description)}</desc>
       <rect width={figure.canvas.width} height={figure.canvas.height} fill={figure.canvas.background} />
       {figure.elements.map((element) => renderElement(element, activeSelectedIds, isInteractive, onSelect, onSelectIds))}
       {visibleBox ? (
@@ -201,8 +202,9 @@ function renderText(
   const fontSize = element.fontSize ?? 22;
   const width = element.width ?? 240;
   const lineHeight = fontSize * 1.18;
-  const height = element.height ?? wrapSvgText(element.text, width, fontSize).length * lineHeight;
-  const lines = limitLinesToHeight(wrapSvgText(element.text, width, fontSize), height, lineHeight);
+  const wrappedLines = wrapSvgText(element.text, width, fontSize);
+  const height = element.height ?? wrappedLines.length * lineHeight;
+  const lines = limitLinesToHeight(wrappedLines, height, lineHeight, { width, fontSize });
   const anchor = element.textAnchor ?? "middle";
   const anchorX = anchor === "start" ? element.x : anchor === "end" ? element.x + width : element.x + width / 2;
   const blockHeight = lines.length * lineHeight;
@@ -217,7 +219,7 @@ function renderText(
           width={width + 12}
           height={height + 8}
           fill="none"
-        stroke="#737A82"
+          stroke="#737A82"
           strokeDasharray="6 5"
           strokeWidth={2}
           rx={6}
@@ -241,18 +243,6 @@ function renderText(
       </text>
     </g>
   );
-}
-
-function limitLinesToHeight(lines: string[], height: number, lineHeight: number): string[] {
-  const maxLines = Math.max(1, Math.min(4, Math.floor(height / lineHeight)));
-  const visibleLines = lines.slice(0, maxLines);
-
-  if (lines.length > maxLines) {
-    const lastIndex = visibleLines.length - 1;
-    visibleLines[lastIndex] = `${visibleLines[lastIndex].replace(/…|\.*$/g, "")}...`;
-  }
-
-  return visibleLines.length ? visibleLines : [""];
 }
 
 function renderArrow(
@@ -285,37 +275,6 @@ function renderArrow(
       <polygon points={points} fill={color} />
     </g>
   );
-}
-
-function wrapSvgText(text: string, width: number, fontSize: number): string[] {
-  const maxChars = Math.max(4, Math.floor(width / (fontSize * 0.58)));
-  const hasSpaces = /\s/.test(text);
-  const tokens = hasSpaces ? text.split(/\s+/) : Array.from(text);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const token of tokens) {
-    const separator = hasSpaces && current ? " " : "";
-    const next = `${current}${separator}${token}`;
-
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = token;
-    } else {
-      current = next;
-    }
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  const trimmed = lines.slice(0, 4);
-  if (lines.length > 4) {
-    trimmed[3] = `${trimmed[3].slice(0, Math.max(1, maxChars - 1))}…`;
-  }
-
-  return trimmed.length ? trimmed : [text];
 }
 
 function arrowHeadPoints(x1: number, y1: number, x2: number, y2: number, length: number, width: number): string {

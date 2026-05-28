@@ -1,11 +1,26 @@
 "use client";
 
-import { Check, CheckCircle2, Database, ExternalLink, Loader2, MessageSquarePlus, Send, Undo2 } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Database,
+  ExternalLink,
+  Loader2,
+  MessageSquarePlus,
+  PanelRightClose,
+  Send,
+  SlidersHorizontal,
+  Undo2
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import { appUrl } from "@/lib/app-url";
+import { ACCEPTED_CONTEXT_EXTENSIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_NAME_CHARS } from "@/lib/file-limits";
 import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { dictionaries } from "@/lib/i18n";
@@ -71,7 +86,7 @@ interface OptimizeApiResponse {
   error?: string;
 }
 
-const ACCEPTED_CONTEXT_EXTENSIONS = [".pdf", ".md", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".pptx"];
+const HELP_URL = "https://blog.graptolite.ai/help/ppt-svg/";
 const MAX_CONVERSATION_TURNS = 5;
 
 interface ChatEntry {
@@ -122,12 +137,14 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(crypto.randomUUID());
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
   const conversationTurnCount = chatEntries.filter((entry) => entry.role === "user").length;
   const remainingTurns = Math.max(0, MAX_CONVERSATION_TURNS - conversationTurnCount);
   const canReferenceCurrentRender = Boolean(figure);
   const shouldReferenceCurrentRender = referenceCurrentRender && canReferenceCurrentRender;
+  const isEditDeckOpen = Boolean(figure && selectedIds.length);
 
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
@@ -149,6 +166,13 @@ export function Workspace({ locale }: WorkspaceProps) {
     }, 1000);
     return () => window.clearInterval(intervalId);
   }, [generationStartedAt]);
+
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({
+      top: chatScrollRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }, [chatEntries, generationStatus]);
 
   async function handleGenerate() {
     if (!description.trim()) {
@@ -260,7 +284,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                 ...entry,
                 content: [
                   `${t.chatRendered}: ${payload.figure.metadata.title}`,
-                  payload.layoutReview?.summary ? payload.layoutReview.summary : ""
+                  payload.layoutReview?.summary && !payload.layoutReview.unavailable ? payload.layoutReview.summary : ""
                 ]
                   .filter(Boolean)
                   .join(" "),
@@ -377,6 +401,18 @@ export function Workspace({ locale }: WorkspaceProps) {
       return;
     }
 
+    if (file.name.length > MAX_ATTACHMENT_NAME_CHARS) {
+      setUploadError(t.fileNameTooLong);
+      setAttachment(null);
+      return;
+    }
+
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setUploadError(t.fileTooLarge.replace("{size}", formatFileSize(MAX_ATTACHMENT_BYTES)));
+      setAttachment(null);
+      return;
+    }
+
     setIsUploading(true);
     setAttachment(null);
 
@@ -485,6 +521,11 @@ export function Workspace({ locale }: WorkspaceProps) {
     setSelectedId(ids[0] ?? "");
   }
 
+  function clearSelection() {
+    setSelectedId("");
+    setSelectedIds([]);
+  }
+
   function viewHistory(entry: RenderHistoryEntry) {
     if (figure) {
       pushHistory(figure);
@@ -539,11 +580,16 @@ export function Workspace({ locale }: WorkspaceProps) {
               PPT
             </a>
           </li>
+          <li>
+            <a href={HELP_URL} target="_blank" rel="noreferrer">
+              {t.helpLabel}
+            </a>
+          </li>
         </ul>
       </nav>
 
-      <main className="min-h-screen overflow-x-hidden px-7 pb-4 pt-[92px] text-ink lg:px-14 lg:pb-6 lg:pt-[94px]">
-      <div className="mx-auto flex max-w-[1280px] flex-col gap-4">
+      <main className="workspace-main text-ink">
+      <div className="workspace-shell">
         <header className="flex flex-col gap-4 border border-line bg-panel/95 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="flex min-w-0 items-center">
             <div className="min-w-0">
@@ -558,6 +604,16 @@ export function Workspace({ locale }: WorkspaceProps) {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <a
+              href={HELP_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-9 items-center justify-center gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:text-accent2"
+              aria-label={t.openHelp}
+            >
+              <BookOpen size={15} />
+              <span>{t.helpLabel}</span>
+            </a>
             <a
               href="https://github.com/imkcrevit/PPT-SVG"
               target="_blank"
@@ -589,8 +645,8 @@ export function Workspace({ locale }: WorkspaceProps) {
           </div>
         </header>
 
-        <div className="grid gap-4 lg:grid-cols-[352px_minmax(0,1fr)]">
-          <section className="border border-line bg-panel">
+        <div className={`workspace-grid ${isEditDeckOpen ? "is-editing" : ""}`}>
+          <section className={`workspace-chat-panel border border-line bg-panel ${isEditDeckOpen ? "is-compact" : ""}`}>
             <div className="flex items-center gap-3 border-b border-line px-4 py-3">
               <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">01</span>
               <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{t.chatTitle}</h2>
@@ -605,81 +661,101 @@ export function Workspace({ locale }: WorkspaceProps) {
               </button>
             </div>
 
-            <div className="space-y-4 p-4">
-              <div className="flex items-center justify-between border border-line bg-bg2 px-3 py-2">
-                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  {t.conversationCount}: {conversationTurnCount}/{MAX_CONVERSATION_TURNS}
+            <div className="chat-workspace-body">
+              <div className="chat-toolbar">
+                <div className="chat-toolbar-count">
+                  <span>{t.conversationCount}: {conversationTurnCount}/{MAX_CONVERSATION_TURNS}</span>
+                  <strong>{remainingTurns} {t.turnsLeft}</strong>
                 </div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent2">
-                  {remainingTurns} {t.turnsLeft}
-                </div>
-              </div>
 
-              <label className="block">
-                <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.skillLabel}</span>
-                <select
-                  value={skillId}
-                  onChange={(event) => setSkillId(event.target.value as SkillId)}
-                  className="h-10 w-full border border-line bg-bg px-3 text-sm text-ink transition hover:border-accent/40"
+                <label className="chat-toolbar-field">
+                  <span>{t.skillLabel}</span>
+                  <select value={skillId} onChange={(event) => setSkillId(event.target.value as SkillId)}>
+                    {INTERNAL_SKILLS.map((skill) => (
+                      <option key={skill.id} value={skill.id}>
+                        {skill.name[locale]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    void handleFile(event.dataTransfer.files[0]);
+                  }}
+                  onDragOver={(event) => event.preventDefault()}
+                  className="chat-toolbar-button"
                 >
-                  {INTERNAL_SKILLS.map((skill) => (
-                    <option key={skill.id} value={skill.id}>
-                      {skill.name[locale]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <span>
+                    {isUploading
+                      ? t.uploading
+                      : attachment
+                        ? `${t.pptReady}: ${attachment.originalName}`
+                        : t.pptLabel}
+                  </span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_CONTEXT_EXTENSIONS.join(",")}
+                  className="hidden"
+                  onChange={(event) => void handleFile(event.target.files?.[0])}
+                />
 
-              <div>
-                <div className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.modelLabel}</div>
-                <div className="flex min-h-10 items-center justify-between gap-3 border border-line bg-bg2 px-3 text-sm text-mid">
-                  <span className="truncate">{model || t.modelFromEnv}</span>
-                  {model ? <CheckCircle2 className="shrink-0 text-mint" size={16} /> : null}
+                <label className="chat-toolbar-check">
+                  <input
+                    type="checkbox"
+                    checked={shouldReferenceCurrentRender}
+                    disabled={!canReferenceCurrentRender || conversationTurnCount >= MAX_CONVERSATION_TURNS}
+                    onChange={(event) => setReferenceCurrentRender(event.target.checked)}
+                  />
+                  <span>{t.referenceBadge}</span>
+                </label>
+
+                <div className="chat-model-pill">
+                  <span>{model || t.modelFromEnv}</span>
+                  {model ? <CheckCircle2 className="shrink-0 text-mint" size={14} /> : null}
                 </div>
               </div>
+              {uploadError ? <p className="chat-inline-error">{uploadError}</p> : null}
 
-              <div>
-                <div className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">
-                  {t.chatHistory}
-                </div>
-                <div className="max-h-[260px] min-h-[180px] space-y-3 overflow-y-auto border border-line bg-bg px-3 py-3">
+              <div className="workspace-chat-history flex flex-col">
+                <div ref={chatScrollRef} className="workspace-chat-scroll chat-thread">
                   {chatEntries.length ? (
                     chatEntries.map((entry) => (
                       <div
                         key={entry.id}
-                        className={`flex ${entry.role === "user" ? "justify-end" : "justify-start"}`}
+                        className={`chat-message ${entry.role === "user" ? "is-user" : "is-assistant"} ${
+                          entry.status === "error" ? "is-error" : ""
+                        }`}
                       >
-                        <div
-                          className={`max-w-[92%] border px-3 py-2 text-sm leading-5 ${
-                            entry.role === "user"
-                              ? "border-accent/30 bg-panel text-ink"
-                              : entry.status === "error"
-                                ? "border-coral/40 bg-bg2 text-accent2"
-                                : "border-line bg-bg2 text-mid"
-                          }`}
-                        >
-                          <div className="mb-1 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+                        <div className="chat-bubble">
+                          <div className="chat-meta">
                             <span>{entry.role === "user" ? t.chatYou : t.chatAssistant}</span>
                             <span>#{entry.turn}</span>
                             {entry.referencedRender ? <span>{t.referenceBadge}</span> : null}
                           </div>
-                          <div className="whitespace-pre-wrap break-words">{entry.content}</div>
+                          <div className="chat-content">{entry.content}</div>
                           {entry.requestId ? (
-                            <div className="mt-1 font-mono text-[10px] text-faint">{entry.requestId}</div>
+                            <div className="chat-request-id">{entry.requestId}</div>
                           ) : null}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="flex h-full min-h-[150px] items-center justify-center text-center font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                    <div className="chat-empty-state">
                       {t.chatEmpty}
                     </div>
                   )}
                 </div>
               </div>
 
-              <label className="block">
-                <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.promptLabel}</span>
+              <label className="chat-composer">
+                <span className="chat-composer-label">{t.promptLabel}</span>
                 <textarea
                   value={description}
                   onChange={(event) => {
@@ -693,70 +769,23 @@ export function Workspace({ locale }: WorkspaceProps) {
                     }
                   }}
                   placeholder={conversationTurnCount ? t.chatFollowupPlaceholder : t.promptPlaceholder}
-                  rows={4}
+                  rows={2}
                   disabled={conversationTurnCount >= MAX_CONVERSATION_TURNS}
-                  className="w-full resize-none border border-line bg-bg px-3 py-2.5 text-sm leading-6 text-ink transition placeholder:text-faint hover:border-accent/40 disabled:bg-bg2 disabled:text-faint"
+                  className="chat-composer-input"
                 />
                 {optimizedPromptReady ? (
-                  <div className="mt-2 border border-accent/30 bg-bg2 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-accent2">
+                  <div className="chat-composer-note">
                     {t.optimizedPromptReady}
                   </div>
                 ) : null}
               </label>
 
-              <label className="flex items-start gap-3 border border-line bg-bg2 px-3 py-2.5 text-sm leading-5 text-mid">
-                <input
-                  type="checkbox"
-                  checked={shouldReferenceCurrentRender}
-                  disabled={!canReferenceCurrentRender || conversationTurnCount >= MAX_CONVERSATION_TURNS}
-                  onChange={(event) => setReferenceCurrentRender(event.target.checked)}
-                  className="mt-1 h-4 w-4 accent-[var(--accent)]"
-                />
-                <span>
-                  <span className="block font-semibold text-ink">{t.referenceCurrentRender}</span>
-                  <span className="block text-xs leading-5 text-faint">
-                    {canReferenceCurrentRender ? t.referenceCurrentRenderHint : t.referenceCurrentRenderDisabled}
-                  </span>
-                </span>
-              </label>
-
-              <div>
-                <div className="mb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{t.pptLabel}</div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    void handleFile(event.dataTransfer.files[0]);
-                  }}
-                  onDragOver={(event) => event.preventDefault()}
-                  className="flex min-h-20 w-full items-center justify-center border border-dashed border-line bg-bg2 px-3 py-4 text-sm text-mid transition hover:border-accent/50 hover:bg-bg"
-                >
-                  <span className="truncate">
-                    {isUploading
-                      ? t.uploading
-                      : attachment
-                        ? `${t.pptReady}: ${attachment.originalName}`
-                        : t.pptIdle}
-                  </span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPTED_CONTEXT_EXTENSIONS.join(",")}
-                  className="hidden"
-                  onChange={(event) => void handleFile(event.target.files?.[0])}
-                />
-                {uploadError ? <p className="mt-2 text-sm text-coral">{uploadError}</p> : null}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div className="chat-actions">
                 <button
                   type="button"
                   onClick={handleOptimizePrompt}
                   disabled={isGenerating || isUploading || isOptimizingPrompt || conversationTurnCount >= MAX_CONVERSATION_TURNS}
-                  className="flex h-11 items-center justify-center gap-2 border border-line bg-panel px-4 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
+                  className="chat-secondary-action"
                 >
                   <MessageSquarePlus size={16} />
                   <span className="truncate">{isOptimizingPrompt ? t.optimizingPrompt : t.optimizePrompt}</span>
@@ -765,22 +794,21 @@ export function Workspace({ locale }: WorkspaceProps) {
                   type="button"
                   onClick={handleGenerate}
                   disabled={isGenerating || isUploading || isOptimizingPrompt || conversationTurnCount >= MAX_CONVERSATION_TURNS}
-                  className="group relative flex h-11 items-center justify-center gap-2 overflow-hidden bg-ink px-4 text-sm font-semibold text-white transition disabled:bg-faint"
+                  className="chat-primary-action"
                 >
-                  <span className="absolute inset-y-0 left-0 w-0 bg-accent transition-all duration-300 group-hover:w-full" />
                   <Send className="relative" size={16} />
                   <span className="relative">{isGenerating ? t.generating : t.submitPrompt}</span>
                 </button>
               </div>
 
               {thinkingStatus ? (
-                <div className="animate-pulse border border-line bg-bg2 px-3 py-2.5 text-sm leading-5 text-mid">
+                <div className="chat-status">
                   {thinkingStatus}
                 </div>
               ) : null}
 
               {error ? (
-                <div className="border border-coral/40 bg-bg2 px-3 py-2.5 text-sm text-accent2">
+                <div className="chat-error">
                   <div className="font-semibold">{t.errorTitle}</div>
                   <div className="mt-1 leading-5">{error}</div>
                 </div>
@@ -788,7 +816,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             </div>
           </section>
 
-          <section className="flex min-h-[520px] flex-col overflow-hidden border border-line bg-panel lg:min-h-[680px]">
+          <section className="workspace-preview-panel flex flex-col overflow-hidden border border-line bg-panel">
             <div className="flex flex-col gap-3 border-b border-line bg-panel px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
                 <button
@@ -832,8 +860,8 @@ export function Workspace({ locale }: WorkspaceProps) {
               </div>
             </div>
 
-            <div className="grid flex-1 xl:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="flex min-h-[300px] items-center justify-center bg-bg2 p-2 sm:min-h-[430px] sm:p-4 lg:min-h-[560px] lg:p-6">
+            <div className="flex flex-1">
+              <div className="workspace-preview-stage flex w-full flex-1 items-center justify-center bg-bg2 p-2 sm:p-4 lg:p-6">
                 {isGenerating ? (
                   <div className="flex min-h-[220px] w-full max-w-[1080px] flex-col items-center justify-center gap-3 border border-line bg-panel/95 text-center">
                     <Loader2 size={30} className="animate-spin text-cobalt" />
@@ -880,38 +908,82 @@ export function Workspace({ locale }: WorkspaceProps) {
                   </div>
                 )}
               </div>
-
-              <aside className="border-t border-line bg-panel p-4 xl:border-l xl:border-t-0">
-                {fit ? (
-                  <div className="mb-5 border-b border-line pb-4 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold tracking-[0.04em] text-ink">{t.fit}</span>
-                      <span className="font-mono text-[12px] font-medium text-accent2">{Math.round(fit.score * 100)}%</span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden bg-bg3">
-                      <div className="h-full bg-accent2" style={{ width: `${Math.round(fit.score * 100)}%` }} />
-                    </div>
-                    {fit.note ? <p className="mt-2 text-sm leading-5 text-mid">{fit.note}</p> : null}
-                  </div>
-                ) : null}
-
-                <ElementPanel
-                  element={selectedElement}
-                  elements={selectedElements}
-                  selectedCount={selectedIds.length}
-                  labels={t}
-                  onPatch={patchSelected}
-                />
-
-                <RenderHistory labels={t} logs={renderHistory} onView={viewHistory} />
-
-                <div className="mt-5 border-t border-line pt-4 font-mono text-[10px] leading-5 text-faint">{t.pptxDisabled}</div>
-              </aside>
             </div>
           </section>
-        </div>
 
-        <UsageGuide labels={t} />
+          {figure || renderHistory.length ? (
+            <aside className={`workspace-deck-panel border border-line bg-panel ${isEditDeckOpen ? "is-active" : ""}`}>
+              <div className="deck-panel-heading">
+                <div className="min-w-0">
+                  <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">
+                    03 / {t.deckTitle}
+                  </div>
+                  <h2 className="mt-1 truncate text-sm font-semibold tracking-[0.04em] text-ink">
+                    {isEditDeckOpen ? t.elementEdit : t.editDeckHint}
+                  </h2>
+                </div>
+                {isEditDeckOpen ? (
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    title={t.closeEdit}
+                    className="deck-icon-button"
+                  >
+                    <PanelRightClose size={16} />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="deck-block-stack">
+                <DeckBlock
+                  key={isEditDeckOpen ? "edit-active" : "edit-idle"}
+                  title={t.elementEdit}
+                  kicker="Edit"
+                  badge={selectedIds.length ? String(selectedIds.length) : undefined}
+                  defaultOpen={isEditDeckOpen}
+                >
+                  <ElementPanel
+                    element={selectedElement}
+                    elements={selectedElements}
+                    selectedCount={selectedIds.length}
+                    labels={t}
+                    onPatch={patchSelected}
+                  />
+                </DeckBlock>
+
+                <DeckBlock title={t.fitDeck} kicker="Fit" defaultOpen={!isEditDeckOpen && Boolean(fit)}>
+                  <FitDeck fit={fit} labels={t} />
+                </DeckBlock>
+
+                <DeckBlock
+                  title={t.historyTitle}
+                  kicker="Deck"
+                  badge={renderHistory.length ? String(renderHistory.length) : undefined}
+                  defaultOpen={!isEditDeckOpen && renderHistory.length > 0}
+                >
+                  <RenderHistory labels={t} logs={renderHistory} onView={viewHistory} />
+                </DeckBlock>
+
+                <DeckBlock title={t.helpLabel} kicker="Help" defaultOpen={false}>
+                  <a
+                    href={HELP_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
+                    aria-label={t.openHelp}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <BookOpen size={15} />
+                      <span className="truncate">{t.helpLabel}</span>
+                    </span>
+                    <ExternalLink size={13} />
+                  </a>
+                </DeckBlock>
+              </div>
+            </aside>
+          ) : null}
+
+        </div>
       </div>
       </main>
     </>
@@ -920,6 +992,11 @@ export function Workspace({ locale }: WorkspaceProps) {
 
 function isNetworkLoadError(message: string): boolean {
   return /^(load failed|failed to fetch|networkerror when attempting to fetch resource)$/i.test(message.trim());
+}
+
+function formatFileSize(bytes: number): string {
+  const megabytes = bytes / (1024 * 1024);
+  return `${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
 }
 
 async function readGenerateAgentStream(
@@ -972,61 +1049,62 @@ async function readGenerateAgentStream(
   return finalPayload;
 }
 
-function UsageGuide({ labels }: { labels: typeof dictionaries.en }) {
-  const pptSteps = [labels.pptStep1, labels.pptStep2, labels.pptStep3, labels.pptStep4, labels.pptStep5];
-  const svgReasons = [labels.svgReason1, labels.svgReason2, labels.svgReason3, labels.svgReason4];
-
-  return (
-    <section className="border border-line bg-panel">
-      <div className="flex flex-col gap-2 border-b border-line px-4 py-3 sm:flex-row sm:items-end sm:justify-between sm:px-5">
-        <div>
-          <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">02 / GUIDE</div>
-          <h2 className="mt-1 text-base font-semibold tracking-[0.04em] text-ink">{labels.usageHeading}</h2>
-        </div>
-        <p className="max-w-xl text-sm leading-5 text-mid">{labels.usageSubtitle}</p>
-      </div>
-
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div className="border-b border-line p-4 sm:p-5 lg:border-b-0 lg:border-r">
-          <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
-            {labels.pptWorkflowTitle}
-          </h3>
-          <ol className="mt-4 space-y-3">
-            {pptSteps.map((step, index) => (
-              <li key={step} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 text-sm leading-6 text-mid">
-                <span className="flex h-7 w-7 items-center justify-center border border-line bg-bg2 font-mono text-[11px] text-accent2">
-                  {index + 1}
-                </span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <div className="p-4 sm:p-5">
-          <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
-            {labels.svgReasonTitle}
-          </h3>
-          <ul className="mt-4 space-y-3">
-            {svgReasons.map((reason) => (
-              <li key={reason} className="flex gap-3 text-sm leading-6 text-mid">
-                <CheckCircle2 className="mt-1 shrink-0 text-mint" size={16} />
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function isJsonSyntaxError(message: string): boolean {
   return (
     /Expected .+ in JSON at position \d+/i.test(message) ||
     /Unexpected .+ in JSON at position \d+/i.test(message) ||
     message.includes("Model returned invalid JSON") ||
     message.includes("Repair response was invalid JSON")
+  );
+}
+
+function DeckBlock({
+  title,
+  kicker,
+  badge,
+  defaultOpen,
+  children
+}: {
+  title: string;
+  kicker: string;
+  badge?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
+
+  return (
+    <section className="deck-block">
+      <button type="button" className="deck-block-header" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+        <SlidersHorizontal size={14} className="deck-block-mark" />
+        <span className="deck-block-title">
+          <span>{kicker}</span>
+          <strong>{title}</strong>
+        </span>
+        {badge ? <span className="deck-block-badge">{badge}</span> : null}
+        <ChevronDown size={15} className={`deck-block-chevron ${open ? "is-open" : ""}`} />
+      </button>
+      {open ? <div className="deck-block-body">{children}</div> : null}
+    </section>
+  );
+}
+
+function FitDeck({ fit, labels }: { fit: FitAssessment | null; labels: typeof dictionaries.en }) {
+  if (!fit) {
+    return <p className="text-sm leading-5 text-mid">{labels.emptyState}</p>;
+  }
+
+  return (
+    <div className="text-sm">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold tracking-[0.04em] text-ink">{labels.fit}</span>
+        <span className="font-mono text-[12px] font-medium text-accent2">{Math.round(fit.score * 100)}%</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden bg-bg3">
+        <div className="h-full bg-accent2" style={{ width: `${Math.round(fit.score * 100)}%` }} />
+      </div>
+      {fit.note ? <p className="mt-2 text-sm leading-5 text-mid">{fit.note}</p> : null}
+    </div>
   );
 }
 
@@ -1040,20 +1118,15 @@ function RenderHistory({
   onView: (entry: RenderHistoryEntry) => void;
 }) {
   return (
-    <div className="mt-5 border-t border-line pt-4">
-      <div className="mb-3 flex items-center gap-2">
-        <Database size={15} className="text-accent2" />
-        <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.historyTitle}</h2>
-      </div>
-
+    <div>
       {logs.length ? (
-        <div className="space-y-3">
+        <div className="history-deck-list">
           {logs.map((log) => (
             <button
               key={log.id}
               type="button"
               onClick={() => onView(log)}
-              className="block w-full border border-line bg-bg2 p-2 text-left text-xs leading-5 text-mid transition hover:border-accent/40 hover:bg-bg"
+              className="history-deck-item"
             >
               <div className="aspect-video overflow-hidden border border-line bg-panel">
                 <FigureSvg figure={log.figure} svgId={`history-${log.id}`} />
@@ -1062,6 +1135,7 @@ function RenderHistory({
                 <div className="min-w-0">
                   <div className="mt-2 truncate font-semibold text-ink">{log.title}</div>
                   <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+                    <Database size={12} className="mr-1 inline text-accent2" />
                     #{log.turn} / {log.requestId}
                   </div>
                 </div>
@@ -1094,23 +1168,20 @@ function ElementPanel({
   onPatch: (updater: (element: FigureElement) => FigureElement) => void;
 }) {
   if (!selectedCount) {
-    return (
-      <div>
-        <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">{labels.selectedElement}</h2>
-        <p className="mt-2 text-sm leading-5 text-mid">{labels.noSelection}</p>
-      </div>
-    );
+    return <p className="text-sm leading-5 text-mid">{labels.noSelection}</p>;
   }
 
   const fillElement = elements.find((item) => "fill" in item);
   const strokeElement = elements.find((item) => "stroke" in item);
   const canEditText = selectedCount === 1 && element?.type === "text";
+  const elementName = selectedCount > 1 ? `${labels.selectedElements}: ${selectedCount}` : (element?.name || element?.id || labels.selectedElement);
 
   return (
     <div>
-      <h2 className="text-sm font-semibold tracking-[0.04em] text-ink">
-        {selectedCount > 1 ? `${labels.selectedElements}: ${selectedCount}` : labels.selectedElement}
-      </h2>
+      <div className="element-edit-meta">
+        <span>{elementName}</span>
+        {selectedCount === 1 && element ? <strong>{element.type}</strong> : null}
+      </div>
       {selectedCount > 1 ? <p className="mt-2 text-sm leading-5 text-mid">{labels.multiSelectHint}</p> : null}
       <div className="mt-3 space-y-4">
         {canEditText ? (

@@ -1,4 +1,5 @@
 import type { Figure, FigureElement, TextElement } from "@/lib/types";
+import { limitLinesToHeight, sanitizeXmlText, wrapSvgText } from "@/lib/text-layout";
 
 export function renderFigureSvg(figure: Figure): string {
   return [
@@ -38,8 +39,9 @@ function renderText(element: TextElement, opacity: string): string {
   const fontSize = element.fontSize ?? 22;
   const width = element.width ?? 240;
   const lineHeight = fontSize * 1.18;
-  const height = element.height ?? wrapSvgText(element.text, width, fontSize).length * lineHeight;
-  const lines = limitLinesToHeight(wrapSvgText(element.text, width, fontSize), height, lineHeight);
+  const wrappedLines = wrapSvgText(element.text, width, fontSize);
+  const height = element.height ?? wrappedLines.length * lineHeight;
+  const lines = limitLinesToHeight(wrappedLines, height, lineHeight, { width, fontSize });
   const anchor = element.textAnchor ?? "middle";
   const anchorX = anchor === "start" ? element.x : anchor === "end" ? element.x + width : element.x + width / 2;
   const blockHeight = lines.length * lineHeight;
@@ -55,18 +57,6 @@ function renderText(element: TextElement, opacity: string): string {
   return `<text data-node-id="${element.id}" x="${round(anchorX)}" y="${round(firstLineY)}" fill="${element.fill ?? "#2F3337"}" font-size="${fontSize}" font-weight="${element.fontWeight ?? 500}" text-anchor="${anchor}" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"${opacity}>${tspans}</text>`;
 }
 
-function limitLinesToHeight(lines: string[], height: number, lineHeight: number): string[] {
-  const maxLines = Math.max(1, Math.min(4, Math.floor(height / lineHeight)));
-  const visibleLines = lines.slice(0, maxLines);
-
-  if (lines.length > maxLines) {
-    const lastIndex = visibleLines.length - 1;
-    visibleLines[lastIndex] = `${visibleLines[lastIndex].replace(/\.*$/, "")}...`;
-  }
-
-  return visibleLines.length ? visibleLines : [""];
-}
-
 function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity: string): string {
   const strokeWidth = element.strokeWidth ?? 2;
   const points = arrowHeadPoints(element.x1, element.y1, element.x2, element.y2, 15 + strokeWidth * 1.5, 9 + strokeWidth);
@@ -78,37 +68,6 @@ function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity
     `<polygon points="${points}" fill="${element.stroke}" />`,
     "</g>"
   ].join("\n");
-}
-
-function wrapSvgText(text: string, width: number, fontSize: number): string[] {
-  const maxChars = Math.max(4, Math.floor(width / (fontSize * 0.58)));
-  const hasSpaces = /\s/.test(text);
-  const tokens = hasSpaces ? text.split(/\s+/) : Array.from(text);
-  const lines: string[] = [];
-  let current = "";
-
-  for (const token of tokens) {
-    const separator = hasSpaces && current ? " " : "";
-    const next = `${current}${separator}${token}`;
-
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = token;
-    } else {
-      current = next;
-    }
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  const trimmed = lines.slice(0, 4);
-  if (lines.length > 4) {
-    trimmed[3] = `${trimmed[3].slice(0, Math.max(1, maxChars - 1))}...`;
-  }
-
-  return trimmed.length ? trimmed : [text];
 }
 
 function arrowHeadPoints(x1: number, y1: number, x2: number, y2: number, length: number, width: number): string {
@@ -133,7 +92,7 @@ function lineEndBeforeArrow(x1: number, y1: number, x2: number, y2: number, offs
 }
 
 function escapeXml(value: string): string {
-  return value
+  return sanitizeXmlText(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

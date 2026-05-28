@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { persistAttachment } from "@/lib/attachments";
+import { AttachmentValidationError, persistAttachment } from "@/lib/attachments";
 import { recordAttachment } from "@/lib/mongodb";
+import { checkUploadAbuse, enforceUploadContentLength, securityJson } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    const contentLengthDecision = enforceUploadContentLength(request);
+    if (!contentLengthDecision.ok) {
+      return securityJson(contentLengthDecision);
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const rawSessionId = formData.get("sessionId");
@@ -20,6 +26,11 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "file is required." }, { status: 400 });
+    }
+
+    const uploadDecision = checkUploadAbuse(request, sessionId, file.size);
+    if (!uploadDecision.ok) {
+      return securityJson(uploadDecision);
     }
 
     const attachment = await persistAttachment(file);
@@ -36,6 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ attachment });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Attachment upload failed.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const status = error instanceof AttachmentValidationError ? error.status : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }
