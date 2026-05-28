@@ -90,7 +90,15 @@ interface OptimizeApiResponse {
   error?: string;
 }
 
-const HELP_URL = "https://blog.graptolite.ai/help/ppt-svg/";
+const HELP_URLS: Record<Locale, string> = {
+  en: "https://blog.graptolite.ai/help/ppt-svg.en/",
+  zh: "https://blog.graptolite.ai/help/ppt-svg/"
+};
+const CASE_URLS: Record<Locale, string> = {
+  en: "https://blog.graptolite.ai/help/ppt-svg-cases.en/",
+  zh: "https://blog.graptolite.ai/help/ppt-svg-cases/"
+};
+const HELP_TYPES_ANCHOR = "#supported-diagram-types";
 const MAX_CONVERSATION_TURNS = 5;
 
 interface ChatEntry {
@@ -128,6 +136,9 @@ interface ClarificationRequest {
 
 export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
+  const helpUrl = HELP_URLS[locale];
+  const caseUrl = CASE_URLS[locale];
+  const helpTypesUrl = `${helpUrl}${HELP_TYPES_ANCHOR}`;
   const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
@@ -694,7 +705,7 @@ export function Workspace({ locale }: WorkspaceProps) {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <a
-              href={HELP_URL}
+              href={helpUrl}
               target="_blank"
               rel="noreferrer"
               className="flex h-9 items-center justify-center gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:text-accent2"
@@ -702,6 +713,16 @@ export function Workspace({ locale }: WorkspaceProps) {
             >
               <BookOpen size={15} />
               <span>{t.helpLabel}</span>
+            </a>
+            <a
+              href={caseUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-9 items-center justify-center gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:text-accent2"
+              aria-label={t.openCases}
+            >
+              <CheckCircle2 size={15} />
+              <span>{t.caseLabel}</span>
             </a>
             <a
               href="https://github.com/imkcrevit/PPT-SVG"
@@ -1099,19 +1120,47 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </DeckBlock>
 
                 <DeckBlock title={t.helpLabel} kicker="Help" defaultOpen={false}>
-                  <a
-                    href={HELP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
-                    aria-label={t.openHelp}
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <BookOpen size={15} />
-                      <span className="truncate">{t.helpLabel}</span>
-                    </span>
-                    <ExternalLink size={13} />
-                  </a>
+                  <div className="grid gap-2">
+                    <a
+                      href={helpUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
+                      aria-label={t.openHelp}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <BookOpen size={15} />
+                        <span className="truncate">{t.helpOverview}</span>
+                      </span>
+                      <ExternalLink size={13} />
+                    </a>
+                    <a
+                      href={helpTypesUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
+                      aria-label={t.helpDiagramTypes}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Database size={15} />
+                        <span className="truncate">{t.helpDiagramTypes}</span>
+                      </span>
+                      <ExternalLink size={13} />
+                    </a>
+                    <a
+                      href={caseUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
+                      aria-label={t.helpExamples}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <CheckCircle2 size={15} />
+                        <span className="truncate">{t.helpExamples}</span>
+                      </span>
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
                 </DeckBlock>
               </div>
             </aside>
