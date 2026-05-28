@@ -16,7 +16,8 @@ import {
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
-import { resolveThemeFromAttachments } from "@/lib/theme-extract";
+import { resolveStyleContext } from "@/lib/theme-extract";
+import { resolveThemeIntent } from "@/lib/theme-intent";
 import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
@@ -192,8 +193,14 @@ async function validateOrRepair(
   startedAt: number,
   requestId: string
 ): Promise<ValidatedGeneration> {
-  const sessionTheme = await resolveThemeFromAttachments(request.attachments);
-  const requestedTheme = mergeTheme(sessionTheme, request.themeOverride);
+  const { theme: sessionTheme, detectedBackground } = await resolveStyleContext(request.attachments);
+  const intent = await resolveThemeIntent(
+    request.userDescription,
+    { detectedBackground },
+    (msgs) => callOpenRouter(msgs as Parameters<typeof callOpenRouter>[0])
+  );
+  const override = { ...(request.themeOverride ?? {}), ...(intent ?? {}) };
+  const requestedTheme = mergeTheme(sessionTheme, Object.keys(override).length ? override : undefined);
   const parsed = tryParseJsonObject(rawOutput);
   const validation = parsed.ok
     ? validateAndNormalizeSemanticResponse(parsed.value, request.skillId, request.language, requestedTheme)

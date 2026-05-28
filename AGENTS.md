@@ -64,8 +64,10 @@ The theme system is deterministic and server-side. The model must not emit color
 - `figure.canvas.background` should come from the resolved theme unless a caller explicitly supplies a canvas background.
 - `themeOverride` in `/api/generate` or `/api/generate-agent` is optional and must be sanitized with `normalizeThemeOverride`.
 - Automatic extraction comes from uploaded PPTX `ppt/theme/theme*.xml` first, then image dominant colors through `sharp`.
-- Merge order is: default theme → uploaded attachment theme → user `themeOverride`.
+- Conversational style intent is parsed from the user message through `src/lib/theme-intent.ts`, using deterministic rules first and an LLM fallback only for style-related messages that rules do not parse.
+- Merge order is: default theme → uploaded attachment theme → user `themeOverride` → conversational style intent.
 - User override wins only for fields it supplies; missing fields must keep the extracted theme or default.
+- Image backgrounds are treated as incidental by default: keep the diagram canvas light unless the user explicitly asks to use the detected uploaded image background in conversation.
 - Keep SVG and PPTX font fallback chains conservative: theme font, `Microsoft YaHei`, Chinese system fonts, then generic sans-serif.
 
 For frontend changes, if a manual theme control is exposed, the generated request body must pass `themeOverride: override ?? undefined`. Resetting a conversation should reset manual theme overrides.
@@ -95,6 +97,7 @@ There is currently no dedicated unit or end-to-end test runner configured. Befor
 
 ```bash
 npm run test:layout
+npm run test:theme
 npm run test:snapshots
 npm run lint
 npm run typecheck

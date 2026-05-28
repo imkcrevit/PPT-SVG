@@ -15,7 +15,8 @@ import {
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
-import { resolveThemeFromAttachments } from "@/lib/theme-extract";
+import { resolveStyleContext } from "@/lib/theme-extract";
+import { resolveThemeIntent } from "@/lib/theme-intent";
 import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
@@ -120,8 +121,14 @@ export async function POST(request: Request) {
       ? await compressContext(generationRequest)
       : generationRequest.userDescription;
     const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext));
-    const sessionTheme = await resolveThemeFromAttachments(generationRequest.attachments);
-    const requestedTheme = mergeTheme(sessionTheme, normalizeThemeOverride(body.themeOverride));
+    const { theme: sessionTheme, detectedBackground } = await resolveStyleContext(generationRequest.attachments);
+    const intent = await resolveThemeIntent(
+      generationRequest.userDescription,
+      { detectedBackground },
+      (msgs) => callOpenRouter(msgs as Parameters<typeof callOpenRouter>[0])
+    );
+    const override = { ...(normalizeThemeOverride(body.themeOverride) ?? {}), ...(intent ?? {}) };
+    const requestedTheme = mergeTheme(sessionTheme, Object.keys(override).length ? override : undefined);
     const parsed = tryParseJsonObject(rawOutput);
     const validation = parsed.ok
       ? validateAndNormalizeSemanticResponse(parsed.value, body.skillId, body.language, requestedTheme)
