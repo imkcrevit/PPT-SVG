@@ -1,13 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
 import { parseJsonObject } from "@/lib/json";
-import { MAX_LAYOUT_AGENT_PASSES, reviewFigureLayout } from "@/lib/layout-review-agent";
 import { recordConversation } from "@/lib/mongodb";
 import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
-import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages, buildVisualRevisionMessages } from "@/lib/prompts";
+import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
 import {
   beginGenerationGuard,
   checkGenerationAbuse,
@@ -20,7 +18,6 @@ import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
-import { reviewFigureLayoutVisually, type VisualLayoutReviewResult } from "@/lib/visual-layout-review-agent";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, Locale, SkillId, UploadedAttachment } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -31,13 +28,8 @@ const RESPONSE_SAFETY_BUFFER_MS = 2_500;
 const CONTEXT_COMPRESSION_TIMEOUT_MS = 8_000;
 const GENERATION_TIMEOUT_MS = 82_000;
 const REPAIR_TIMEOUT_MS = 16_000;
-const VISUAL_REVIEW_TIMEOUT_MS = 12_000;
-const VISUAL_REGENERATION_TIMEOUT_MS = 24_000;
 const GENERATION_MAX_COMPLETION_TOKENS = 8_000;
 const REPAIR_MAX_COMPLETION_TOKENS = 10_000;
-const MIN_VISUAL_REVIEW_REMAINING_MS = 15_000;
-const MIN_VISUAL_REGENERATION_REMAINING_MS = 34_000;
-const MAX_VISUAL_REGENERATION_PASSES = 1;
 
 type ParseResult = { ok: true; value: unknown } | { ok: false; error: string };
 type ValidatedGeneration = { response: GenerateFigureResponse; repaired: boolean; fallback?: boolean };
@@ -187,186 +179,6 @@ export async function POST(request: Request) {
       "X-Accel-Buffering": "no"
     }
   });
-}
-
-async function runVisualReviewAndRegenerationAgent({
-  response,
-  request,
-  skill,
-  compressedContext,
-  language,
-  send,
-  startedAt,
-  requestId,
-  fastReview
-}: {
-  response: GenerateFigureResponse;
-  request: GenerateFigureRequest;
-  skill: NonNullable<ReturnType<typeof getInternalSkill>>;
-  compressedContext: string;
-  language: "en" | "zh";
-  send: (event: Record<string, unknown>) => void;
-  startedAt: number;
-  requestId: string;
-  fastReview: boolean;
-}): Promise<{ response: GenerateFigureResponse; visualReview: VisualLayoutReviewResult }> {
-  let current = response;
-  let visualReview = await runSingleVisualReview(current, language, send, 0, startedAt);
-
-  for (let pass = 1; pass <= MAX_VISUAL_REGENERATION_PASSES; pass += 1) {
-    if (visualReview.ok || (visualReview.unavailable && visualReview.deterministicIssues.length === 0)) {
-      return { response: current, visualReview };
-    }
-
-    if (fastReview && visualReview.deterministicIssues.length === 0) {
-      return { response: current, visualReview };
-    }
-
-    if (remainingBudgetMs(startedAt) < MIN_VISUAL_REGENERATION_REMAINING_MS) {
-      send({
-        ...statusEvent(language, "visual_regeneration_skipped", "Skipping visual-feedback regeneration to keep the response under 120 seconds.", pass),
-        issues: visualReview.issues.map((issue) => issue.message).slice(0, 6)
-      });
-      return { response: current, visualReview };
-    }
-
-    send({
-      ...statusEvent(language, "visual_regenerating", `Regenerating from visual feedback, pass ${pass}.`, pass),
-      issues: visualReview.issues.map((issue) => issue.message).slice(0, 6)
-    });
-
-    try {
-      const rawOutput = await callOpenRouter(
-        await buildVisualRevisionMessages(request, skill, current, visualReview, compressedContext, pass),
-        {
-          timeoutMs: requireTimeoutMs(startedAt, VISUAL_REGENERATION_TIMEOUT_MS),
-          maxCompletionTokens: GENERATION_MAX_COMPLETION_TOKENS
-        }
-      );
-      const revised = await validateOrRepair(rawOutput, request, language, send, startedAt, requestId);
-
-      send(statusEvent(language, "reviewing", "Rendering and reviewing layout.", pass));
-      current = runLayoutAgent(revised.response, language, send);
-      visualReview = await runSingleVisualReview(current, language, send, pass, startedAt);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      send({
-        ...statusEvent(language, "visual_regeneration_failed", "Visual-feedback regeneration failed; keeping the last render.", pass),
-        issues: [message]
-      });
-      return { response: current, visualReview };
-    }
-  }
-
-  return { response: current, visualReview };
-}
-
-async function runSingleVisualReview(
-  response: GenerateFigureResponse,
-  language: "en" | "zh",
-  send: (event: Record<string, unknown>) => void,
-  pass: number,
-  startedAt: number
-): Promise<VisualLayoutReviewResult> {
-  if (remainingBudgetMs(startedAt) < MIN_VISUAL_REVIEW_REMAINING_MS) {
-    const skippedReview = buildSkippedVisualReview(response.figure, language);
-    send({
-      ...statusEvent(language, "visual_skipped", "Skipping multimodal review to keep the response under 120 seconds.", pass),
-      issues: skippedReview.issues.map((issue) => issue.message).slice(0, 6)
-    });
-    return skippedReview;
-  }
-
-  if (response.figure.metadata.language === "zh") {
-    const visualReview = await reviewFigureLayoutVisually(response.figure);
-    send({
-      ...statusEvent(
-        language,
-        visualReview.ok ? "visual_font_skipped" : "visual_flagged",
-        visualReview.ok
-          ? "Skipped image visual review for Chinese font rendering; deterministic layout review passed."
-          : "Deterministic layout review found issues.",
-        pass
-      ),
-      issues: visualReview.issues.map((issue) => issue.message).slice(0, 6)
-    });
-    return visualReview;
-  }
-
-  send(statusEvent(language, "visualizing", "Converting SVG to PNG for multimodal review.", pass));
-  const visualReview = await reviewFigureLayoutVisually(response.figure, {
-    timeoutMs: requireTimeoutMs(startedAt, VISUAL_REVIEW_TIMEOUT_MS)
-  });
-
-  send({
-    ...statusEvent(
-      language,
-      visualReview.ok ? "visual_passed" : "visual_flagged",
-      visualReview.ok ? "Visual layout review passed." : "Visual layout review found issues.",
-      pass
-    ),
-    issues: visualReview.issues.map((issue) => issue.message).slice(0, 6)
-  });
-
-  return visualReview;
-}
-
-function runLayoutAgent(
-  response: GenerateFigureResponse,
-  language: "en" | "zh",
-  send: (event: Record<string, unknown>) => void
-): GenerateFigureResponse {
-  let current = response;
-
-  for (let pass = 1; pass <= MAX_LAYOUT_AGENT_PASSES; pass += 1) {
-    const review = reviewFigureLayout(current.figure);
-    send({
-      ...statusEvent(
-        language,
-        review.ok ? "review_passed" : "adjusting",
-        review.ok ? "Layout review passed." : `Adjusting layout pass ${pass}.`,
-        pass
-      ),
-      issues: review.issues.slice(0, 6)
-    });
-
-    if (review.ok) {
-      return current;
-    }
-
-    const validation = validateAndNormalizeFigureResponse({ figure: current.figure, fit: current.fit }, current.figure.metadata.skillId, current.figure.metadata.language);
-    if (!validation.ok || !validation.response) {
-      return current;
-    }
-
-    current = validation.response;
-  }
-
-  send({
-    ...statusEvent(language, "review_stopped", "Layout agent stopped after 5 passes.", MAX_LAYOUT_AGENT_PASSES),
-    issues: reviewFigureLayout(current.figure).issues.slice(0, 6)
-  });
-  return current;
-}
-
-function buildSkippedVisualReview(figure: Figure, language: "en" | "zh"): VisualLayoutReviewResult {
-  const deterministicIssues = reviewFigureLayout(figure).issues;
-
-  return {
-    ok: deterministicIssues.length === 0,
-    score: deterministicIssues.length ? 0.72 : 0.9,
-    summary:
-      language === "zh"
-        ? "已跳过多模态视觉检查以控制生成时间。"
-        : "Multimodal visual review was skipped to keep generation within the time budget.",
-    issues: deterministicIssues.slice(0, 8).map((message) => ({
-      severity: "warning",
-      message
-    })),
-    model: getConfiguredModelLabel(),
-    deterministicIssues,
-    unavailable: true
-  };
 }
 
 async function validateOrRepair(
@@ -739,18 +551,6 @@ function statusEvent(language: "en" | "zh", code: string, english: string, pass:
     generating: "正在生成语义图 JSON。",
     repairing: "正在修复生成的 JSON。",
     repair_fallback: "JSON 修复失败，正在使用紧凑保底图。",
-    reviewing: "正在渲染并判定布局。",
-    adjusting: `正在调整布局，第 ${pass} 次。`,
-    review_passed: "布局判定通过。",
-    review_stopped: "布局 Agent 已在 5 次调整后中断。",
-    visualizing: "正在转成图片并进行多模态检查。",
-    visual_skipped: "为控制在 120 秒内返回，已跳过多模态视觉检查。",
-    visual_font_skipped: "服务器端中文字体不可用，已跳过图片视觉检查并保留布局检查。",
-    visual_passed: "多模态视觉检查通过。",
-    visual_flagged: "多模态视觉检查发现问题。",
-    visual_regenerating: `正在根据视觉检查意见重新生成，第 ${pass} 次。`,
-    visual_regeneration_skipped: "为控制在 120 秒内返回，已跳过视觉反馈重生成。",
-    visual_regeneration_failed: "按视觉意见重新生成失败，保留上一版。",
     persisting: "正在保存 session 产物。"
   };
 
@@ -758,47 +558,8 @@ function statusEvent(language: "en" | "zh", code: string, english: string, pass:
     type: "status",
     code,
     pass,
-    maxPasses: MAX_LAYOUT_AGENT_PASSES,
+    maxPasses: 0,
     message: language === "zh" ? zh[code] ?? english : english
-  };
-}
-
-function applyVisualReviewToResponse(
-  response: GenerateFigureResponse,
-  review: VisualLayoutReviewResult,
-  language: "en" | "zh"
-): GenerateFigureResponse {
-  if (review.unavailable && review.deterministicIssues.length === 0) {
-    return response;
-  }
-
-  const prefix = language === "zh" ? "视觉检查" : "Visual review";
-  const verdict =
-    review.unavailable
-      ? language === "zh"
-        ? "未完成"
-        : "unavailable"
-      : review.ok
-        ? language === "zh"
-          ? "通过"
-          : "passed"
-        : language === "zh"
-          ? "需复核"
-          : "needs review";
-  const visualNote = `${prefix}: ${verdict}. ${review.summary}`.slice(0, 240);
-  const existingNote = response.fit.note.trim();
-  const reviewScore = review.unavailable
-    ? review.deterministicIssues.length
-      ? Math.min(response.fit.score, 0.72)
-      : response.fit.score
-    : Math.min(response.fit.score, review.score);
-
-  return {
-    ...response,
-    fit: {
-      score: reviewScore,
-      note: existingNote ? `${existingNote} ${visualNote}`.slice(0, 360) : visualNote
-    }
   };
 }
 
@@ -934,7 +695,6 @@ async function recordCompletedConversation({
   requestId,
   response,
   compressedContext,
-  layoutReview,
   artifacts,
   durationMs
 }: {
@@ -942,7 +702,6 @@ async function recordCompletedConversation({
   requestId: string;
   response: GenerateFigureResponse;
   compressedContext: string;
-  layoutReview?: VisualLayoutReviewResult;
   artifacts: unknown;
   durationMs: number;
 }) {
@@ -960,7 +719,6 @@ async function recordCompletedConversation({
     clientLog: request.clientLog,
     figure: response.figure,
     fit: response.fit,
-    layoutReview,
     artifacts,
     model: getConfiguredModelLabel(),
     status: "completed",

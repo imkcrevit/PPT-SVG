@@ -228,15 +228,9 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
     const used = new Set<string>();
 
     for (const layer of diagram.layers) {
-      const layerRoots = layer.nodeIds
-        .filter((id) => !used.has(id))
-        .map((id) => rootById.get(id))
-        .filter((root): root is LayoutNode => Boolean(root));
+      const layerRoots = layer.nodeIds.map((id) => rootById.get(id)).filter((root): root is LayoutNode => Boolean(root));
       layerRoots.forEach((root) => used.add(root.node.id));
-
-      if (layerRoots.length) {
-        bands.push({ name: layer.name, roots: layerRoots });
-      }
+      bands.push({ name: layer.name, roots: layerRoots });
     }
 
     const leftover = roots.filter((root) => !used.has(root.node.id));

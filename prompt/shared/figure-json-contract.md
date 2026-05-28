@@ -93,3 +93,11 @@ Right:
 - Output the semantic graph only. No `x`, `y`, `width`, `height`, `canvas`, `elements`, `fill`, `stroke`, or pixel/style values.
 - Every `id` must be unique. Every `parent` must be `null` or an existing id. Every edge endpoint must be an existing id. No parent cycles.
 - Valid JSON only: quoted keys/strings, commas between items, balanced brackets, no comments, no markdown fences, no trailing commas, and no prose outside the object.
+
+
+## 不要重复套层 / 嵌套要浅（重要）
+
+- 不要为一个层再造一个同名的容器节点。用了 `layers` 时，把真实组件**直接**放进该层的 `nodeIds`，不要再包一个 "XX层/XX Layer" 节点去重复这个层带。层带本身就是那一层的视觉分组。
+- 反例（冗余）：层带 `数据接入` 里只放一个节点 `数据接入层`，该节点再包 `离线数据`，`离线数据` 再包 `交易历史`……四层套娃。
+- 正例：层带 `数据接入` 的 `nodeIds` 直接是 `离线数据`、`实时流`；`离线数据` 作为容器直接包 `交易历史/设备指纹/关系图谱`。
+- **嵌套最多两层**：一个容器 + 它的直接子节点。再深会让盒子越缩越小、文字小到看不清。需要再分组时，优先用 `layers`（分带）而不是继续往里套。
