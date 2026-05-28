@@ -1,0 +1,45 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;数据处理流程&quot;,&quot;description&quot;:&quot;数据处理流程&quot;,&quot;skillId&quot;:&quot;flow&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">数据处理流程</title>
+<desc id="figure-desc">数据处理流程</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">数据处理流程</tspan></text>
+<g data-node-id="source-group">
+<rect data-node-id="source-rect" x="321" y="357" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" stroke-dasharray="7 5" />
+<text data-node-id="source-title" x="376" y="377.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="376" y="377.5">外部数据源</tspan></text>
+<text data-node-id="source-detail" x="376" y="400" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="376" y="400">外部不可控</tspan></text>
+</g>
+<g data-node-id="collect-group">
+<rect data-node-id="collect-rect" x="453" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="collect-title" x="508" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="508" y="387.5">采集</tspan></text>
+</g>
+<g data-node-id="clean-group">
+<rect data-node-id="clean-rect" x="585" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="clean-title" x="640" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="387.5">清洗</tspan></text>
+</g>
+<g data-node-id="store-group">
+<rect data-node-id="store-rect" x="717" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="store-title" x="772" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="772" y="387.5">入库</tspan></text>
+</g>
+<g data-node-id="realtime-group">
+<rect data-node-id="realtime-rect" x="849" y="357" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" stroke-dasharray="7 5" />
+<text data-node-id="realtime-title" x="904" y="377.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="904" y="377.5">实时同步</tspan></text>
+<text data-node-id="realtime-detail" x="904" y="400" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="904" y="400">规划中</tspan></text>
+</g>
+<g data-node-id="edge-0-head">
+<line x1="431" y1="388" x2="439" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="453,388 435,399 435,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-1-head">
+<line x1="563" y1="388" x2="571" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="585,388 567,399 567,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-2-head">
+<line x1="695" y1="388" x2="703" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="717,388 699,399 699,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-3-head">
+<line x1="827" y1="388" x2="835" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5" />
+<polygon points="849,388 831,399 831,377" fill="#52607A" />
+</g>
+</svg>

@@ -10,8 +10,15 @@ PPT-SVG is a Next.js TypeScript app that generates single-slide presentation vis
 - `prompt/` contains system, skill, and shared prompt Markdown files loaded by the server.
 - `deploy/` contains optional Nginx and systemd examples.
 - `.env.example` documents required local environment variables.
+- `tmps/` is the SFTP upload landing area for temporary review bundles. It may be owned by `sftp_upload` with restrictive permissions.
 
 Do not edit generated directories such as `.next/` or `node_modules/`.
+
+## Review Upload Workflow
+
+When the user says they uploaded review material, locate the current SFTP upload folder (`tmps/`, usually `PPT-SVG/tmps/`), find the newest `.zip` by modification time, then copy it into a readable working location under the project `tmps/` area before extracting and reading it. The upload directory and zip files may require escalated permissions because they can be owned by `sftp_upload`.
+
+Do not assume the newest review content is already extracted. After copying the latest zip, unzip it into a clearly named directory, inspect the included README or integration notes first, and then apply the requested review changes from that extracted copy.
 
 ## Build, Test, and Development Commands
 

@@ -10,6 +10,7 @@
     "start": "bash ./scripts/start.sh prod",
     "stop": "bash ./scripts/start.sh stop",
     "check:sessions": "node scripts/check-session-concurrency.mjs",
+    "test:snapshots": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/snapshot-test.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

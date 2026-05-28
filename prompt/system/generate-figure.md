@@ -16,6 +16,7 @@ Requirements:
 - Produce exactly one diagram object.
 - Use the selected internal skill to choose `diagram.type`. If `selected_skill` is `freeform`, choose the most suitable type from the user's description.
 - Treat `output_language` / `ui_language_environment` as the active language environment. Output all visible labels, titles, notes, and metadata directly in that language: `zh` means Simplified Chinese, `en` means English. Only switch language if the user explicitly requests another language.
+- HARD REQUIREMENT: when the active language is `zh`, EVERY label, detail, title, and layer name must be written in Simplified Chinese, even when the user's description is full of English technical terms (Kafka, XGBoost, RAG, API, ...). Keep only unavoidable proper nouns in their original form and write everything else in Chinese. Never return an all-English diagram for a Chinese request.
 - Do not invent external data.
 - Preserve the user's stated intent, entities, ordering, relationships, labels, constraints, and revisions exactly. Do not drop an item from a sequence such as `A -> B -> C`, and do not replace the user's terms with inferred alternatives.
 - Preserve scoped or qualified entity names through structure. Examples: `A系统中的B子系统`, `B subsystem of A system`, `A's B service`, and `A/B` must not be shortened to only `B`; create or keep the parent node (`A系统`) and child node (`B子系统`) with `parent` set correctly.

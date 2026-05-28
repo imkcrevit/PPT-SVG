@@ -107,8 +107,18 @@ export async function POST(request: Request) {
 
         try {
           send(statusEvent(language, "queued", "Agent received the request.", 0));
-          send(statusEvent(language, "compressing", "Compressing context.", 0));
-          const compressedContext = await compressContext(generationRequest, safeTimeoutMs(startedAt, CONTEXT_COMPRESSION_TIMEOUT_MS));
+          // First-turn requests without reference material do not need an extra
+          // model round-trip for context compression.
+          const needsCompression =
+            (generationRequest.conversationTurn ?? 1) > 1 ||
+            Boolean(generationRequest.referenceFigure) ||
+            (generationRequest.attachments?.length ?? 0) > 0;
+          let compressedContext = generationRequest.userDescription;
+
+          if (needsCompression) {
+            send(statusEvent(language, "compressing", "Compressing context.", 0));
+            compressedContext = await compressContext(generationRequest, safeTimeoutMs(startedAt, CONTEXT_COMPRESSION_TIMEOUT_MS));
+          }
 
           send(statusEvent(language, "generating", "Generating semantic diagram JSON.", 0));
           const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext), {
@@ -117,23 +127,13 @@ export async function POST(request: Request) {
           });
           const generated = await validateOrRepair(rawOutput, generationRequest, language, send, startedAt, requestId);
 
-          send(statusEvent(language, "reviewing", "Rendering and reviewing layout.", 1));
-          const reviewedResponse = runLayoutAgent(generated.response, language, send);
-          const visuallyReviewed = await runVisualReviewAndRegenerationAgent({
-            response: reviewedResponse,
-            request: generationRequest,
-            skill,
-            compressedContext,
-            language,
-            send,
-            startedAt,
-            requestId,
-            fastReview: !generated.repaired
-          });
-          const finalResponse = applyVisualReviewToResponse(visuallyReviewed.response, visuallyReviewed.visualReview, language);
+          // The semantic layout engine is deterministic. The old geometric
+          // cleanup and visual regeneration passes were built for model-placed
+          // coordinates and can distort the compiled layout.
+          const finalResponse = generated.response;
 
-          send(statusEvent(language, "persisting", "Saving session artifacts.", MAX_LAYOUT_AGENT_PASSES));
-          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, visuallyReviewed.visualReview, {
+          send(statusEvent(language, "persisting", "Saving session artifacts.", 0));
+          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, undefined, {
             userDescription: generationRequest.userDescription,
             conversationTurn: generationRequest.conversationTurn
           });
@@ -142,7 +142,6 @@ export async function POST(request: Request) {
             requestId,
             response: finalResponse,
             compressedContext,
-            layoutReview: visuallyReviewed.visualReview,
             artifacts,
             durationMs: Date.now() - startedAt
           });
@@ -155,7 +154,6 @@ export async function POST(request: Request) {
               sessionId,
               conversationTurn: generationRequest.conversationTurn,
               model: getConfiguredModelLabel(),
-              layoutReview: visuallyReviewed.visualReview,
               artifacts,
               context: { compressed: compressedContext }
             }

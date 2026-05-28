@@ -1,0 +1,135 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;建筑项目从设计到交付全流程&quot;,&quot;description&quot;:&quot;建筑项目从设计到交付全流程&quot;,&quot;skillId&quot;:&quot;flow&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">建筑项目从设计到交付全流程</title>
+<desc id="figure-desc">建筑项目从设计到交付全流程</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">建筑项目从设计到交付全流程</tspan></text>
+<g data-node-id="start-group">
+<rect data-node-id="start-rect" x="48" y="372" width="66" height="31" rx="12" fill="#FBF6EC" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="start-title" x="81" y="388" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="81" y="388">项目启动</tspan></text>
+</g>
+<g data-node-id="p1-group">
+<rect data-node-id="p1-rect" x="127" y="329" width="246" height="118" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="1.5" />
+<text data-node-id="p1-label" x="250" y="339" fill="#1D2433" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="250" y="339">前期准备</tspan></text>
+<g data-node-id="p1-0-group">
+<rect data-node-id="p1-0-rect" x="138" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-0-title" x="171" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="171" y="376">需求确认</tspan></text>
+</g>
+<g data-node-id="p1-1-group">
+<rect data-node-id="p1-1-rect" x="217" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-1-title" x="250" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="250" y="376">场地踏勘</tspan></text>
+</g>
+<g data-node-id="p1-2-group">
+<rect data-node-id="p1-2-rect" x="297" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-2-title" x="330" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="330" y="376">方案比选</tspan></text>
+</g>
+<g data-node-id="p1-3-group">
+<rect data-node-id="p1-3-rect" x="178" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-3-title" x="211" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="211" y="421">估算校核</tspan></text>
+</g>
+<g data-node-id="p1-4-group">
+<rect data-node-id="p1-4-rect" x="257" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-4-title" x="290" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="290" y="421">设计任务书</tspan></text>
+</g>
+</g>
+<g data-node-id="p2-group">
+<rect data-node-id="p2-rect" x="387" y="329" width="246" height="118" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="1.5" />
+<text data-node-id="p2-label" x="510" y="339" fill="#1D2433" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="510" y="339">设计深化</tspan></text>
+<g data-node-id="p2-0-group">
+<rect data-node-id="p2-0-rect" x="398" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="p2-0-title" x="431" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="431" y="376">初步设计</tspan></text>
+</g>
+<g data-node-id="p2-1-group">
+<rect data-node-id="p2-1-rect" x="477" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="p2-1-title" x="510" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="510" y="376">专业协调</tspan></text>
+</g>
+<g data-node-id="p2-2-group">
+<rect data-node-id="p2-2-rect" x="556" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="p2-2-title" x="589" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="589" y="376">模型深化</tspan></text>
+</g>
+<g data-node-id="p2-3-group">
+<rect data-node-id="p2-3-rect" x="437" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="p2-3-title" x="470" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="470" y="421">成本优化</tspan></text>
+</g>
+<g data-node-id="p2-4-group">
+<rect data-node-id="p2-4-rect" x="517" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="p2-4-title" x="550" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="550" y="421">风险复核</tspan></text>
+</g>
+</g>
+<g data-node-id="p3-group">
+<rect data-node-id="p3-rect" x="647" y="329" width="246" height="118" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="1.5" />
+<text data-node-id="p3-label" x="770" y="339" fill="#1D2433" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="770" y="339">报审采购</tspan></text>
+<g data-node-id="p3-0-group">
+<rect data-node-id="p3-0-rect" x="657" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-0-title" x="690" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="690" y="376">报审材料</tspan></text>
+</g>
+<g data-node-id="p3-1-group">
+<rect data-node-id="p3-1-rect" x="737" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-1-title" x="770" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="770" y="376">审批沟通</tspan></text>
+</g>
+<g data-node-id="p3-2-group">
+<rect data-node-id="p3-2-rect" x="816" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-2-title" x="849" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="849" y="376">招采文件</tspan></text>
+</g>
+<g data-node-id="p3-3-group">
+<rect data-node-id="p3-3-rect" x="697" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-3-title" x="730" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="730" y="421">清单预算</tspan></text>
+</g>
+<g data-node-id="p3-4-group">
+<rect data-node-id="p3-4-rect" x="776" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-4-title" x="809" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="809" y="421">供应商确认</tspan></text>
+</g>
+</g>
+<g data-node-id="p4-group">
+<rect data-node-id="p4-rect" x="906" y="329" width="246" height="118" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="1.5" />
+<text data-node-id="p4-label" x="1029" y="339" fill="#1D2433" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1029" y="339">施工交付</tspan></text>
+<g data-node-id="p4-0-group">
+<rect data-node-id="p4-0-rect" x="917" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-0-title" x="950" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="950" y="376">施工准备</tspan></text>
+</g>
+<g data-node-id="p4-1-group">
+<rect data-node-id="p4-1-rect" x="996" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-1-title" x="1029" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1029" y="376">现场实施</tspan></text>
+</g>
+<g data-node-id="p4-2-group">
+<rect data-node-id="p4-2-rect" x="1076" y="360" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-2-title" x="1109" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1109" y="376">质量检查</tspan></text>
+</g>
+<g data-node-id="p4-3-group">
+<rect data-node-id="p4-3-rect" x="917" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-3-title" x="950" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="950" y="421">变更闭环</tspan></text>
+</g>
+<g data-node-id="p4-4-group">
+<rect data-node-id="p4-4-rect" x="996" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-4-title" x="1029" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1029" y="421">竣工验收</tspan></text>
+</g>
+<g data-node-id="p4-5-group">
+<rect data-node-id="p4-5-rect" x="1076" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="p4-5-title" x="1109" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1109" y="421">移交</tspan></text>
+</g>
+</g>
+<g data-node-id="end-group">
+<rect data-node-id="end-rect" x="1166" y="372" width="66" height="31" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="end-title" x="1199" y="388" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1199" y="388">落地交付</tspan></text>
+</g>
+<g data-node-id="edge-0-head">
+<line x1="114" y1="388" x2="113" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="127,388 109,399 109,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-1-head">
+<line x1="374" y1="388" x2="373" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="387,388 369,399 369,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-2-head">
+<line x1="633" y1="388" x2="633" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="647,388 629,399 629,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-3-head">
+<line x1="893" y1="388" x2="892" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="906,388 888,399 888,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-4-head">
+<line x1="1153" y1="388" x2="1152" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="1166,388 1148,399 1148,377" fill="#52607A" />
+</g>
+</svg>

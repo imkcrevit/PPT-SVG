@@ -110,7 +110,13 @@ export async function POST(request: Request) {
       attachmentCount: generationRequest.attachments?.length ?? 0
     });
 
-    const compressedContext = await compressContext(generationRequest);
+    const needsCompression =
+      (generationRequest.conversationTurn ?? 1) > 1 ||
+      Boolean(generationRequest.referenceFigure) ||
+      (generationRequest.attachments?.length ?? 0) > 0;
+    const compressedContext = needsCompression
+      ? await compressContext(generationRequest)
+      : generationRequest.userDescription;
     const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext));
     const parsed = tryParseJsonObject(rawOutput);
     const validation = parsed.ok

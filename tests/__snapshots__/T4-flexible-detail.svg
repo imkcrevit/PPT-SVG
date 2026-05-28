@@ -1,0 +1,28 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;三步流程&quot;,&quot;description&quot;:&quot;三步流程&quot;,&quot;skillId&quot;:&quot;flow&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">三步流程</title>
+<desc id="figure-desc">三步流程</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">三步流程</tspan></text>
+<g data-node-id="login-group">
+<rect data-node-id="login-rect" x="388" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="login-title" x="443" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="443" y="387.5">登录</tspan></text>
+</g>
+<g data-node-id="process-group">
+<rect data-node-id="process-rect" x="520" y="357" width="240" height="63" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="process-title" x="640" y="377.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="377.5">处理</tspan></text>
+<text data-node-id="process-detail" x="640" y="400" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="400">调用支付网关、校验库存、写入订单，失败...</tspan></text>
+</g>
+<g data-node-id="done-group">
+<rect data-node-id="done-rect" x="782" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="done-title" x="837" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="837" y="387.5">完成</tspan></text>
+</g>
+<g data-node-id="edge-0-head">
+<line x1="498" y1="388" x2="506" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="520,388 502,399 502,377" fill="#52607A" />
+</g>
+<g data-node-id="edge-1-head">
+<line x1="760" y1="388" x2="768" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="782,388 764,399 764,377" fill="#52607A" />
+</g>
+</svg>
