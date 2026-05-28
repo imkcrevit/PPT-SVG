@@ -77,6 +77,46 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
     return;
   }
 
+  if (element.type === "ellipse") {
+    slide.addShape("ellipse" as pptxgen.ShapeType, {
+      x: pxToIn(element.cx - element.rx, figure.canvas.width),
+      y: pyToIn(element.cy - element.ry, figure.canvas.height),
+      w: pxToIn(element.rx * 2, figure.canvas.width),
+      h: pyToIn(element.ry * 2, figure.canvas.height),
+      fill: {
+        color: stripHash(element.fill ?? "#FFFFFF"),
+        transparency: element.fill && element.fill !== "none" ? Math.round((1 - (element.opacity ?? 1)) * 100) : 100
+      },
+      line: {
+        color: stripHash(element.stroke ?? "#1D2433"),
+        transparency: element.stroke ? 0 : 100,
+        width: element.strokeWidth ?? 1.5,
+        dashType: element.dash ? ("dash" as const) : ("solid" as const)
+      }
+    });
+    return;
+  }
+
+  if (element.type === "polygon") {
+    const pts = element.points;
+    for (let i = 0; i < pts.length; i += 1) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      slide.addShape("line" as pptxgen.ShapeType, {
+        x: pxToIn(a.x, figure.canvas.width),
+        y: pyToIn(a.y, figure.canvas.height),
+        w: pxToIn(b.x - a.x, figure.canvas.width),
+        h: pyToIn(b.y - a.y, figure.canvas.height),
+        line: {
+          color: stripHash(element.stroke ?? "#1D2433"),
+          width: element.strokeWidth ?? 1.5,
+          dashType: element.dash ? ("dash" as const) : ("solid" as const)
+        }
+      });
+    }
+    return;
+  }
+
   const lineOptions = {
     x: pxToIn(element.x1, figure.canvas.width),
     y: pyToIn(element.y1, figure.canvas.height),

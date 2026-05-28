@@ -1,5 +1,19 @@
 import type { Figure, FigureElement } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
+import {
+  layoutCycle,
+  layoutFishbone,
+  layoutFunnel,
+  layoutGantt,
+  layoutHierarchy,
+  layoutMatrix,
+  layoutMindmap,
+  layoutPyramid,
+  layoutScatter,
+  layoutSwimlane,
+  layoutTimeline,
+  layoutVenn
+} from "@/lib/layout-extra";
 
 // Deterministic semantic-to-geometry compiler.
 //
@@ -345,6 +359,19 @@ function routeEdge(source: Box, target: Box, obstacles: Box[]): Pt[] {
 }
 
 export function layoutDiagram(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+  if (diagram.type === "timeline") return layoutTimeline(diagram, canvasBg);
+  if (diagram.type === "pyramid") return layoutPyramid(diagram, canvasBg);
+  if (diagram.type === "matrix") return layoutMatrix(diagram, canvasBg);
+  if (diagram.type === "hierarchy") return layoutHierarchy(diagram, canvasBg);
+  if (diagram.type === "cycle") return layoutCycle(diagram, canvasBg);
+  if (diagram.type === "funnel") return layoutFunnel(diagram, canvasBg);
+  if (diagram.type === "venn") return layoutVenn(diagram, canvasBg);
+  if (diagram.type === "mindmap") return layoutMindmap(diagram, canvasBg);
+  if (diagram.type === "fishbone") return layoutFishbone(diagram, canvasBg);
+  if (diagram.type === "gantt") return layoutGantt(diagram, canvasBg);
+  if (diagram.type === "swimlane") return layoutSwimlane(diagram, canvasBg);
+  if (diagram.type === "scatter") return layoutScatter(diagram, canvasBg);
+
   const width = 1280;
   const height = 720;
   const direction = diagram.direction ?? "horizontal";

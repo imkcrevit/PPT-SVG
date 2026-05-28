@@ -32,6 +32,15 @@ function renderElement(element: FigureElement): string {
     return `<line data-node-id="${element.id}" x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${element.stroke}" stroke-width="${element.strokeWidth ?? 2}" stroke-linecap="round"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
   }
 
+  if (element.type === "polygon") {
+    const pts = element.points.map((pt) => `${pt.x},${pt.y}`).join(" ");
+    return `<polygon data-node-id="${element.id}" points="${pts}" fill="${element.fill ?? "none"}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
+  }
+
+  if (element.type === "ellipse") {
+    return `<ellipse data-node-id="${element.id}" cx="${element.cx}" cy="${element.cy}" rx="${element.rx}" ry="${element.ry}" fill="${element.fill ?? "none"}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
+  }
+
   return renderArrow(element, opacity);
 }
 

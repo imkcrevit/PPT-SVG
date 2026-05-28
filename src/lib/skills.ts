@@ -66,6 +66,69 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/architecture.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "hierarchy",
+    name: { en: "Hierarchy", zh: "组织/层级图" },
+    description: { en: "Org chart / top-down tree.", zh: "组织架构 / 自上而下树。" },
+    promptFile: "skills/hierarchy.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "cycle",
+    name: { en: "Cycle", zh: "循环图" },
+    description: { en: "Cyclical loop (PDCA, lifecycle).", zh: "循环流程(PDCA、生命周期)。" },
+    promptFile: "skills/cycle.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "funnel",
+    name: { en: "Funnel", zh: "漏斗图" },
+    description: { en: "Conversion / stage funnel.", zh: "转化 / 阶段漏斗。" },
+    promptFile: "skills/funnel.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "venn",
+    name: { en: "Venn", zh: "韦恩图" },
+    description: { en: "2-3 overlapping sets.", zh: "2~3 个交叠集合。" },
+    promptFile: "skills/venn.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "mindmap",
+    name: { en: "Mind map", zh: "思维导图" },
+    description: { en: "Central topic with branches.", zh: "中心主题向外发散。" },
+    promptFile: "skills/mindmap.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "fishbone",
+    name: { en: "Fishbone", zh: "鱼骨图" },
+    description: { en: "Cause-effect (Ishikawa).", zh: "因果分析(石川图)。" },
+    promptFile: "skills/fishbone.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "gantt",
+    name: { en: "Gantt", zh: "甘特图" },
+    description: { en: "Schedule with task bars.", zh: "带任务条的排期。" },
+    promptFile: "skills/gantt.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "swimlane",
+    name: { en: "Swimlane", zh: "泳道图" },
+    description: { en: "Cross-functional process lanes.", zh: "跨职能泳道流程。" },
+    promptFile: "skills/swimlane.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "scatter",
+    name: { en: "Scatter", zh: "散点/定位图" },
+    description: { en: "2D positioning by score.", zh: "按评分二维定位。" },
+    promptFile: "skills/scatter.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 

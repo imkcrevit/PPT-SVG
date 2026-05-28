@@ -1,7 +1,11 @@
 export const LOCALES = ["en", "zh"] as const;
 export type Locale = (typeof LOCALES)[number];
 
-export const SKILL_IDS = ["freeform", "flow", "matrix", "timeline", "pyramid", "architecture"] as const;
+export const SKILL_IDS = [
+  "freeform", "flow", "matrix", "timeline", "pyramid", "architecture",
+  "hierarchy", "cycle", "funnel", "venn", "mindmap", "fishbone",
+  "gantt", "swimlane", "scatter"
+] as const;
 export type SkillId = (typeof SKILL_IDS)[number];
 
 export interface CanvasSpec {
@@ -77,7 +81,28 @@ export interface ArrowElement extends Omit<BaseElement, "type"> {
   dash?: boolean;
 }
 
-export type FigureElement = GroupElement | RectElement | TextElement | LineElement | ArrowElement;
+export interface PolygonElement extends Omit<BaseElement, "type"> {
+  type: "polygon";
+  points: { x: number; y: number }[];
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  dash?: boolean;
+}
+
+export interface EllipseElement extends Omit<BaseElement, "type"> {
+  type: "ellipse";
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  dash?: boolean;
+}
+
+export type FigureElement = GroupElement | RectElement | TextElement | LineElement | ArrowElement | PolygonElement | EllipseElement;
 
 export interface Figure {
   canvas: CanvasSpec;

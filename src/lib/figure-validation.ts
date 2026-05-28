@@ -522,6 +522,22 @@ function elementBox(element: FigureElement): Box {
     };
   }
 
+  if (element.type === "polygon") {
+    if (!element.points.length) {
+      return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    const minX = Math.min(...element.points.map((point) => point.x));
+    const minY = Math.min(...element.points.map((point) => point.y));
+    const maxX = Math.max(...element.points.map((point) => point.x));
+    const maxY = Math.max(...element.points.map((point) => point.y));
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  if (element.type === "ellipse") {
+    return { x: element.cx - element.rx, y: element.cy - element.ry, width: element.rx * 2, height: element.ry * 2 };
+  }
+
   return unionBoxes(element.children.map(elementBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
 }
 
@@ -542,6 +558,15 @@ function authoredElementPoint(element: FigureElement): { x: number; y: number } 
       x: (element.x1 + element.x2) / 2,
       y: (element.y1 + element.y2) / 2
     };
+  }
+
+  if (element.type === "polygon") {
+    const box = elementBox(element);
+    return centerOf(box);
+  }
+
+  if (element.type === "ellipse") {
+    return { x: element.cx, y: element.cy };
   }
 
   return undefined;
@@ -681,10 +706,28 @@ function constrainElementToCanvas(element: FigureElement, canvasWidth: number, c
     return;
   }
 
-  element.x1 = round(clampNumber(element.x1, 0, canvasWidth, 0));
-  element.y1 = round(clampNumber(element.y1, 0, canvasHeight, 0));
-  element.x2 = round(clampNumber(element.x2, 0, canvasWidth, 0));
-  element.y2 = round(clampNumber(element.y2, 0, canvasHeight, 0));
+  if (element.type === "polygon") {
+    element.points = element.points.map((point) => ({
+      x: round(clampNumber(point.x, 0, canvasWidth, 0)),
+      y: round(clampNumber(point.y, 0, canvasHeight, 0))
+    }));
+    return;
+  }
+
+  if (element.type === "ellipse") {
+    element.rx = round(Math.min(element.rx, canvasWidth / 2));
+    element.ry = round(Math.min(element.ry, canvasHeight / 2));
+    element.cx = round(clampNumber(element.cx, element.rx, canvasWidth - element.rx, canvasWidth / 2));
+    element.cy = round(clampNumber(element.cy, element.ry, canvasHeight - element.ry, canvasHeight / 2));
+    return;
+  }
+
+  if (element.type === "line" || element.type === "arrow") {
+    element.x1 = round(clampNumber(element.x1, 0, canvasWidth, 0));
+    element.y1 = round(clampNumber(element.y1, 0, canvasHeight, 0));
+    element.x2 = round(clampNumber(element.x2, 0, canvasWidth, 0));
+    element.y2 = round(clampNumber(element.y2, 0, canvasHeight, 0));
+  }
 }
 
 function hasLayoutOverflow(elements: FigureElement[], canvasWidth: number, canvasHeight: number): boolean {
@@ -721,10 +764,23 @@ function moveElement(element: FigureElement, dx: number, dy: number): void {
     return;
   }
 
-  element.x1 = round(element.x1 + dx);
-  element.y1 = round(element.y1 + dy);
-  element.x2 = round(element.x2 + dx);
-  element.y2 = round(element.y2 + dy);
+  if (element.type === "polygon") {
+    element.points = element.points.map((point) => ({ x: round(point.x + dx), y: round(point.y + dy) }));
+    return;
+  }
+
+  if (element.type === "ellipse") {
+    element.cx = round(element.cx + dx);
+    element.cy = round(element.cy + dy);
+    return;
+  }
+
+  if (element.type === "line" || element.type === "arrow") {
+    element.x1 = round(element.x1 + dx);
+    element.y1 = round(element.y1 + dy);
+    element.x2 = round(element.x2 + dx);
+    element.y2 = round(element.y2 + dy);
+  }
 }
 
 function uniqueElements<T extends FigureElement>(elements: T[]): T[] {

@@ -185,6 +185,35 @@ function renderElement(
     );
   }
 
+  if (element.type === "polygon") {
+    return (
+      <polygon
+        {...shared}
+        points={element.points.map((pt) => `${pt.x},${pt.y}`).join(" ")}
+        fill={element.fill ?? "none"}
+        stroke={isSelected ? "#737A82" : element.stroke}
+        strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 1.5, 3) : element.strokeWidth}
+        strokeDasharray={element.dash ? "7 5" : undefined}
+      />
+    );
+  }
+
+  if (element.type === "ellipse") {
+    return (
+      <ellipse
+        {...shared}
+        cx={element.cx}
+        cy={element.cy}
+        rx={element.rx}
+        ry={element.ry}
+        fill={element.fill ?? "none"}
+        stroke={isSelected ? "#737A82" : element.stroke}
+        strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 1.5, 3) : element.strokeWidth}
+        strokeDasharray={element.dash ? "7 5" : undefined}
+      />
+    );
+  }
+
   return renderArrow(element, isSelected, shared);
 }
 
@@ -344,6 +373,22 @@ function getElementBounds(element: FigureElement): ReturnType<typeof normalizeBo
 
   if (element.type === "text") {
     return normalizeBox(element.x, element.y, element.x + (element.width ?? 240), element.y + (element.height ?? (element.fontSize ?? 22) * 1.18));
+  }
+
+  if (element.type === "polygon") {
+    if (!element.points.length) {
+      return undefined;
+    }
+
+    const x1 = Math.min(...element.points.map((pt) => pt.x));
+    const y1 = Math.min(...element.points.map((pt) => pt.y));
+    const x2 = Math.max(...element.points.map((pt) => pt.x));
+    const y2 = Math.max(...element.points.map((pt) => pt.y));
+    return normalizeBox(x1, y1, x2, y2);
+  }
+
+  if (element.type === "ellipse") {
+    return normalizeBox(element.cx - element.rx, element.cy - element.ry, element.cx + element.rx, element.cy + element.ry);
   }
 
   return normalizeBox(element.x1, element.y1, element.x2, element.y2);

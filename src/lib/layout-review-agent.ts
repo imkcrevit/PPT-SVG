@@ -244,6 +244,22 @@ function elementBox(element: FigureElement): Box {
     };
   }
 
+  if (element.type === "polygon") {
+    if (!element.points.length) {
+      return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    const minX = Math.min(...element.points.map((point) => point.x));
+    const minY = Math.min(...element.points.map((point) => point.y));
+    const maxX = Math.max(...element.points.map((point) => point.x));
+    const maxY = Math.max(...element.points.map((point) => point.y));
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
+
+  if (element.type === "ellipse") {
+    return { x: element.cx - element.rx, y: element.cy - element.ry, width: element.rx * 2, height: element.ry * 2 };
+  }
+
   return unionBoxes(element.children.map(elementBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
 }
 
