@@ -138,7 +138,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const t = dictionaries[locale];
   const helpUrl = HELP_URLS[locale];
   const caseUrl = CASE_URLS[locale];
-  const helpTypesUrl = `${helpUrl}${HELP_TYPES_ANCHOR}`;
+  const caseTypesUrl = `${caseUrl}${HELP_TYPES_ANCHOR}`;
   const [skillId, setSkillId] = useState<SkillId>("freeform");
   const [description, setDescription] = useState("");
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
@@ -1135,7 +1135,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                       <ExternalLink size={13} />
                     </a>
                     <a
-                      href={helpTypesUrl}
+                      href={caseTypesUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="flex h-10 items-center justify-between gap-2 border border-line bg-panel px-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink transition hover:border-accent/40 hover:bg-bg2 hover:text-accent2"
