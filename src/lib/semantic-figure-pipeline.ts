@@ -35,18 +35,20 @@ export function validateAndNormalizeSemanticResponse(
     };
   }
 
+  // The deterministic layout engine is the single source of truth. Do not run
+  // validateAndNormalizeFigureResponse over its output: that path applies the
+  // legacy geometric normalizer for model-placed coordinates and can detach
+  // labels from their boxes or stack bands on top of each other.
   const figure = layoutDiagram(semanticValidation.diagram);
   figure.metadata.skillId = expectedSkillId;
   figure.metadata.language = expectedLanguage;
 
   const fit = readFit(value);
-  const figureValidation = validateAndNormalizeFigureResponse({ figure, fit }, expectedSkillId, expectedLanguage);
-  const errors = [...semanticValidation.errors, ...figureValidation.errors];
 
   return {
-    ok: figureValidation.ok,
-    response: figureValidation.response,
-    errors
+    ok: true,
+    response: { figure, fit },
+    errors: semanticValidation.errors
   };
 }
 
