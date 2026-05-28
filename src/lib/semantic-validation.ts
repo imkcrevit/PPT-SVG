@@ -216,18 +216,28 @@ function normalizeLayers(values: unknown[] | undefined, idMap: Map<string, strin
   }
 
   const rootIds = new Set(nodes.filter((node) => node.parent === null).map((node) => node.id));
+  const assignedRootIds = new Set<string>();
   const layers: SemanticLayer[] = [];
 
   values.forEach((value, index) => {
     const errors: string[] = [];
     const record = readRecord(value, ["diagram", "layers", index], errors);
     const rawNodeIds = readArray(record?.nodeIds, ["diagram", "layers", index, "nodeIds"], errors) ?? [];
+    const layerRootIds = new Set<string>();
     const nodeIds = rawNodeIds
       .map((item) => (typeof item === "string" ? idMap.get(sanitizeDisplayText(item)) ?? slugId(item) : ""))
-      .filter((id) => rootIds.has(id));
+      .filter((id) => {
+        if (!rootIds.has(id) || layerRootIds.has(id) || assignedRootIds.has(id)) {
+          return false;
+        }
+
+        layerRootIds.add(id);
+        return true;
+      });
     const name = typeof record?.name === "string" ? sanitizeDisplayText(record.name).slice(0, 40) : "";
 
     if (name && nodeIds.length) {
+      nodeIds.forEach((id) => assignedRootIds.add(id));
       layers.push({ name, nodeIds });
     }
   });
