@@ -580,11 +580,6 @@ export function Workspace({ locale }: WorkspaceProps) {
               PPT
             </a>
           </li>
-          <li>
-            <a href={HELP_URL} target="_blank" rel="noreferrer">
-              {t.helpLabel}
-            </a>
-          </li>
         </ul>
       </nav>
 
