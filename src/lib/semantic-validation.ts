@@ -147,7 +147,14 @@ function normalizeNodes(
       record.score && typeof record.score === "object" && !Array.isArray(record.score)
         ? (record.score as Record<string, unknown>)
         : undefined;
-    const score = scoreRec && typeof scoreRec.x === "number" && typeof scoreRec.y === "number" ? { x: scoreRec.x, y: scoreRec.y } : undefined;
+    const toNum = (v: unknown): number | undefined => {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) return Number(v);
+      return undefined;
+    };
+    const sx = scoreRec ? toNum(scoreRec.x) : undefined;
+    const sy = scoreRec ? toNum(scoreRec.y) : undefined;
+    const score = sx !== undefined && sy !== undefined ? { x: sx, y: sy } : undefined;
 
     nodes.push({
       id,

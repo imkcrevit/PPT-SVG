@@ -75,8 +75,8 @@ const CASES: Case[] = [
   {
     id: "scatter", skill: "scatter",
     raw: { type: "scatter", title: "项目定位", language: "zh", axes: { xLabel: "成本", yLabel: "价值" }, nodes: [
-      { id: "a", label: "A", score: { x: 0.2, y: 0.8 }, parent: null }, { id: "b", label: "B", score: { x: 0.7, y: 0.6 }, parent: null },
-      { id: "c", label: "C", score: { x: 0.5, y: 0.3 }, parent: null }, { id: "d", label: "D", score: { x: 0.85, y: 0.85 }, parent: null }
+      { id: "a", label: "A", score: { x: "20", y: "80" }, parent: null }, { id: "b", label: "B", score: { x: "70", y: "60" }, parent: null },
+      { id: "c", label: "C", score: { x: "50", y: "30" }, parent: null }, { id: "d", label: "D", score: { x: "85", y: "85" }, parent: null }
     ], edges: [] },
     assert: (fig) => {
       const bad: string[] = [];

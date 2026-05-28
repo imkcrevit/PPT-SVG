@@ -796,8 +796,21 @@ export function layoutScatter(diagram: SemanticDiagram, theme: DiagramTheme = DE
   const right = W - MARGIN - 30;
   const top = MARGIN + TITLE_H + 30;
   const bottom = H - MARGIN - 46;
-  const mapX = (v: number) => left + clamp(v, 0, 1) * (right - left);
-  const mapY = (v: number) => bottom - clamp(v, 0, 1) * (bottom - top);
+  // Robust to whatever numeric scale the model emits (0..1, 0..100, etc.):
+  // keep absolute positions when data is already within 0..1, otherwise rescale
+  // by the data's own min/max so points never collapse onto one spot.
+  const raw = pts.map((n) => (n as unknown as ScoreNode).score ?? { x: 0.5, y: 0.5 });
+  const axisMap = (vals: number[]) => {
+    const mn = Math.min(...vals);
+    const mx = Math.max(...vals);
+    if (mn >= 0 && mx <= 1) return (v: number) => clamp(v, 0, 1);
+    if (mx === mn) return () => 0.5;
+    return (v: number) => 0.06 + 0.88 * ((clamp(v, mn, mx) - mn) / (mx - mn));
+  };
+  const nx = axisMap(raw.map((p) => p.x));
+  const ny = axisMap(raw.map((p) => p.y));
+  const mapX = (v: number) => left + nx(v) * (right - left);
+  const mapY = (v: number) => bottom - ny(v) * (bottom - top);
 
   // plot frame + quadrant guides
   elements.push({ id: "scatter-frame", type: "rect", name: "frame", x: left, y: top, width: right - left, height: bottom - top, rx: 4, fill: "#FFFFFF", stroke: "#C9CFDA", strokeWidth: 1.5 });

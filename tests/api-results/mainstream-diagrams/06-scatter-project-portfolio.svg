@@ -1,26 +1,28 @@
-<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif">
 <metadata>{&quot;title&quot;:&quot;项目组合定位图&quot;,&quot;description&quot;:&quot;按实施难度和业务收益对项目进行相对定位，并标注高收益低难度的优先区。&quot;,&quot;skillId&quot;:&quot;scatter&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
 <title id="figure-title">项目组合定位图</title>
 <desc id="figure-desc">按实施难度和业务收益对项目进行相对定位，并标注高收益低难度的优先区。</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">项目组合定位图</tspan></text>
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">项目组合定位图</tspan></text>
 <rect data-node-id="scatter-frame" x="118" y="134" width="1084" height="492" rx="4" fill="#FFFFFF" stroke="#C9CFDA" stroke-width="1.5" />
 <line data-node-id="scatter-qv" x1="660" y1="134" x2="660" y2="626" stroke="#E3E7EE" stroke-width="1" stroke-linecap="round" />
 <line data-node-id="scatter-qh" x1="118" y1="380" x2="1202" y2="380" stroke="#E3E7EE" stroke-width="1" stroke-linecap="round" />
-<ellipse data-node-id="scatter-dot-0" cx="660" cy="380" rx="9" ry="9" fill="#5B6B86" stroke="#5B6B86" stroke-width="1" />
-<text data-node-id="scatter-label-0" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">统一登录</tspan></text>
-<ellipse data-node-id="scatter-dot-1" cx="660" cy="380" rx="9" ry="9" fill="#6B5BD2" stroke="#6B5BD2" stroke-width="1" />
-<text data-node-id="scatter-label-1" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">客户画像</tspan></text>
-<ellipse data-node-id="scatter-dot-2" cx="660" cy="380" rx="9" ry="9" fill="#7A5AC4" stroke="#7A5AC4" stroke-width="1" />
-<text data-node-id="scatter-label-2" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">自动报价</tspan></text>
-<ellipse data-node-id="scatter-dot-3" cx="660" cy="380" rx="9" ry="9" fill="#2E9E76" stroke="#2E9E76" stroke-width="1" />
-<text data-node-id="scatter-label-3" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">预测补货</tspan></text>
-<ellipse data-node-id="scatter-dot-4" cx="660" cy="380" rx="9" ry="9" fill="#2F6FED" stroke="#2F6FED" stroke-width="1" />
-<text data-node-id="scatter-label-4" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">合同智能审阅</tspan></text>
-<ellipse data-node-id="scatter-dot-5" cx="660" cy="380" rx="9" ry="9" fill="#E08A1E" stroke="#E08A1E" stroke-width="1" />
-<text data-node-id="scatter-label-5" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">客服机器人</tspan></text>
-<ellipse data-node-id="scatter-dot-6" cx="660" cy="380" rx="9" ry="9" fill="#D6457C" stroke="#D6457C" stroke-width="1" />
-<text data-node-id="scatter-label-6" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">数据中台</tspan></text>
-<ellipse data-node-id="scatter-dot-7" cx="660" cy="380" rx="9" ry="9" fill="#C0453C" stroke="#C0453C" stroke-width="1" />
-<text data-node-id="scatter-label-7" x="660" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="660" y="361">移动审批</tspan></text>
+<text data-node-id="scatter-xlabel" x="660" y="651" fill="#6B7280" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="660" y="651">实施难度</tspan></text>
+<text data-node-id="scatter-ylabel" x="42" y="119" fill="#6B7280" font-size="12" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="42" y="119">业务收益</tspan></text>
+<ellipse data-node-id="scatter-dot-0" cx="256.41846153846154" cy="524.32" rx="9" ry="9" fill="#5B6B86" stroke="#5B6B86" stroke-width="1" />
+<text data-node-id="scatter-label-0" x="256.418" y="505.32" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="256.418" y="505.32">统一登录</tspan></text>
+<ellipse data-node-id="scatter-dot-1" cx="623.3107692307692" cy="380" rx="9" ry="9" fill="#6B5BD2" stroke="#6B5BD2" stroke-width="1" />
+<text data-node-id="scatter-label-1" x="623.311" y="361" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="623.311" y="361">客户画像</tspan></text>
+<ellipse data-node-id="scatter-dot-2" cx="476.55384615384617" cy="452.15999999999997" rx="9" ry="9" fill="#7A5AC4" stroke="#7A5AC4" stroke-width="1" />
+<text data-node-id="scatter-label-2" x="476.554" y="433.16" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="476.554" y="433.16">自动报价</tspan></text>
+<ellipse data-node-id="scatter-dot-3" cx="843.446153846154" cy="235.67999999999995" rx="9" ry="9" fill="#2E9E76" stroke="#2E9E76" stroke-width="1" />
+<text data-node-id="scatter-label-3" x="843.446" y="216.68" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="843.446" y="216.68">预测补货</tspan></text>
+<ellipse data-node-id="scatter-dot-4" cx="990.2030769230768" cy="336.70399999999995" rx="9" ry="9" fill="#2F6FED" stroke="#2F6FED" stroke-width="1" />
+<text data-node-id="scatter-label-4" x="990.203" y="317.704" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="990.203" y="317.704">合同智能审阅</tspan></text>
+<ellipse data-node-id="scatter-dot-5" cx="403.17538461538464" cy="423.296" rx="9" ry="9" fill="#E08A1E" stroke="#E08A1E" stroke-width="1" />
+<text data-node-id="scatter-label-5" x="403.175" y="404.296" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="403.175" y="404.296">客服机器人</tspan></text>
+<ellipse data-node-id="scatter-dot-6" cx="1136.96" cy="163.52000000000004" rx="9" ry="9" fill="#D6457C" stroke="#D6457C" stroke-width="1" />
+<text data-node-id="scatter-label-6" x="1136.96" y="144.52" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1136.96" y="144.52">数据中台</tspan></text>
+<ellipse data-node-id="scatter-dot-7" cx="183.04" cy="596.48" rx="9" ry="9" fill="#C0453C" stroke="#C0453C" stroke-width="1" />
+<text data-node-id="scatter-label-7" x="183.04" y="577.48" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="183.04" y="577.48">移动审批</tspan></text>
 </svg>
