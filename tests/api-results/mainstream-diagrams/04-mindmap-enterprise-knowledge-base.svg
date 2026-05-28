@@ -1,0 +1,129 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;企业知识库建设方案&quot;,&quot;description&quot;:&quot;围绕企业知识库的内容、治理、体验、AI能力、运营与评估展开建设思路。&quot;,&quot;skillId&quot;:&quot;mindmap&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">企业知识库建设方案</title>
+<desc id="figure-desc">围绕企业知识库的内容、治理、体验、AI能力、运营与评估展开建设思路。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">企业知识库建设方案</tspan></text>
+<line data-node-id="mind-l-0" x1="732" y1="388" x2="855" y2="186" stroke="#5B6B86" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-0-0" x1="1015" y1="186" x2="1075" y2="136" stroke="#5B6B86" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-0-0-group">
+<rect data-node-id="mind-leaf-0-0-rect" x="1075" y="117" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="mind-leaf-0-0-title" x="1144" y="136" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="136">制度流程文档</tspan></text>
+</g>
+<line data-node-id="mind-ll-0-1" x1="1015" y1="186" x2="1075" y2="186" stroke="#5B6B86" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-0-1-group">
+<rect data-node-id="mind-leaf-0-1-rect" x="1075" y="167" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="mind-leaf-0-1-title" x="1144" y="186" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="186">项目交付资料</tspan></text>
+</g>
+<line data-node-id="mind-ll-0-2" x1="1015" y1="186" x2="1075" y2="236" stroke="#5B6B86" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-0-2-group">
+<rect data-node-id="mind-leaf-0-2-rect" x="1075" y="217" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="mind-leaf-0-2-title" x="1144" y="236" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="236">专家经验沉淀</tspan></text>
+</g>
+<g data-node-id="mind-br-0-group">
+<rect data-node-id="mind-br-0-rect" x="855" y="160" width="160" height="52" rx="12" fill="#FBF6EC" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="mind-br-0-title" x="935" y="186" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="935" y="186">内容来源</tspan></text>
+</g>
+<line data-node-id="mind-l-2" x1="732" y1="388" x2="855" y2="414" stroke="#7A5AC4" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-2-0" x1="1015" y1="414" x2="1075" y2="364" stroke="#7A5AC4" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-2-0-group">
+<rect data-node-id="mind-leaf-2-0-rect" x="1075" y="345" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="mind-leaf-2-0-title" x="1144" y="364" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="364">语义检索</tspan></text>
+</g>
+<line data-node-id="mind-ll-2-1" x1="1015" y1="414" x2="1075" y2="414" stroke="#7A5AC4" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-2-1-group">
+<rect data-node-id="mind-leaf-2-1-rect" x="1075" y="395" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="mind-leaf-2-1-title" x="1144" y="414" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="414">标签导航</tspan></text>
+</g>
+<line data-node-id="mind-ll-2-2" x1="1015" y1="414" x2="1075" y2="464" stroke="#7A5AC4" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-2-2-group">
+<rect data-node-id="mind-leaf-2-2-rect" x="1075" y="445" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="mind-leaf-2-2-title" x="1144" y="464" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="464">结果反馈优化</tspan></text>
+</g>
+<g data-node-id="mind-br-2-group">
+<rect data-node-id="mind-br-2-rect" x="855" y="388" width="160" height="52" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="mind-br-2-title" x="935" y="414" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="935" y="414">检索体验</tspan></text>
+</g>
+<line data-node-id="mind-l-4" x1="732" y1="388" x2="855" y2="642" stroke="#2F6FED" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-4-0" x1="1015" y1="642" x2="1075" y2="592" stroke="#2F6FED" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-4-0-group">
+<rect data-node-id="mind-leaf-4-0-rect" x="1075" y="573" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="mind-leaf-4-0-title" x="1144" y="592" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="592">内容责任人</tspan></text>
+</g>
+<line data-node-id="mind-ll-4-1" x1="1015" y1="642" x2="1075" y2="642" stroke="#2F6FED" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-4-1-group">
+<rect data-node-id="mind-leaf-4-1-rect" x="1075" y="623" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="mind-leaf-4-1-title" x="1144" y="642" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="642">定期更新机制</tspan></text>
+</g>
+<line data-node-id="mind-ll-4-2" x1="1015" y1="642" x2="1075" y2="692" stroke="#2F6FED" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-4-2-group">
+<rect data-node-id="mind-leaf-4-2-rect" x="1075" y="673" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="mind-leaf-4-2-title" x="1144" y="692" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1144" y="692">贡献激励</tspan></text>
+</g>
+<g data-node-id="mind-br-4-group">
+<rect data-node-id="mind-br-4-rect" x="855" y="616" width="160" height="52" rx="12" fill="#EAF1FE" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="mind-br-4-title" x="935" y="642" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="935" y="642">运营机制</tspan></text>
+</g>
+<line data-node-id="mind-l-1" x1="548" y1="388" x2="425" y2="186" stroke="#6B5BD2" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-1-0" x1="265" y1="186" x2="205" y2="136" stroke="#6B5BD2" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-1-0-group">
+<rect data-node-id="mind-leaf-1-0-rect" x="67" y="117" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="mind-leaf-1-0-title" x="136" y="136" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="136">角色分级授权</tspan></text>
+</g>
+<line data-node-id="mind-ll-1-1" x1="265" y1="186" x2="205" y2="186" stroke="#6B5BD2" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-1-1-group">
+<rect data-node-id="mind-leaf-1-1-rect" x="67" y="167" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="mind-leaf-1-1-title" x="136" y="186" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="186">敏感信息脱敏</tspan></text>
+</g>
+<line data-node-id="mind-ll-1-2" x1="265" y1="186" x2="205" y2="236" stroke="#6B5BD2" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-1-2-group">
+<rect data-node-id="mind-leaf-1-2-rect" x="67" y="217" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="mind-leaf-1-2-title" x="136" y="236" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="236">访问审计追踪</tspan></text>
+</g>
+<g data-node-id="mind-br-1-group">
+<rect data-node-id="mind-br-1-rect" x="265" y="160" width="160" height="52" rx="12" fill="#EFEBFB" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="mind-br-1-title" x="345" y="186" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="345" y="186">权限治理</tspan></text>
+</g>
+<line data-node-id="mind-l-3" x1="548" y1="388" x2="425" y2="414" stroke="#2E9E76" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-3-0" x1="265" y1="414" x2="205" y2="364" stroke="#2E9E76" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-3-0-group">
+<rect data-node-id="mind-leaf-3-0-rect" x="67" y="345" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="mind-leaf-3-0-title" x="136" y="364" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="364">基于知识问答</tspan></text>
+</g>
+<line data-node-id="mind-ll-3-1" x1="265" y1="414" x2="205" y2="414" stroke="#2E9E76" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-3-1-group">
+<rect data-node-id="mind-leaf-3-1-rect" x="67" y="395" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="mind-leaf-3-1-title" x="136" y="414" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="414">答案来源引用</tspan></text>
+</g>
+<line data-node-id="mind-ll-3-2" x1="265" y1="414" x2="205" y2="464" stroke="#2E9E76" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-3-2-group">
+<rect data-node-id="mind-leaf-3-2-rect" x="67" y="445" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="mind-leaf-3-2-title" x="136" y="464" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="464">人工纠错闭环</tspan></text>
+</g>
+<g data-node-id="mind-br-3-group">
+<rect data-node-id="mind-br-3-rect" x="265" y="388" width="160" height="52" rx="12" fill="#E7F5EF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="mind-br-3-title" x="345" y="414" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="345" y="414">AI问答</tspan></text>
+</g>
+<line data-node-id="mind-l-5" x1="548" y1="388" x2="425" y2="642" stroke="#E08A1E" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="mind-ll-5-0" x1="265" y1="642" x2="205" y2="592" stroke="#E08A1E" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-5-0-group">
+<rect data-node-id="mind-leaf-5-0-rect" x="67" y="573" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="mind-leaf-5-0-title" x="136" y="592" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="592">使用活跃度</tspan></text>
+</g>
+<line data-node-id="mind-ll-5-1" x1="265" y1="642" x2="205" y2="642" stroke="#E08A1E" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-5-1-group">
+<rect data-node-id="mind-leaf-5-1-rect" x="67" y="623" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="mind-leaf-5-1-title" x="136" y="642" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="642">检索命中率</tspan></text>
+</g>
+<line data-node-id="mind-ll-5-2" x1="265" y1="642" x2="205" y2="692" stroke="#E08A1E" stroke-width="1.5" stroke-linecap="round" />
+<g data-node-id="mind-leaf-5-2-group">
+<rect data-node-id="mind-leaf-5-2-rect" x="67" y="673" width="138" height="38" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="mind-leaf-5-2-title" x="136" y="692" fill="#1D2433" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="136" y="692">问答满意度</tspan></text>
+</g>
+<g data-node-id="mind-br-5-group">
+<rect data-node-id="mind-br-5-rect" x="265" y="616" width="160" height="52" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="mind-br-5-title" x="345" y="642" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="345" y="642">效果评估</tspan></text>
+</g>
+<ellipse data-node-id="mind-center" cx="640" cy="388" rx="92" ry="54" fill="#1D2433" stroke="#1D2433" stroke-width="2" />
+<text data-node-id="mind-center-label" x="640" y="388" fill="#FFFFFF" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="388">企业知识库</tspan></text>
+</svg>

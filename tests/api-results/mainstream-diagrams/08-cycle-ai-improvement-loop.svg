@@ -1,0 +1,70 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;企业AI应用持续改进循环&quot;,&quot;description&quot;:&quot;展示企业AI应用从问题收集到策略迭代的持续改进闭环。&quot;,&quot;skillId&quot;:&quot;cycle&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">企业AI应用持续改进循环</title>
+<desc id="figure-desc">展示企业AI应用从问题收集到策略迭代的持续改进闭环。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">企业AI应用持续改进循环</tspan></text>
+<g data-node-id="cycle-arrow-0">
+<line x1="710.2755716963886" y1="207.84293165116952" x2="729.114" y2="216.915" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="741.727,222.989 720.737,225.09 730.283,205.269" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-1">
+<line x1="829.3595589915591" y1="332.87662074126087" x2="834.012" y2="353.261" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="837.128,366.91 822.398,351.809 843.846,346.914" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-2">
+<line x1="805.85193613502" y1="503.9374611028955" x2="792.815" y2="520.285" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="784.087,531.23 786.709,510.299 803.91,524.016" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-3">
+<line x1="657.4544226058628" y1="592.2131509385322" x2="636.546" y2="592.213" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="622.546,592.213 640.546,581.213 640.546,603.213" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-4">
+<line x1="495.913372849156" y1="531.2302953060258" x2="482.877" y2="514.883" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="474.148,503.937 493.971,511.152 476.771,524.869" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-5">
+<line x1="442.87249216859135" y1="366.91022832020695" x2="447.525" y2="346.526" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="450.64,332.877 457.359,352.873 435.911,347.978" fill="#52607A" />
+</g>
+<g data-node-id="cycle-arrow-6">
+<line x1="538.2726455534221" y1="222.9893119399091" x2="557.111" y2="213.917" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="569.724,207.843 558.28,225.563 548.734,205.742" fill="#52607A" />
+</g>
+<g data-node-id="cycle-0-group">
+<rect data-node-id="cycle-0-rect" x="565" y="144" width="150" height="60" rx="12" fill="#FBF6EC" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="cycle-0-title" x="640" y="156.16" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="156.16">业务问题收集</tspan></text>
+<text data-node-id="cycle-0-detail" x="640" y="178.52" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="178.52">梳理业务痛点，明确AI应用</tspan><tspan x="640" y="192.68">改进方向。</tspan></text>
+</g>
+<g data-node-id="cycle-1-group">
+<rect data-node-id="cycle-1-rect" x="737.0029261429665" y="226.83224359107862" width="150" height="60" rx="12" fill="#EFEBFB" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="cycle-1-title" x="812.003" y="238.992" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="812.003" y="238.992">数据准备</tspan></text>
+<text data-node-id="cycle-1-detail" x="812.003" y="261.352" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="812.003" y="261.352">整理可用数据，支撑后续建</tspan><tspan x="812.003" y="275.512">模与验证。</tspan></text>
+</g>
+<g data-node-id="cycle-2-group">
+<rect data-node-id="cycle-2-rect" x="779.4841406800012" y="412.9546054703892" width="150" height="60" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="cycle-2-title" x="854.484" y="433.035" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="854.484" y="433.035">原型验证</tspan></text>
+<text data-node-id="cycle-2-detail" x="854.484" y="454.555" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="854.484" y="454.555">快速构建原型，验证方案...</tspan></text>
+</g>
+<g data-node-id="cycle-3-group">
+<rect data-node-id="cycle-3-rect" x="660.4544226058628" y="562.2131509385322" width="150" height="60" rx="12" fill="#E7F5EF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="cycle-3-title" x="735.454" y="574.373" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="735.454" y="574.373">上线试点</tspan></text>
+<text data-node-id="cycle-3-detail" x="735.454" y="596.733" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="735.454" y="596.733">在小范围场景中部署并观察</tspan><tspan x="735.454" y="610.893">运行表现。</tspan></text>
+</g>
+<g data-node-id="cycle-4-group">
+<rect data-node-id="cycle-4-rect" x="469.54557739413724" y="562.2131509385322" width="150" height="60" rx="12" fill="#EAF1FE" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="cycle-4-title" x="544.546" y="574.373" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="544.546" y="574.373">效果评估</tspan></text>
+<text data-node-id="cycle-4-detail" x="544.546" y="596.733" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="544.546" y="596.733">对照业务目标，评估应用效</tspan><tspan x="544.546" y="610.893">果与价值。</tspan></text>
+</g>
+<g data-node-id="cycle-5-group">
+<rect data-node-id="cycle-5-rect" x="350.5158593199988" y="412.9546054703892" width="150" height="60" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="cycle-5-title" x="425.516" y="433.035" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="425.516" y="433.035">风险复盘</tspan></text>
+<text data-node-id="cycle-5-detail" x="425.516" y="454.555" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="425.516" y="454.555">识别问题与风险，沉淀改...</tspan></text>
+</g>
+<g data-node-id="cycle-6-group">
+<rect data-node-id="cycle-6-rect" x="392.99707385703346" y="226.83224359107862" width="150" height="60" rx="12" fill="#FCE8F0" stroke="#D6457C" stroke-width="2" />
+<text data-node-id="cycle-6-title" x="467.997" y="238.992" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="467.997" y="238.992">策略迭代</tspan></text>
+<text data-node-id="cycle-6-detail" x="467.997" y="261.352" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="467.997" y="261.352">根据评估结果优化策略，并</tspan><tspan x="467.997" y="275.512">进入下一轮循环。</tspan></text>
+</g>
+</svg>

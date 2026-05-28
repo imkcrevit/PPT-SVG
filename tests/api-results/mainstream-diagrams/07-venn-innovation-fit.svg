@@ -1,0 +1,16 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;产品可行性、技术可行性与商业价值对比&quot;,&quot;description&quot;:&quot;交集含义：产品∩技术=可落地MVP；技术∩商业=技术领先但难变现；产品∩商业=商业机会明确但实现风险高；三者交集=最佳创新机会。&quot;,&quot;skillId&quot;:&quot;venn&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">产品可行性、技术可行性与商业价值对比</title>
+<desc id="figure-desc">交集含义：产品∩技术=可落地MVP；技术∩商业=技术领先但难变现；产品∩商业=商业机会明确但实现风险高；三者交集=最佳创新机会。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">产品可行性、技术可行性与商业价值对比</tspan></text>
+<ellipse data-node-id="venn-0" cx="640" cy="319" rx="175" ry="175" fill="#5B6B86" stroke="#5B6B86" stroke-width="2" opacity="0.22" />
+<ellipse data-node-id="venn-1" cx="531.5" cy="511.5" rx="175" ry="175" fill="#6B5BD2" stroke="#6B5BD2" stroke-width="2" opacity="0.22" />
+<ellipse data-node-id="venn-2" cx="748.5" cy="511.5" rx="175" ry="175" fill="#7A5AC4" stroke="#7A5AC4" stroke-width="2" opacity="0.22" />
+<text data-node-id="venn-0-label" x="640" y="205.25" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="205.25">产品可行性</tspan></text>
+<text data-node-id="venn-0-detail" x="640" y="226.25" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="226.25">关注点：用户需求、使用体验、MVP范围</tspan></text>
+<text data-node-id="venn-1-label" x="438.75" y="590.25" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="438.75" y="590.25">技术可行性</tspan></text>
+<text data-node-id="venn-1-detail" x="438.75" y="611.25" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="438.75" y="611.25">关注点：实现难度、技术方案、资源约束</tspan></text>
+<text data-node-id="venn-2-label" x="841.25" y="590.25" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="841.25" y="590.25">商业价值</tspan></text>
+<text data-node-id="venn-2-detail" x="841.25" y="611.25" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="841.25" y="611.25">关注点：市场机会、变现路径、增长潜力</tspan></text>
+</svg>

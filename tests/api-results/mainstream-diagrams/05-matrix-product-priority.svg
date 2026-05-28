@@ -1,0 +1,39 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;产品功能优先级四象限矩阵&quot;,&quot;description&quot;:&quot;按用户价值和实施成本对产品功能进行优先级归类，并给出简短理由。&quot;,&quot;skillId&quot;:&quot;matrix&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">产品功能优先级四象限矩阵</title>
+<desc id="figure-desc">按用户价值和实施成本对产品功能进行优先级归类，并给出简短理由。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">产品功能优先级四象限矩阵</tspan></text>
+<line data-node-id="matrix-axis-v" x1="640" y1="128" x2="640" y2="620" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="matrix-axis-h" x1="244" y1="374" x2="1036" y2="374" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="matrix-0-group">
+<rect data-node-id="matrix-0-rect" x="270" y="154" width="233.33333333333334" height="210" rx="12" fill="#FBF6EC" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="matrix-0-title" x="386.667" y="249.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="386.667" y="249.08">用户价值</tspan></text>
+<text data-node-id="matrix-0-detail" x="386.667" y="270.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="386.667" y="270.6">横轴，从低到高。</tspan></text>
+</g>
+<g data-node-id="matrix-1-group">
+<rect data-node-id="matrix-1-rect" x="523.3333333333334" y="154" width="233.33333333333334" height="210" rx="12" fill="#EFEBFB" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="matrix-1-title" x="640" y="249.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="249.08">实施成本</tspan></text>
+<text data-node-id="matrix-1-detail" x="640" y="270.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="270.6">纵轴，从低到高。</tspan></text>
+</g>
+<g data-node-id="matrix-2-group">
+<rect data-node-id="matrix-2-rect" x="776.6666666666667" y="154" width="233.33333333333334" height="210" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="matrix-2-title" x="893.333" y="249.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="893.333" y="249.08">低成本高价值</tspan></text>
+<text data-node-id="matrix-2-detail" x="893.333" y="270.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="893.333" y="270.6">策略：优先推进。</tspan></text>
+</g>
+<g data-node-id="matrix-3-group">
+<rect data-node-id="matrix-3-rect" x="270" y="384" width="233.33333333333334" height="210" rx="12" fill="#E7F5EF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="matrix-3-title" x="386.667" y="479.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="386.667" y="479.08">高成本高价值</tspan></text>
+<text data-node-id="matrix-3-detail" x="386.667" y="500.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="386.667" y="500.6">策略：重点投入。</tspan></text>
+</g>
+<g data-node-id="matrix-4-group">
+<rect data-node-id="matrix-4-rect" x="523.3333333333334" y="384" width="233.33333333333334" height="210" rx="12" fill="#EAF1FE" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="matrix-4-title" x="640" y="479.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="479.08">低成本低价值</tspan></text>
+<text data-node-id="matrix-4-detail" x="640" y="500.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="500.6">策略：择机补齐。</tspan></text>
+</g>
+<g data-node-id="matrix-5-group">
+<rect data-node-id="matrix-5-rect" x="776.6666666666667" y="384" width="233.33333333333334" height="210" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="matrix-5-title" x="893.333" y="479.08" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="893.333" y="479.08">高成本低价值</tspan></text>
+<text data-node-id="matrix-5-detail" x="893.333" y="500.6" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="893.333" y="500.6">策略：谨慎评估。</tspan></text>
+</g>
+</svg>

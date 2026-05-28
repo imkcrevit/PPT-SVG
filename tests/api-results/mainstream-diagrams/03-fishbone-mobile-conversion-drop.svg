@@ -1,0 +1,58 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;移动端转化率下降鱼骨图&quot;,&quot;description&quot;:&quot;从流量质量、页面体验、支付链路、营销策略、技术稳定性、数据统计六类原因分析移动端转化率下降。&quot;,&quot;skillId&quot;:&quot;fishbone&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">移动端转化率下降鱼骨图</title>
+<desc id="figure-desc">从流量质量、页面体验、支付链路、营销策略、技术稳定性、数据统计六类原因分析移动端转化率下降。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">移动端转化率下降鱼骨图</tspan></text>
+<line data-node-id="fish-spine" x1="78" y1="388" x2="1046" y2="388" stroke="#52607A" stroke-width="3" stroke-linecap="round" />
+<g data-node-id="fish-spine-arrow">
+<line x1="1046" y1="388" x2="1037" y2="388" stroke="#52607A" stroke-width="3" stroke-linecap="round" />
+<polygon points="1052,388 1032.5,400 1032.5,376" fill="#52607A" />
+</g>
+<g data-node-id="fish-head-group">
+<rect data-node-id="fish-head-rect" x="1052" y="348" width="168" height="80" rx="12" fill="#FBE9E7" stroke="#C0453C" stroke-width="2" />
+<text data-node-id="fish-head-title" x="1136" y="388" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1136" y="388">移动端转化率下降</tspan></text>
+</g>
+<line data-node-id="fish-bone-0" x1="214.16666666666669" y1="388" x2="144.16666666666669" y2="238" stroke="#5B6B86" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-0-group">
+<rect data-node-id="fish-cat-0-rect" x="69.16666666666669" y="192" width="150" height="46" rx="12" fill="#FBF6EC" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="fish-cat-0-title" x="144.167" y="215" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="144.167" y="215">流量质量</tspan></text>
+</g>
+<text data-node-id="fish-sub-0-0" x="130.833" y="338" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="130.833" y="338">低意向流量增加</tspan></text>
+<text data-node-id="fish-sub-0-1" x="107.5" y="288" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="107.5" y="288">渠道人群不匹配</tspan></text>
+<line data-node-id="fish-bone-1" x1="366.5" y1="388" x2="296.5" y2="538" stroke="#6B5BD2" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-1-group">
+<rect data-node-id="fish-cat-1-rect" x="221.5" y="538" width="150" height="46" rx="12" fill="#EFEBFB" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="fish-cat-1-title" x="296.5" y="561" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="296.5" y="561">页面体验</tspan></text>
+</g>
+<text data-node-id="fish-sub-1-0" x="283.167" y="438" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="283.167" y="438">加载慢</tspan></text>
+<text data-node-id="fish-sub-1-1" x="259.833" y="488" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="259.833" y="488">首屏信息不清</tspan></text>
+<line data-node-id="fish-bone-2" x1="518.8333333333334" y1="388" x2="448.83333333333337" y2="238" stroke="#7A5AC4" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-2-group">
+<rect data-node-id="fish-cat-2-rect" x="373.83333333333337" y="192" width="150" height="46" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="fish-cat-2-title" x="448.833" y="215" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="448.833" y="215">支付链路</tspan></text>
+</g>
+<text data-node-id="fish-sub-2-0" x="435.5" y="338" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="435.5" y="338">支付失败率升高</tspan></text>
+<text data-node-id="fish-sub-2-1" x="412.167" y="288" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="412.167" y="288">支付步骤过多</tspan></text>
+<line data-node-id="fish-bone-3" x1="671.1666666666667" y1="388" x2="601.1666666666667" y2="538" stroke="#2E9E76" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-3-group">
+<rect data-node-id="fish-cat-3-rect" x="526.1666666666667" y="538" width="150" height="46" rx="12" fill="#E7F5EF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="fish-cat-3-title" x="601.167" y="561" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="601.167" y="561">营销策略</tspan></text>
+</g>
+<text data-node-id="fish-sub-3-0" x="587.833" y="438" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="587.833" y="438">优惠规则复杂</tspan></text>
+<text data-node-id="fish-sub-3-1" x="564.5" y="488" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="564.5" y="488">活动利益点不突出</tspan></text>
+<line data-node-id="fish-bone-4" x1="823.5" y1="388" x2="753.5" y2="238" stroke="#2F6FED" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-4-group">
+<rect data-node-id="fish-cat-4-rect" x="678.5" y="192" width="150" height="46" rx="12" fill="#EAF1FE" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="fish-cat-4-title" x="753.5" y="215" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="753.5" y="215">技术稳定性</tspan></text>
+</g>
+<text data-node-id="fish-sub-4-0" x="740.167" y="338" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="740.167" y="338">接口超时</tspan></text>
+<text data-node-id="fish-sub-4-1" x="716.833" y="288" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="716.833" y="288">客户端崩溃率升高</tspan></text>
+<line data-node-id="fish-bone-5" x1="975.8333333333334" y1="388" x2="905.8333333333334" y2="538" stroke="#E08A1E" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="fish-cat-5-group">
+<rect data-node-id="fish-cat-5-rect" x="830.8333333333334" y="538" width="150" height="46" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="fish-cat-5-title" x="905.833" y="561" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="905.833" y="561">数据统计</tspan></text>
+</g>
+<text data-node-id="fish-sub-5-0" x="892.5" y="438" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="892.5" y="438">埋点口径变化</tspan></text>
+<text data-node-id="fish-sub-5-1" x="869.167" y="488" fill="#6B7280" font-size="11" font-weight="500" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="869.167" y="488">转化漏斗漏记</tspan></text>
+</svg>

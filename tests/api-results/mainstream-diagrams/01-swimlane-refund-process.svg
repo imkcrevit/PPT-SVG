@@ -1,0 +1,100 @@
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<metadata>{&quot;title&quot;:&quot;跨部门退款处理泳道图&quot;,&quot;description&quot;:&quot;展示用户、客服、财务、系统在退款处理中的顺序流程、资料缺失分支和订单过期异常结束。&quot;,&quot;skillId&quot;:&quot;swimlane&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
+<title id="figure-title">跨部门退款处理泳道图</title>
+<desc id="figure-desc">展示用户、客服、财务、系统在退款处理中的顺序流程、资料缺失分支和订单过期异常结束。</desc>
+<rect width="1280" height="720" fill="#FFFFFF" />
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">跨部门退款处理泳道图</tspan></text>
+<rect data-node-id="lane-bg-0" x="48" y="124" width="1184" height="542" rx="10" fill="#FBF6EC" stroke="none" stroke-width="0" />
+<text data-node-id="lane-name-0" x="58" y="398" fill="#5B6B86" font-size="13" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="58" y="398">流程</tspan></text>
+<g data-node-id="lane-node-0-group">
+<rect data-node-id="lane-node-0-rect" x="189" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-0-title" x="238.444" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="238.444" y="398">提交退款申请</tspan></text>
+</g>
+<g data-node-id="lane-node-1-group">
+<rect data-node-id="lane-node-1-rect" x="305.88888888888886" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-1-title" x="355.333" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="355.333" y="398">校验订单状态</tspan></text>
+</g>
+<g data-node-id="lane-node-2-group">
+<rect data-node-id="lane-node-2-rect" x="422.77777777777777" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-2-title" x="472.222" y="388.08" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="472.222" y="388.08">结束</tspan></text>
+<text data-node-id="lane-node-2-detail" x="472.222" y="408.32" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="472.222" y="408.32">订单已过退款期</tspan></text>
+</g>
+<g data-node-id="lane-node-3-group">
+<rect data-node-id="lane-node-3-rect" x="539.6666666666666" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-3-title" x="589.111" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="589.111" y="398">审核退款原因</tspan></text>
+</g>
+<g data-node-id="lane-node-4-group">
+<rect data-node-id="lane-node-4-rect" x="656.5555555555555" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-4-title" x="706" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="706" y="398">要求补充资料</tspan></text>
+</g>
+<g data-node-id="lane-node-5-group">
+<rect data-node-id="lane-node-5-rect" x="773.4444444444445" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-5-title" x="822.889" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="822.889" y="398">补充资料</tspan></text>
+</g>
+<g data-node-id="lane-node-6-group">
+<rect data-node-id="lane-node-6-rect" x="890.3333333333333" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-6-title" x="939.778" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="939.778" y="398">复核金额</tspan></text>
+</g>
+<g data-node-id="lane-node-7-group">
+<rect data-node-id="lane-node-7-rect" x="1007.2222222222221" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-7-title" x="1056.667" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1056.667" y="398">执行原路退款</tspan></text>
+</g>
+<g data-node-id="lane-node-8-group">
+<rect data-node-id="lane-node-8-rect" x="1124.1111111111113" y="368" width="98.88888888888889" height="60" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="lane-node-8-title" x="1173.556" y="398" fill="#1D2433" font-size="13" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="1173.556" y="398">收到到账通知</tspan></text>
+</g>
+<line data-node-id="lane-e0-s0" x1="287.8888888888889" y1="398" x2="296.8888888888889" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e0-s1" x1="296.8888888888889" y1="398" x2="296.8888888888889" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e0-h">
+<line x1="296.8888888888889" y1="398" x2="291.889" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="305.889,398 287.889,409 287.889,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e1-s0" x1="404.77777777777777" y1="398" x2="413.77777777777777" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e1-s1" x1="413.77777777777777" y1="398" x2="413.77777777777777" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e1-h">
+<line x1="413.77777777777777" y1="398" x2="408.778" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="422.778,398 404.778,409 404.778,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e2-s0" x1="404.77777777777777" y1="398" x2="472.2222222222222" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e2-s1" x1="472.2222222222222" y1="398" x2="472.2222222222222" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e2-h">
+<line x1="472.2222222222222" y1="398" x2="525.667" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="539.667,398 521.667,409 521.667,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e3-s0" x1="638.5555555555555" y1="398" x2="647.5555555555555" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e3-s1" x1="647.5555555555555" y1="398" x2="647.5555555555555" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e3-h">
+<line x1="647.5555555555555" y1="398" x2="642.556" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="656.556,398 638.556,409 638.556,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e4-s0" x1="755.4444444444445" y1="398" x2="764.4444444444445" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e4-s1" x1="764.4444444444445" y1="398" x2="764.4444444444445" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e4-h">
+<line x1="764.4444444444445" y1="398" x2="759.444" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="773.444,398 755.444,409 755.444,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e5-s0" x1="872.3333333333334" y1="398" x2="706" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5" />
+<line data-node-id="lane-e5-s1" x1="706" y1="398" x2="706" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5" />
+<g data-node-id="lane-e5-h">
+<line x1="706" y1="398" x2="553.667" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 5" />
+<polygon points="539.667,398 557.667,387 557.667,409" fill="#52607A" />
+</g>
+<line data-node-id="lane-e6-s0" x1="638.5555555555555" y1="398" x2="764.4444444444443" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e6-s1" x1="764.4444444444443" y1="398" x2="764.4444444444443" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e6-h">
+<line x1="764.4444444444443" y1="398" x2="876.333" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="890.333,398 872.333,409 872.333,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e7-s0" x1="989.2222222222222" y1="398" x2="998.2222222222222" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e7-s1" x1="998.2222222222222" y1="398" x2="998.2222222222222" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e7-h">
+<line x1="998.2222222222222" y1="398" x2="993.222" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="1007.222,398 989.222,409 989.222,387" fill="#52607A" />
+</g>
+<line data-node-id="lane-e8-s0" x1="1106.1111111111109" y1="398" x2="1115.111111111111" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<line data-node-id="lane-e8-s1" x1="1115.111111111111" y1="398" x2="1115.111111111111" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<g data-node-id="lane-e8-h">
+<line x1="1115.111111111111" y1="398" x2="1110.111" y2="398" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
+<polygon points="1124.111,398 1106.111,409 1106.111,387" fill="#52607A" />
+</g>
+</svg>
