@@ -16,6 +16,8 @@ import {
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
+import { resolveThemeFromAttachments } from "@/lib/theme-extract";
+import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, Locale, SkillId, UploadedAttachment } from "@/lib/types";
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
           conversationId: typeof body.conversationId === "string" && body.conversationId.trim() ? body.conversationId.trim() : sessionId,
           conversationTurn: normalizeConversationTurn(body.conversationTurn),
           attachments: normalizeAttachments(body.attachments),
+          themeOverride: normalizeThemeOverride(body.themeOverride),
           pptContext: body.pptContext,
           referenceFigure: normalizeReferenceFigure(body.referenceFigure),
           clientLog: normalizeClientLog(body.clientLog)
@@ -189,9 +192,11 @@ async function validateOrRepair(
   startedAt: number,
   requestId: string
 ): Promise<ValidatedGeneration> {
+  const sessionTheme = await resolveThemeFromAttachments(request.attachments);
+  const requestedTheme = mergeTheme(sessionTheme, request.themeOverride);
   const parsed = tryParseJsonObject(rawOutput);
   const validation = parsed.ok
-    ? validateAndNormalizeSemanticResponse(parsed.value, request.skillId, request.language)
+    ? validateAndNormalizeSemanticResponse(parsed.value, request.skillId, request.language, requestedTheme)
     : {
         ok: false,
         errors: [`Model returned invalid JSON: ${parsed.error}`]
@@ -240,7 +245,7 @@ async function validateOrRepair(
     };
   }
 
-  const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, request.skillId, request.language);
+  const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, request.skillId, request.language, requestedTheme);
   if (!repairedValidation.ok || !repairedValidation.response) {
     console.warn(`[generate:${requestId}] repair validation failed`, {
       errors: repairedValidation.errors.slice(0, 10),

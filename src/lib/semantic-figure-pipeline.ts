@@ -3,6 +3,7 @@ import { layoutDiagram } from "@/lib/layout-engine";
 import { validateAndNormalizeSemanticDiagram } from "@/lib/semantic-validation";
 import { sanitizeDisplayText } from "@/lib/text-layout";
 import type { FitAssessment, GenerateFigureResponse, Locale, SkillId } from "@/lib/types";
+import type { DiagramTheme } from "@/lib/theme";
 
 interface ValidationResult {
   ok: boolean;
@@ -13,7 +14,8 @@ interface ValidationResult {
 export function validateAndNormalizeSemanticResponse(
   value: unknown,
   expectedSkillId: SkillId,
-  expectedLanguage: Locale
+  expectedLanguage: Locale,
+  theme?: DiagramTheme
 ): ValidationResult {
   if (isLegacyFigureResponse(value)) {
     return validateAndNormalizeFigureResponse(value, expectedSkillId, expectedLanguage);
@@ -39,7 +41,7 @@ export function validateAndNormalizeSemanticResponse(
   // validateAndNormalizeFigureResponse over its output: that path applies the
   // legacy geometric normalizer for model-placed coordinates and can detach
   // labels from their boxes or stack bands on top of each other.
-  const figure = layoutDiagram(semanticValidation.diagram);
+  const figure = layoutDiagram(semanticValidation.diagram, { theme });
   figure.metadata.skillId = expectedSkillId;
   figure.metadata.language = expectedLanguage;
 

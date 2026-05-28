@@ -21,12 +21,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
+import ThemeOverridePanel from "@/components/ThemeOverridePanel";
 import { appUrl } from "@/lib/app-url";
 import { ACCEPTED_CONTEXT_EXTENSIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_NAME_CHARS } from "@/lib/file-limits";
 import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { dictionaries } from "@/lib/i18n";
 import { INTERNAL_SKILLS } from "@/lib/skills";
+import type { ThemeOverride } from "@/lib/theme";
 import type { Figure, FigureElement, FitAssessment, Locale, SkillId, UploadedAttachment } from "@/lib/types";
 
 interface WorkspaceProps {
@@ -134,6 +136,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [renderHistory, setRenderHistory] = useState<RenderHistoryEntry[]>([]);
   const [referenceCurrentRender, setReferenceCurrentRender] = useState(true);
   const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
+  const [themeOverride, setThemeOverride] = useState<ThemeOverride | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [figure, setFigure] = useState<Figure | null>(null);
@@ -269,6 +272,7 @@ export function Workspace({ locale }: WorkspaceProps) {
           conversationId: sessionIdRef.current,
           conversationTurn: turn,
           referenceFigure: referencedRender && figure ? { source: "current-render", figure, fit } : undefined,
+          themeOverride: themeOverride ?? undefined,
           clientLog: {
             messageId: userMessageId,
             sentAt: new Date().toISOString()
@@ -435,6 +439,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setHistory([]);
     setError("");
     setAttachment(null);
+    setThemeOverride(null);
     setActiveTab("preview");
     setOptimizedPromptReady(false);
   }
@@ -806,6 +811,8 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </div>
               </div>
               {uploadError ? <p className="chat-inline-error">{uploadError}</p> : null}
+
+              <ThemeOverridePanel key={themeOverride ? "theme-custom" : "theme-auto"} value={themeOverride} onChange={setThemeOverride} />
 
               <div className="workspace-chat-history flex flex-col">
                 <div ref={chatScrollRef} className="workspace-chat-scroll chat-thread">

@@ -13,9 +13,10 @@ export async function figureToPptx(figure: Figure): Promise<Buffer> {
   deck.subject = figure.metadata.description;
   deck.title = figure.metadata.title;
   deck.company = "PPT-SVG";
+  const fontFace = figure.canvas.fontFamily ?? PPTX_DEFAULT_FONT_FACE;
   deck.theme = {
-    headFontFace: PPTX_DEFAULT_FONT_FACE,
-    bodyFontFace: PPTX_DEFAULT_FONT_FACE
+    headFontFace: fontFace,
+    bodyFontFace: fontFace
   };
 
   const slide = deck.addSlide();
@@ -64,7 +65,7 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       y: pyToIn(element.y, figure.canvas.height),
       w: pxToIn(element.width ?? 240, figure.canvas.width),
       h: pyToIn(element.height ?? 70, figure.canvas.height),
-      fontFace: PPTX_DEFAULT_FONT_FACE,
+      fontFace: figure.canvas.fontFamily ?? PPTX_DEFAULT_FONT_FACE,
       fontSize: element.fontSize ?? 22,
       bold: (element.fontWeight ?? 500) >= 600,
       color: stripHash(element.fill ?? "#1D2433"),

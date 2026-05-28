@@ -15,6 +15,8 @@ import {
 } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
+import { resolveThemeFromAttachments } from "@/lib/theme-extract";
+import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
@@ -118,9 +120,11 @@ export async function POST(request: Request) {
       ? await compressContext(generationRequest)
       : generationRequest.userDescription;
     const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext));
+    const sessionTheme = await resolveThemeFromAttachments(generationRequest.attachments);
+    const requestedTheme = mergeTheme(sessionTheme, normalizeThemeOverride(body.themeOverride));
     const parsed = tryParseJsonObject(rawOutput);
     const validation = parsed.ok
-      ? validateAndNormalizeSemanticResponse(parsed.value, body.skillId, body.language)
+      ? validateAndNormalizeSemanticResponse(parsed.value, body.skillId, body.language, requestedTheme)
       : {
           ok: false,
           errors: [`Model returned invalid JSON: ${parsed.error}`]
@@ -172,7 +176,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, body.skillId, body.language);
+    const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, body.skillId, body.language, requestedTheme);
 
     if (!repairedValidation.ok || !repairedValidation.response) {
       console.warn(`[generate:${requestId}] repair failed`, {

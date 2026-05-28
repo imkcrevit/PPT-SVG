@@ -6,6 +6,11 @@ import type { MouseEvent, PointerEvent, ReactNode } from "react";
 import { limitLinesToHeight, sanitizeXmlText, wrapSvgText } from "@/lib/text-layout";
 import type { Figure, FigureElement, TextElement } from "@/lib/types";
 
+function cssFontStack(fontFamily?: string): string {
+  const primary = (fontFamily ?? "Microsoft YaHei").replace(/["<>]/g, "");
+  return `'${primary}', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif`;
+}
+
 interface FigureSvgProps {
   figure: Figure;
   svgId?: string;
@@ -25,6 +30,7 @@ interface SelectionBox {
 export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedIds, onSelect, onSelectIds }: FigureSvgProps) {
   const activeSelectedIds = selectedIds ?? (selectedId ? [selectedId] : []);
   const isInteractive = Boolean(onSelect || onSelectIds);
+  const fontFamily = cssFontStack(figure.canvas.fontFamily);
   const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
 
   function getPoint(event: PointerEvent<SVGSVGElement>) {
@@ -87,6 +93,7 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       viewBox={`0 0 ${figure.canvas.width} ${figure.canvas.height}`}
       role="img"
       aria-labelledby={`${svgId}-title ${svgId}-desc`}
+      fontFamily={fontFamily}
       className="h-full w-full touch-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -96,7 +103,7 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       <title id={`${svgId}-title`}>{sanitizeXmlText(figure.metadata.title)}</title>
       <desc id={`${svgId}-desc`}>{sanitizeXmlText(figure.metadata.description)}</desc>
       <rect width={figure.canvas.width} height={figure.canvas.height} fill={figure.canvas.background} />
-      {figure.elements.map((element) => renderElement(element, activeSelectedIds, isInteractive, onSelect, onSelectIds))}
+      {figure.elements.map((element) => renderElement(element, activeSelectedIds, isInteractive, fontFamily, onSelect, onSelectIds))}
       {visibleBox ? (
         <rect
           x={visibleBox.x}
@@ -118,6 +125,7 @@ function renderElement(
   element: FigureElement,
   selectedIds: string[],
   isInteractive: boolean,
+  fontFamily: string,
   onSelect?: (id: string) => void,
   onSelectIds?: (ids: string[]) => void
 ): ReactNode {
@@ -145,7 +153,7 @@ function renderElement(
   if (element.type === "group") {
     return (
       <g {...shared}>
-        {element.children.map((child) => renderElement(child, selectedIds, isInteractive, onSelect, onSelectIds))}
+        {element.children.map((child) => renderElement(child, selectedIds, isInteractive, fontFamily, onSelect, onSelectIds))}
       </g>
     );
   }
@@ -167,7 +175,7 @@ function renderElement(
   }
 
   if (element.type === "text") {
-    return renderText(element, isSelected, shared);
+    return renderText(element, isSelected, shared, fontFamily);
   }
 
   if (element.type === "line") {
@@ -226,7 +234,8 @@ function renderText(
     opacity?: number;
     onClick?: (event: MouseEvent<SVGElement>) => void;
     className?: string;
-  }
+  },
+  fontFamily: string
 ) {
   const fontSize = element.fontSize ?? 22;
   const width = element.width ?? 240;
@@ -262,7 +271,7 @@ function renderText(
         fontWeight={element.fontWeight ?? 500}
         textAnchor={anchor}
         dominantBaseline="middle"
-        fontFamily="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"
+        fontFamily={fontFamily}
       >
         {lines.map((line, index) => (
           <tspan key={`${element.id}-line-${index}`} x={anchorX} y={firstLineY + index * lineHeight}>

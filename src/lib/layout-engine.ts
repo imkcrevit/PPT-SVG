@@ -1,5 +1,6 @@
 import type { Figure, FigureElement } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
+import { DEFAULT_THEME, resolveTheme, type DiagramTheme } from "@/lib/theme";
 import {
   layoutCycle,
   layoutFishbone,
@@ -62,19 +63,10 @@ interface LayoutNode {
   detailLines: number;
 }
 
-const ACCENTS = [
-  { stroke: "#5B6B86", tint: "#FBF6EC" },
-  { stroke: "#6B5BD2", tint: "#EFEBFB" },
-  { stroke: "#7A5AC4", tint: "#F0EAFA" },
-  { stroke: "#2E9E76", tint: "#E7F5EF" },
-  { stroke: "#2F6FED", tint: "#EAF1FE" },
-  { stroke: "#E08A1E", tint: "#FDF1DF" },
-  { stroke: "#D6457C", tint: "#FCE8F0" },
-  { stroke: "#C0453C", tint: "#FBE9E7" }
-];
-const TEXT = "#1D2433";
-const SUBTEXT = "#6B7280";
-const EDGE = "#52607A";
+let ACCENTS = DEFAULT_THEME.accents;
+let TEXT = DEFAULT_THEME.text;
+let SUBTEXT = DEFAULT_THEME.subtext;
+let EDGE = DEFAULT_THEME.edge;
 
 function visualLen(value: string): number {
   let length = 0;
@@ -358,19 +350,29 @@ function routeEdge(source: Box, target: Box, obstacles: Box[]): Pt[] {
   ];
 }
 
-export function layoutDiagram(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
-  if (diagram.type === "timeline") return layoutTimeline(diagram, canvasBg);
-  if (diagram.type === "pyramid") return layoutPyramid(diagram, canvasBg);
-  if (diagram.type === "matrix") return layoutMatrix(diagram, canvasBg);
-  if (diagram.type === "hierarchy") return layoutHierarchy(diagram, canvasBg);
-  if (diagram.type === "cycle") return layoutCycle(diagram, canvasBg);
-  if (diagram.type === "funnel") return layoutFunnel(diagram, canvasBg);
-  if (diagram.type === "venn") return layoutVenn(diagram, canvasBg);
-  if (diagram.type === "mindmap") return layoutMindmap(diagram, canvasBg);
-  if (diagram.type === "fishbone") return layoutFishbone(diagram, canvasBg);
-  if (diagram.type === "gantt") return layoutGantt(diagram, canvasBg);
-  if (diagram.type === "swimlane") return layoutSwimlane(diagram, canvasBg);
-  if (diagram.type === "scatter") return layoutScatter(diagram, canvasBg);
+export function layoutDiagram(
+  diagram: SemanticDiagram,
+  opts: { theme?: DiagramTheme; canvasBg?: string } | string = {}
+): Figure {
+  const options = typeof opts === "string" ? { canvasBg: opts } : opts;
+  const theme = resolveTheme(options.theme);
+  ACCENTS = theme.accents;
+  TEXT = theme.text;
+  SUBTEXT = theme.subtext;
+  EDGE = theme.edge;
+  const canvasBg = options.canvasBg ?? theme.background;
+  if (diagram.type === "timeline") return layoutTimeline(diagram, theme, canvasBg);
+  if (diagram.type === "pyramid") return layoutPyramid(diagram, theme, canvasBg);
+  if (diagram.type === "matrix") return layoutMatrix(diagram, theme, canvasBg);
+  if (diagram.type === "hierarchy") return layoutHierarchy(diagram, theme, canvasBg);
+  if (diagram.type === "cycle") return layoutCycle(diagram, theme, canvasBg);
+  if (diagram.type === "funnel") return layoutFunnel(diagram, theme, canvasBg);
+  if (diagram.type === "venn") return layoutVenn(diagram, theme, canvasBg);
+  if (diagram.type === "mindmap") return layoutMindmap(diagram, theme, canvasBg);
+  if (diagram.type === "fishbone") return layoutFishbone(diagram, theme, canvasBg);
+  if (diagram.type === "gantt") return layoutGantt(diagram, theme, canvasBg);
+  if (diagram.type === "swimlane") return layoutSwimlane(diagram, theme, canvasBg);
+  if (diagram.type === "scatter") return layoutScatter(diagram, theme, canvasBg);
 
   const width = 1280;
   const height = 720;
@@ -672,7 +674,7 @@ export function layoutDiagram(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): F
   });
 
   return {
-    canvas: { width, height, background: canvasBg },
+    canvas: { width, height, background: canvasBg, fontFamily: theme.fontFamily },
     metadata: {
       title: diagram.title,
       description: diagram.description ?? diagram.title,

@@ -11,6 +11,7 @@
     "stop": "bash ./scripts/start.sh stop",
     "check:sessions": "node scripts/check-session-concurrency.mjs",
     "test:snapshots": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/snapshot-test.ts",
+    "test:layout": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/diagram-layout-assertions.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

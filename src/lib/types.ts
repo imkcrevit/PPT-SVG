@@ -1,3 +1,4 @@
+import type { DiagramTheme, ThemeOverride } from "@/lib/theme";
 export const LOCALES = ["en", "zh"] as const;
 export type Locale = (typeof LOCALES)[number];
 
@@ -12,6 +13,7 @@ export interface CanvasSpec {
   width: number;
   height: number;
   background: string;
+  fontFamily?: string;
 }
 
 export interface FigureMetadata {
@@ -128,6 +130,7 @@ export interface GenerateFigureRequest {
   conversationId?: string;
   conversationTurn?: number;
   attachments?: UploadedAttachment[];
+  themeOverride?: ThemeOverride;
   pptContext?: {
     fileName?: string;
     extractedText?: string;
@@ -152,6 +155,7 @@ export interface UploadedAttachment {
   size: number;
   path: string;
   extractedText?: string;
+  theme?: DiagramTheme;
 }
 
 export interface InternalSkill {

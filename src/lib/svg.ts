@@ -1,23 +1,29 @@
 import type { Figure, FigureElement, TextElement } from "@/lib/types";
 import { limitLinesToHeight, sanitizeXmlText, wrapSvgText } from "@/lib/text-layout";
 
+function cssFontStack(fontFamily?: string): string {
+  const primary = (fontFamily ?? "Microsoft YaHei").replace(/["<>]/g, "");
+  return `'${primary}', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif`;
+}
+
 export function renderFigureSvg(figure: Figure): string {
+  const fontFamily = cssFontStack(figure.canvas.fontFamily);
   return [
-    `<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${figure.canvas.width} ${figure.canvas.height}" role="img" aria-labelledby="figure-title figure-desc">`,
+    `<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${figure.canvas.width} ${figure.canvas.height}" role="img" aria-labelledby="figure-title figure-desc" font-family="${fontFamily}">`,
     `<metadata>${escapeXml(JSON.stringify(figure.metadata))}</metadata>`,
     `<title id="figure-title">${escapeXml(figure.metadata.title)}</title>`,
     `<desc id="figure-desc">${escapeXml(figure.metadata.description)}</desc>`,
     `<rect width="${figure.canvas.width}" height="${figure.canvas.height}" fill="${figure.canvas.background}" />`,
-    ...figure.elements.map(renderElement),
+    ...figure.elements.map((element) => renderElement(element, fontFamily)),
     "</svg>"
   ].join("\n");
 }
 
-function renderElement(element: FigureElement): string {
+function renderElement(element: FigureElement, fontFamily: string): string {
   const opacity = element.opacity === undefined ? "" : ` opacity="${element.opacity}"`;
 
   if (element.type === "group") {
-    return `<g data-node-id="${element.id}"${opacity}>\n${element.children.map(renderElement).join("\n")}\n</g>`;
+    return `<g data-node-id="${element.id}"${opacity}>\n${element.children.map((child) => renderElement(child, fontFamily)).join("\n")}\n</g>`;
   }
 
   if (element.type === "rect") {
@@ -25,7 +31,7 @@ function renderElement(element: FigureElement): string {
   }
 
   if (element.type === "text") {
-    return renderText(element, opacity);
+    return renderText(element, opacity, fontFamily);
   }
 
   if (element.type === "line") {
@@ -44,7 +50,7 @@ function renderElement(element: FigureElement): string {
   return renderArrow(element, opacity);
 }
 
-function renderText(element: TextElement, opacity: string): string {
+function renderText(element: TextElement, opacity: string, fontFamily: string): string {
   const fontSize = element.fontSize ?? 22;
   const width = element.width ?? 240;
   const lineHeight = fontSize * 1.18;
@@ -63,7 +69,7 @@ function renderText(element: TextElement, opacity: string): string {
     )
     .join("");
 
-  return `<text data-node-id="${element.id}" x="${round(anchorX)}" y="${round(firstLineY)}" fill="${element.fill ?? "#2F3337"}" font-size="${fontSize}" font-weight="${element.fontWeight ?? 500}" text-anchor="${anchor}" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"${opacity}>${tspans}</text>`;
+  return `<text data-node-id="${element.id}" x="${round(anchorX)}" y="${round(firstLineY)}" fill="${element.fill ?? "#2F3337"}" font-size="${fontSize}" font-weight="${element.fontWeight ?? 500}" text-anchor="${anchor}" dominant-baseline="middle" font-family="${fontFamily}"${opacity}>${tspans}</text>`;
 }
 
 function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity: string): string {

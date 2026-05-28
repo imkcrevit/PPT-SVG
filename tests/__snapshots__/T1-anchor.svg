@@ -1,28 +1,28 @@
-<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif">
 <metadata>{&quot;title&quot;:&quot;A 系统集成示意&quot;,&quot;description&quot;:&quot;A 系统集成示意&quot;,&quot;skillId&quot;:&quot;architecture&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
 <title id="figure-title">A 系统集成示意</title>
 <desc id="figure-desc">A 系统集成示意</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">A 系统集成示意</tspan></text>
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">A 系统集成示意</tspan></text>
 <rect data-node-id="band-0" x="493" y="263" width="294" height="138" rx="14" fill="#FBF6EC" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-0" x="493" y="250" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="493" y="250">内部域</tspan></text>
+<text data-node-id="band-label-0" x="493" y="250" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="493" y="250">内部域</tspan></text>
 <rect data-node-id="band-1" x="493" y="445" width="294" height="68" rx="14" fill="#EFEBFB" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-1" x="493" y="432" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="493" y="432">外部系统</tspan></text>
+<text data-node-id="band-label-1" x="493" y="432" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="493" y="432">外部系统</tspan></text>
 <g data-node-id="a-group">
 <rect data-node-id="a-rect" x="501" y="271" width="278" height="122" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
-<text data-node-id="a-label" x="640" y="288" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="288">A 系统</tspan></text>
+<text data-node-id="a-label" x="640" y="288" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="288">A 系统</tspan></text>
 <g data-node-id="b-group">
 <rect data-node-id="b-rect" x="519" y="323" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="b-title" x="574" y="348.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="574" y="348.5">子系统 B</tspan></text>
+<text data-node-id="b-title" x="574" y="348.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="574" y="348.5">子系统 B</tspan></text>
 </g>
 <g data-node-id="c-group">
 <rect data-node-id="c-rect" x="651" y="323" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="c-title" x="706" y="348.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="706" y="348.5">子系统 C</tspan></text>
+<text data-node-id="c-title" x="706" y="348.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="706" y="348.5">子系统 C</tspan></text>
 </g>
 </g>
 <g data-node-id="d-group">
 <rect data-node-id="d-rect" x="585" y="453" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d-title" x="640" y="478.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="478.5">D 系统</tspan></text>
+<text data-node-id="d-title" x="640" y="478.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="478.5">D 系统</tspan></text>
 </g>
 <line data-node-id="edge-0-seg-0" x1="574" y1="375" x2="574" y2="414" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
 <line data-node-id="edge-0-seg-1" x1="574" y1="414" x2="640" y2="414" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
@@ -31,5 +31,5 @@
 <polygon points="640,453 629,435 651,435" fill="#52607A" />
 </g>
 <rect data-node-id="edge-0-label-bg" x="588" y="402" width="38" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-0-label" x="607" y="413" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="607" y="413">调用</tspan></text>
+<text data-node-id="edge-0-label" x="607" y="413" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="607" y="413">调用</tspan></text>
 </svg>

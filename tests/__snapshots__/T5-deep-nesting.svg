@@ -1,38 +1,38 @@
-<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif">
 <metadata>{&quot;title&quot;:&quot;电商平台系统架构&quot;,&quot;description&quot;:&quot;电商平台系统架构&quot;,&quot;skillId&quot;:&quot;architecture&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
 <title id="figure-title">电商平台系统架构</title>
 <desc id="figure-desc">电商平台系统架构</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">电商平台系统架构</tspan></text>
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">电商平台系统架构</tspan></text>
 <g data-node-id="platform-group">
 <rect data-node-id="platform-rect" x="267" y="292" width="746" height="192" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
-<text data-node-id="platform-label" x="640" y="309" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="309">电商平台</tspan></text>
+<text data-node-id="platform-label" x="640" y="309" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="309">电商平台</tspan></text>
 <g data-node-id="order-center-group">
 <rect data-node-id="order-center-rect" x="285" y="344" width="410" height="122" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
-<text data-node-id="order-center-label" x="490" y="361" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="490" y="361">订单中心</tspan></text>
+<text data-node-id="order-center-label" x="490" y="361" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="490" y="361">订单中心</tspan></text>
 <g data-node-id="oc-create-group">
 <rect data-node-id="oc-create-rect" x="303" y="396" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="oc-create-title" x="358" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="358" y="421.5">下单服务</tspan></text>
+<text data-node-id="oc-create-title" x="358" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="358" y="421.5">下单服务</tspan></text>
 </g>
 <g data-node-id="oc-pay-group">
 <rect data-node-id="oc-pay-rect" x="435" y="396" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="oc-pay-title" x="490" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="490" y="421.5">支付服务</tspan></text>
+<text data-node-id="oc-pay-title" x="490" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="490" y="421.5">支付服务</tspan></text>
 </g>
 <g data-node-id="oc-refund-group">
 <rect data-node-id="oc-refund-rect" x="567" y="396" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="oc-refund-title" x="622" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="622" y="421.5">退款服务</tspan></text>
+<text data-node-id="oc-refund-title" x="622" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="622" y="421.5">退款服务</tspan></text>
 </g>
 </g>
 <g data-node-id="user-center-group">
 <rect data-node-id="user-center-rect" x="717" y="344" width="278" height="122" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
-<text data-node-id="user-center-label" x="856" y="361" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="856" y="361">用户中心</tspan></text>
+<text data-node-id="user-center-label" x="856" y="361" fill="#1D2433" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="856" y="361">用户中心</tspan></text>
 <g data-node-id="uc-auth-group">
 <rect data-node-id="uc-auth-rect" x="735" y="396" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="uc-auth-title" x="790" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="790" y="421.5">认证模块</tspan></text>
+<text data-node-id="uc-auth-title" x="790" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="790" y="421.5">认证模块</tspan></text>
 </g>
 <g data-node-id="uc-member-group">
 <rect data-node-id="uc-member-rect" x="867" y="396" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="uc-member-title" x="922" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="922" y="421.5">会员模块</tspan></text>
+<text data-node-id="uc-member-title" x="922" y="421.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="922" y="421.5">会员模块</tspan></text>
 </g>
 </g>
 </g>
@@ -41,5 +41,5 @@
 <polygon points="717,405 699,416 699,394" fill="#52607A" />
 </g>
 <rect data-node-id="edge-0-label-bg" x="674" y="393" width="64" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-0-label" x="706" y="404" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="706" y="404">查询用户</tspan></text>
+<text data-node-id="edge-0-label" x="706" y="404" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="706" y="404">查询用户</tspan></text>
 </svg>

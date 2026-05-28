@@ -12,6 +12,7 @@ import {
   isAllowedAttachmentExtension
 } from "@/lib/file-limits";
 import type { UploadedAttachment } from "@/lib/types";
+import { extractTheme } from "@/lib/theme-extract";
 
 const MAX_ZIP_ENTRIES = 500;
 const MAX_ZIP_UNCOMPRESSED_BYTES = 80 * 1024 * 1024;
@@ -66,7 +67,8 @@ export async function persistAttachment(file: File): Promise<UploadedAttachment>
     mimeType: file.type || mimeTypeFromExtension(extension),
     size: file.size,
     path: storedPath,
-    extractedText: await extractInlineText(extension, bytes)
+    extractedText: await extractInlineText(extension, bytes),
+    theme: await extractTheme(extension, bytes)
   };
 }
 

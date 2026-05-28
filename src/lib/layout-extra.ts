@@ -14,6 +14,7 @@
 import type { Figure, FigureElement } from "@/lib/types";
 import { SKILL_IDS, type SkillId } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
+import { DEFAULT_THEME, type DiagramTheme } from "@/lib/theme";
 
 const W = 1280;
 const H = 720;
@@ -24,19 +25,19 @@ const DETAIL_FONT = 12;
 const TITLE_LH = TITLE_FONT * 1.28;
 const DETAIL_LH = DETAIL_FONT * 1.32;
 
-const ACCENTS = [
-  { stroke: "#5B6B86", tint: "#FBF6EC" },
-  { stroke: "#6B5BD2", tint: "#EFEBFB" },
-  { stroke: "#7A5AC4", tint: "#F0EAFA" },
-  { stroke: "#2E9E76", tint: "#E7F5EF" },
-  { stroke: "#2F6FED", tint: "#EAF1FE" },
-  { stroke: "#E08A1E", tint: "#FDF1DF" },
-  { stroke: "#D6457C", tint: "#FCE8F0" },
-  { stroke: "#C0453C", tint: "#FBE9E7" }
-];
-const TEXT = "#1D2433";
-const SUBTEXT = "#6B7280";
-const EDGE = "#52607A";
+let ACCENTS = DEFAULT_THEME.accents;
+let TEXT = DEFAULT_THEME.text;
+let SUBTEXT = DEFAULT_THEME.subtext;
+let EDGE = DEFAULT_THEME.edge;
+let FONT = DEFAULT_THEME.fontFamily;
+
+function applyTheme(theme: DiagramTheme): void {
+  ACCENTS = theme.accents;
+  TEXT = theme.text;
+  SUBTEXT = theme.subtext;
+  EDGE = theme.edge;
+  FONT = theme.fontFamily;
+}
 
 function visualLen(value: string): number {
   let length = 0;
@@ -89,7 +90,7 @@ function titleElement(diagram: SemanticDiagram): FigureElement {
 
 function frame(diagram: SemanticDiagram, elements: FigureElement[], canvasBg: string): Figure {
   return {
-    canvas: { width: W, height: H, background: canvasBg },
+    canvas: { width: W, height: H, background: canvasBg, fontFamily: FONT },
     metadata: {
       title: diagram.title,
       description: diagram.description ?? diagram.title,
@@ -174,7 +175,8 @@ function card(
 }
 
 // ============================================================ TIMELINE
-export function layoutTimeline(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutTimeline(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const items = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (items.length === 0) return frame(diagram, elements, canvasBg);
@@ -226,7 +228,8 @@ export function layoutTimeline(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): 
 }
 
 // ============================================================ PYRAMID
-export function layoutPyramid(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutPyramid(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const tiers = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (tiers.length === 0) return frame(diagram, elements, canvasBg);
@@ -261,7 +264,8 @@ export function layoutPyramid(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): F
 }
 
 // ============================================================ MATRIX (2x2 / NxM)
-export function layoutMatrix(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutMatrix(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const tops = topLevel(diagram);
   // If a single top-level container holds the cells, use its children.
   let cells: SemanticNode[];
@@ -321,7 +325,8 @@ interface TreePos {
   depth: number;
 }
 
-export function layoutHierarchy(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const elements: FigureElement[] = [titleElement(diagram)];
   const roots = topLevel(diagram);
   if (roots.length === 0) return frame(diagram, elements, canvasBg);
@@ -406,7 +411,8 @@ export function layoutHierarchy(diagram: SemanticDiagram, canvasBg = "#FFFFFF"):
 }
 
 // ============================================================ CYCLE
-export function layoutCycle(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutCycle(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const items = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   const n = items.length;
@@ -451,7 +457,8 @@ export function layoutCycle(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Fig
 }
 
 // ============================================================ FUNNEL (true trapezoids; needs polygon)
-export function layoutFunnel(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutFunnel(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const stages = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   const n = stages.length;
@@ -525,7 +532,8 @@ export function layoutFunnel(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Fi
 }
 
 // ============================================================ VENN (2-3 sets; needs ellipse)
-export function layoutVenn(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutVenn(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const sets = topLevel(diagram).slice(0, 3);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (sets.length === 0) return frame(diagram, elements, canvasBg);
@@ -563,7 +571,8 @@ export function layoutVenn(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figu
 }
 
 // ============================================================ MINDMAP (balanced left/right)
-export function layoutMindmap(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutMindmap(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const elements: FigureElement[] = [titleElement(diagram)];
   const roots = topLevel(diagram);
   if (roots.length === 0) return frame(diagram, elements, canvasBg);
@@ -613,7 +622,8 @@ export function layoutMindmap(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): F
 }
 
 // ============================================================ FISHBONE (cause-effect)
-export function layoutFishbone(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutFishbone(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const elements: FigureElement[] = [titleElement(diagram)];
   const tops = topLevel(diagram);
   if (tops.length === 0) return frame(diagram, elements, canvasBg);
@@ -658,7 +668,8 @@ export function layoutFishbone(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): 
 
 // ============================================================ GANTT (needs node.start / node.end)
 type GanttNode = { start?: string | number; end?: string | number };
-export function layoutGantt(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutGantt(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const tasks = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (tasks.length === 0) return frame(diagram, elements, canvasBg);
@@ -713,7 +724,8 @@ export function layoutGantt(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Fig
 // ============================================================ SWIMLANE (needs node.lane / diagram.lanes)
 type LaneNode = { lane?: string };
 type LaneDiagram = { lanes?: string[] };
-export function layoutSwimlane(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutSwimlane(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const nodes = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (nodes.length === 0) return frame(diagram, elements, canvasBg);
@@ -774,7 +786,8 @@ export function layoutSwimlane(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): 
 // ============================================================ SCATTER / 2D positioning (needs node.score {x,y})
 type ScoreNode = { score?: { x: number; y: number } };
 type AxesDiagram = { axes?: { xLabel?: string; yLabel?: string } };
-export function layoutScatter(diagram: SemanticDiagram, canvasBg = "#FFFFFF"): Figure {
+export function layoutScatter(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
   const pts = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (pts.length === 0) return frame(diagram, elements, canvasBg);

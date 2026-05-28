@@ -1,28 +1,28 @@
-<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc">
+<svg id="figure-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="figure-title figure-desc" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif">
 <metadata>{&quot;title&quot;:&quot;产品上线流程&quot;,&quot;description&quot;:&quot;产品上线流程&quot;,&quot;skillId&quot;:&quot;flow&quot;,&quot;language&quot;:&quot;zh&quot;}</metadata>
 <title id="figure-title">产品上线流程</title>
 <desc id="figure-desc">产品上线流程</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="68">产品上线流程</tspan></text>
+<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">产品上线流程</tspan></text>
 <g data-node-id="review-group">
 <rect data-node-id="review-rect" x="321" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="review-title" x="376" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="376" y="387.5">需求评审</tspan></text>
+<text data-node-id="review-title" x="376" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="387.5">需求评审</tspan></text>
 </g>
 <g data-node-id="design-group">
 <rect data-node-id="design-rect" x="453" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="design-title" x="508" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="508" y="387.5">设计</tspan></text>
+<text data-node-id="design-title" x="508" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="508" y="387.5">设计</tspan></text>
 </g>
 <g data-node-id="dev-group">
 <rect data-node-id="dev-rect" x="585" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="dev-title" x="640" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="640" y="387.5">开发</tspan></text>
+<text data-node-id="dev-title" x="640" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="387.5">开发</tspan></text>
 </g>
 <g data-node-id="test-group">
 <rect data-node-id="test-rect" x="717" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="test-title" x="772" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="772" y="387.5">测试</tspan></text>
+<text data-node-id="test-title" x="772" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="772" y="387.5">测试</tspan></text>
 </g>
 <g data-node-id="release-group">
 <rect data-node-id="release-rect" x="849" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="release-title" x="904" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Roboto, Noto Sans CJK SC, Arial, sans-serif"><tspan x="904" y="387.5">发布</tspan></text>
+<text data-node-id="release-title" x="904" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="904" y="387.5">发布</tspan></text>
 </g>
 <g data-node-id="edge-0-head">
 <line x1="431" y1="388" x2="439" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
