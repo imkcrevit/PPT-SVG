@@ -23,6 +23,7 @@ import type { ReactNode } from "react";
 import { FigureSvg } from "@/components/figure-svg";
 import ThemeOverridePanel from "@/components/ThemeOverridePanel";
 import { appUrl } from "@/lib/app-url";
+import { buildExportFilename, type ExportExtension } from "@/lib/export-filename";
 import { ACCEPTED_CONTEXT_EXTENSIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_NAME_CHARS } from "@/lib/file-limits";
 import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
@@ -151,7 +152,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [figure, setFigure] = useState<Figure | null>(null);
-  const [currentRenderTurn, setCurrentRenderTurn] = useState(0);
+  const [, setCurrentRenderTurn] = useState(0);
   const [fit, setFit] = useState<FitAssessment | null>(null);
   const [model, setModel] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -170,6 +171,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(crypto.randomUUID());
+  const exportDownloadIndexRef = useRef(0);
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
   const conversationTurnCount = chatEntries.filter((entry) => entry.role === "user").length;
   const remainingTurns = Math.max(0, MAX_CONVERSATION_TURNS - conversationTurnCount);
@@ -436,6 +438,7 @@ export function Workspace({ locale }: WorkspaceProps) {
 
   function startNewConversation() {
     sessionIdRef.current = crypto.randomUUID();
+    exportDownloadIndexRef.current = 0;
     setDescription("");
     setClarificationRequest(null);
     setChatEntries([]);
@@ -619,9 +622,14 @@ export function Workspace({ locale }: WorkspaceProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${figure?.metadata.title || "ppt-svg"}.svg`.replace(/[^\w.-]+/g, "-");
+    link.download = nextExportFilename("svg");
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function nextExportFilename(extension: ExportExtension): string {
+    exportDownloadIndexRef.current += 1;
+    return buildExportFilename(sessionIdRef.current, exportDownloadIndexRef.current, extension);
   }
 
   async function downloadPptx() {
@@ -651,7 +659,7 @@ export function Workspace({ locale }: WorkspaceProps) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `session-${currentRenderTurn || conversationTurnCount || 1}.pptx`;
+      link.download = nextExportFilename("pptx");
       link.click();
       URL.revokeObjectURL(url);
     } catch (downloadError) {

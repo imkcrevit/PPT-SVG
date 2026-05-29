@@ -244,7 +244,7 @@ function elementBox(element: FigureElement): Box {
     };
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     if (!element.points.length) {
       return { x: 0, y: 0, width: 0, height: 0 };
     }
@@ -387,6 +387,10 @@ function authoredElementPoint(element: FigureElement): { x: number; y: number } 
       x: (element.x1 + element.x2) / 2,
       y: (element.y1 + element.y2) / 2
     };
+  }
+
+  if (element.type === "connector") {
+    return centerOf(elementBox(element));
   }
 
   return undefined;

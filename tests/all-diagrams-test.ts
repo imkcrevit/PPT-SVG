@@ -174,10 +174,10 @@ const CASES: Case[] = [
         title: "排期",
         language: "zh",
         nodes: [
-          { id: "a", label: "设计", start: 0, end: 2, parent: null },
-          { id: "b", label: "开发", start: 2, end: 6, parent: null },
-          { id: "c", label: "测试", start: 5, end: 8, parent: null },
-          { id: "d", label: "上线", start: 8, end: 9, parent: null }
+          { id: "a", label: "设计", detail: "第1-2周", parent: null },
+          { id: "b", label: "开发", detail: "第2-6周", parent: null },
+          { id: "c", label: "测试", detail: "第5-8周", parent: null },
+          { id: "d", label: "上线", detail: "第8-9周", parent: null }
         ]
       } as unknown as SemanticDiagram)
   },
@@ -236,7 +236,7 @@ function checkBounds(els: FigureElement[], bad: string[]): void {
     } else if (e.type === "line" || e.type === "arrow") {
       test(`${e.id}.1`, e.x1, e.y1);
       test(`${e.id}.2`, e.x2, e.y2);
-    } else if (e.type === "polygon") {
+    } else if (e.type === "polygon" || e.type === "connector") {
       e.points.forEach((p, i) => test(`${e.id}.p${i}`, p.x, p.y));
     } else if (e.type === "ellipse") {
       test(`${e.id}.c`, e.cx, e.cy);

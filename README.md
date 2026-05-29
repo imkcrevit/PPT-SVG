@@ -51,6 +51,20 @@ PPT-SVG 以 SVG 和 figure JSON 作为主要渲染路径，是为了保留更高
 - PPTX 下载会把当前 figure JSON 提交到 `/api/export/pptx`，并转换为可编辑 PowerPoint 形状。
 - SVG 驱动路径负责高自由度表达；PPTX 导出负责兼容演示文稿工作流。
 
+## Recent Export And Layout Updates
+
+- Downloaded SVG and PPTX files are named with the recorded session ID plus an increasing download index: `<sessionId>-1.svg`, `<sessionId>-2.pptx`. This avoids browser-added `(1)` suffixes and keeps exported files tied to the generation log.
+- Gantt layout now preserves explicit schedule intent, supports baseline-style timelines when the user asks for a Gantt chart, prioritizes time labels over long task text, and omits text that cannot fit without overlap.
+- SVG and PPTX exports use unified connector semantics for arrows and folded connector lines, so arrows stay attached to the connector instead of being assembled as separate line and arrow shapes.
+- PPTX export keeps text vertically centered in normal nodes, preserves left-aligned swimlane labels, and applies PowerPoint font sizes consistently.
+- Prompt constraints now emphasize preserving user intent, avoiding fabricated defaults, and asking for clarification when the target diagram or meaning is unclear.
+
+- 下载 SVG 和 PPTX 时，文件名使用日志中记录的 session ID 加递增下载序号：`<sessionId>-1.svg`、`<sessionId>-2.pptx`，避免浏览器追加 `(1)` 后缀，并让导出文件可追溯到生成日志。
+- 甘特图布局会保留用户明确的排期意图；当用户指定甘特图时支持 baseline 风格时间线；在空间不足时优先展示时间，长任务文字无法容纳时不强行显示。
+- SVG 和 PPTX 导出统一使用连接线语义，箭头和多段折线保持为一个连接关系，不再用独立线条和箭头符号拼装。
+- PPTX 导出会保持普通节点文字居中、泳道名称左对齐，并稳定应用 PowerPoint 字号。
+- 提示词约束强调不丢失用户意图、不伪造默认信息；目标不清晰时应先向用户澄清。
+
 ## Bilingual UI
 
 The app is bilingual. Use the language switch in the header or visit the locale routes directly:

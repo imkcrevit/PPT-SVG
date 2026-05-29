@@ -73,7 +73,7 @@ Right:
 
 ## Fields
 
-- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`. Match the selected skill when possible.
+- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`. Match the selected skill when possible.
 - `language`: `zh` for Simplified Chinese, `en` for English.
 - `direction`: optional `horizontal` or `vertical`.
 - `nodes`: up to 40 nodes. Every node has `id`, `label`, and `parent`.
@@ -83,10 +83,22 @@ Right:
 - `parent`: `null` or an existing node id.
 - `emphasis`: optional `primary`, `muted`, or `normal`.
 - `dashed`: optional `true` on a node for tentative/planned/placeholder items.
+- `start` / `end`: required for `gantt` task nodes when the user provides a schedule. Use numeric baseline values such as week/day/month indexes.
+- `lane`: required for `swimlane` step nodes when lanes are known.
+- `score`: optional `{ "x": number, "y": number }` for `scatter`, normalized either as `0..1` or common `0..100` scores.
 - `edges`: connections between existing node ids.
 - `edge.label`: optional short relationship word.
 - `edge.dashed`: optional `true` for feedback loops, retry/rewrite paths, optional links, or async links.
 - `layers`: optional for architecture. Each layer names a band and lists top-level node ids.
+- `lanes`: optional for `swimlane`; lane order from top to bottom.
+- `axes`: optional for `matrix` and `scatter` axis labels.
+
+## Gantt Rules
+
+- If the user explicitly asks for `甘特图`, `Gantt`, task bars, a schedule, or task ranges like `第1-2周`, output `type: "gantt"`.
+- Use task `label` for the task name and numeric `start` / `end` for time. Do not encode the task duration only as free text when it can be numeric.
+- If the user gives a baseline such as `第1到第10周`, map all tasks to that baseline.
+- Do not put long descriptions inside Gantt bar labels. Time is more important than text inside the bar; if short time text would not fit, the renderer may omit bar text.
 
 ## Output Rules
 

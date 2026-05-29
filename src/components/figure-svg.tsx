@@ -103,7 +103,7 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       <title id={`${svgId}-title`}>{sanitizeXmlText(figure.metadata.title)}</title>
       <desc id={`${svgId}-desc`}>{sanitizeXmlText(figure.metadata.description)}</desc>
       <rect width={figure.canvas.width} height={figure.canvas.height} fill={figure.canvas.background} />
-      {figure.elements.map((element) => renderElement(element, activeSelectedIds, isInteractive, fontFamily, onSelect, onSelectIds))}
+      {figure.elements.map((element) => renderElement(element, activeSelectedIds, isInteractive, fontFamily, svgId, onSelect, onSelectIds))}
       {visibleBox ? (
         <rect
           x={visibleBox.x}
@@ -126,6 +126,7 @@ function renderElement(
   selectedIds: string[],
   isInteractive: boolean,
   fontFamily: string,
+  svgId: string,
   onSelect?: (id: string) => void,
   onSelectIds?: (ids: string[]) => void
 ): ReactNode {
@@ -153,7 +154,7 @@ function renderElement(
   if (element.type === "group") {
     return (
       <g {...shared}>
-        {element.children.map((child) => renderElement(child, selectedIds, isInteractive, fontFamily, onSelect, onSelectIds))}
+        {element.children.map((child) => renderElement(child, selectedIds, isInteractive, fontFamily, svgId, onSelect, onSelectIds))}
       </g>
     );
   }
@@ -170,6 +171,7 @@ function renderElement(
         fill={element.fill}
         stroke={isSelected ? "#737A82" : element.stroke}
         strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 1.5, 3) : element.strokeWidth}
+        strokeDasharray={element.dash ? "7 5" : undefined}
       />
     );
   }
@@ -189,8 +191,13 @@ function renderElement(
         stroke={isSelected ? "#737A82" : element.stroke}
         strokeWidth={isSelected ? Math.max(element.strokeWidth ?? 2, 3) : element.strokeWidth}
         strokeLinecap="round"
+        strokeDasharray={element.dash ? "7 5" : undefined}
       />
     );
+  }
+
+  if (element.type === "connector") {
+    return renderConnector(element, isSelected, shared, svgId);
   }
 
   if (element.type === "polygon") {
@@ -222,19 +229,21 @@ function renderElement(
     );
   }
 
-  return renderArrow(element, isSelected, shared);
+  return renderArrow(element, isSelected, shared, svgId);
 }
+
+type SharedElementProps = {
+  key: string;
+  "data-node-id": string;
+  opacity?: number;
+  onClick?: (event: MouseEvent<SVGElement>) => void;
+  className?: string;
+};
 
 function renderText(
   element: TextElement,
   isSelected: boolean,
-  shared: {
-    key: string;
-    "data-node-id": string;
-    opacity?: number;
-    onClick?: (event: MouseEvent<SVGElement>) => void;
-    className?: string;
-  },
+  shared: SharedElementProps,
   fontFamily: string
 ) {
   const fontSize = element.fontSize ?? 22;
@@ -286,54 +295,104 @@ function renderText(
 function renderArrow(
   element: Extract<FigureElement, { type: "arrow" }>,
   isSelected: boolean,
-  shared: {
-    key: string;
-    "data-node-id": string;
-    opacity?: number;
-    onClick?: (event: MouseEvent<SVGElement>) => void;
-    className?: string;
-  }
+  shared: SharedElementProps,
+  svgId: string
 ) {
+  return renderPolyline(
+    {
+      id: element.id,
+      points: [
+        { x: element.x1, y: element.y1 },
+        { x: element.x2, y: element.y2 }
+      ],
+      stroke: element.stroke,
+      strokeWidth: element.strokeWidth,
+      dash: element.dash,
+      endArrow: true
+    },
+    isSelected,
+    shared,
+    svgId
+  );
+}
+
+function renderConnector(
+  element: Extract<FigureElement, { type: "connector" }>,
+  isSelected: boolean,
+  shared: SharedElementProps,
+  svgId: string
+) {
+  return renderPolyline(
+    {
+      id: element.id,
+      points: element.points,
+      stroke: element.stroke,
+      strokeWidth: element.strokeWidth,
+      dash: element.dash,
+      endArrow: element.endArrow === true
+    },
+    isSelected,
+    shared,
+    svgId
+  );
+}
+
+function renderPolyline(
+  element: {
+    id: string;
+    points: { x: number; y: number }[];
+    stroke: string;
+    strokeWidth?: number;
+    dash?: boolean;
+    endArrow?: boolean;
+  },
+  isSelected: boolean,
+  shared: SharedElementProps,
+  svgId: string
+) {
+  if (element.points.length < 2) {
+    return null;
+  }
+
   const color = isSelected ? "#737A82" : element.stroke;
   const strokeWidth = isSelected ? Math.max(element.strokeWidth ?? 2, 3) : element.strokeWidth ?? 2;
-  const points = arrowHeadPoints(element.x1, element.y1, element.x2, element.y2, 15 + strokeWidth * 1.5, 9 + strokeWidth);
-  const lineEnd = lineEndBeforeArrow(element.x1, element.y1, element.x2, element.y2, 12 + strokeWidth);
+  const markerId = safeMarkerId(`${svgId}-${element.id}`);
+  const points = element.points.map((pt) => `${round(pt.x)},${round(pt.y)}`).join(" ");
 
   return (
     <g {...shared}>
-      <line
-        x1={element.x1}
-        y1={element.y1}
-        x2={lineEnd.x}
-        y2={lineEnd.y}
+      {element.endArrow ? (
+        <defs>
+          <marker
+            id={markerId}
+            markerWidth={10}
+            markerHeight={10}
+            refX={9}
+            refY={5}
+            orient="auto"
+            markerUnits="strokeWidth"
+            overflow="visible"
+          >
+            <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
+          </marker>
+        </defs>
+      ) : null}
+      <polyline
+        points={points}
+        fill="none"
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={element.dash ? "7 5" : undefined}
+        markerEnd={element.endArrow ? `url(#${markerId})` : undefined}
       />
-      <polygon points={points} fill={color} />
     </g>
   );
 }
 
-function arrowHeadPoints(x1: number, y1: number, x2: number, y2: number, length: number, width: number): string {
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const backX = x2 - length * Math.cos(angle);
-  const backY = y2 - length * Math.sin(angle);
-  const perp = angle + Math.PI / 2;
-  const leftX = backX + width * Math.cos(perp);
-  const leftY = backY + width * Math.sin(perp);
-  const rightX = backX - width * Math.cos(perp);
-  const rightY = backY - width * Math.sin(perp);
-
-  return `${round(x2)},${round(y2)} ${round(leftX)},${round(leftY)} ${round(rightX)},${round(rightY)}`;
-}
-
-function lineEndBeforeArrow(x1: number, y1: number, x2: number, y2: number, offset: number) {
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  return {
-    x: x2 - offset * Math.cos(angle),
-    y: y2 - offset * Math.sin(angle)
-  };
+function safeMarkerId(id: string): string {
+  return `marker-${id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
 function round(value: number): number {
@@ -384,7 +443,7 @@ function getElementBounds(element: FigureElement): ReturnType<typeof normalizeBo
     return normalizeBox(element.x, element.y, element.x + (element.width ?? 240), element.y + (element.height ?? (element.fontSize ?? 22) * 1.18));
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     if (!element.points.length) {
       return undefined;
     }

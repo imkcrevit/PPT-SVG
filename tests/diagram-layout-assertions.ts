@@ -11,6 +11,7 @@
 // Exit code is non-zero if any case fails (CI-friendly).
 
 import { validateAndNormalizeSemanticDiagram } from "@/lib/semantic-validation";
+import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { layoutDiagram } from "@/lib/layout-engine";
 import { renderFigureSvg } from "@/lib/svg";
 import type { Figure, FigureElement } from "@/lib/types";
@@ -38,7 +39,7 @@ function inCanvasIssues(els: FigureElement[]): string[] {
   for (const e of flatten(els)) {
     if (e.type === "rect" || e.type === "text") { t(e.id, e.x, e.y); if (e.type === "rect") t(e.id + ".br", e.x + e.width, e.y + e.height); }
     else if (e.type === "line" || e.type === "arrow") { t(e.id + ".1", e.x1, e.y1); t(e.id + ".2", e.x2, e.y2); }
-    else if (e.type === "polygon") e.points.forEach((p, i) => t(`${e.id}.p${i}`, p.x, p.y));
+    else if (e.type === "polygon" || e.type === "connector") e.points.forEach((p, i) => t(`${e.id}.p${i}`, p.x, p.y));
     else if (e.type === "ellipse") { t(e.id + ".c", e.cx, e.cy); t(e.id + ".br", e.cx + e.rx, e.cy + e.ry); }
   }
   return bad;
@@ -52,10 +53,25 @@ interface Case {
   id: string;
   skill: SkillId;
   raw: Record<string, unknown>;
-  assert: (fig: Figure) => string[];
+  assert: (fig: Figure, svg: string) => string[];
 }
 
 const CASES: Case[] = [
+  {
+    id: "flow-connectors", skill: "flow",
+    raw: { type: "flow", title: "系统访问", language: "zh", direction: "horizontal", nodes: [
+      { id: "a", label: "A系统", parent: null }, { id: "b", label: "X中间件", parent: null }, { id: "c", label: "C系统", parent: null }
+    ], edges: [{ from: "a", to: "b" }, { from: "b", to: "c" }] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const edgeElements = byPrefix(fig.elements, "edge-");
+      const connectors = edgeElements.filter((e) => e.type === "connector");
+      const splitPieces = edgeElements.filter((e) => /-(seg-\d+|head)$/.test(e.id));
+      if (connectors.length !== 2) bad.push(`expected 2 connector edges, got ${connectors.length}`);
+      if (splitPieces.length) bad.push(`edges should not be split into line/arrow pieces, got ${splitPieces.map((e) => e.id).join(", ")}`);
+      return bad;
+    }
+  },
   {
     id: "swimlane", skill: "swimlane",
     raw: { type: "swimlane", title: "退款流程", language: "zh", lanes: ["用户", "客服", "财务", "系统"], nodes: [
@@ -69,6 +85,15 @@ const CASES: Case[] = [
       if (bands !== 4) bad.push(`expected 4 lane bands, got ${bands} (lane/lanes likely dropped in validation)`);
       const rows = distinct(byPrefix(fig.elements, "lane-node-").filter((e) => e.type === "group").map((g) => (g.type === "group" ? (g.children.find((c) => c.type === "rect") as { y?: number })?.y ?? 0 : 0)));
       if (rows < 3) bad.push(`nodes occupy only ${rows} distinct rows (expected ≥3 lanes used)`);
+      const connectors = byPrefix(fig.elements, "lane-e").filter((e) => e.type === "connector").length;
+      if (connectors !== 5) bad.push(`expected 5 one-piece swimlane connectors, got ${connectors}`);
+      const normalized = validateAndNormalizeFigureResponse({ figure: fig }, "swimlane", "zh");
+      const laneName = normalized.response ? flatten(normalized.response.figure.elements).find((e) => e.id === "lane-name-0") : undefined;
+      if (!laneName || laneName.type !== "text") {
+        bad.push("lane-name-0 missing after figure export normalization");
+      } else if (laneName.textAnchor !== "start" || laneName.x > 100) {
+        bad.push(`lane-name-0 should stay left aligned after export normalization, got anchor=${laneName.textAnchor} x=${laneName.x}`);
+      }
       return bad;
     }
   },
@@ -91,15 +116,17 @@ const CASES: Case[] = [
   {
     id: "gantt", skill: "gantt",
     raw: { type: "gantt", title: "排期", language: "zh", nodes: [
-      { id: "a", label: "设计", start: 0, end: 2, parent: null }, { id: "b", label: "开发", start: 2, end: 6, parent: null },
-      { id: "c", label: "测试", start: 5, end: 8, parent: null }, { id: "d", label: "上线", start: 8, end: 9, parent: null }
+      { id: "a", label: "设计", detail: "第1-2周", parent: null }, { id: "b", label: "开发", detail: "第2-6周", parent: null },
+      { id: "c", label: "测试", detail: "第5-8周", parent: null }, { id: "d", label: "上线", detail: "第8-9周", parent: null }
     ], edges: [] },
-    assert: (fig) => {
+    assert: (fig, svg) => {
       const bad: string[] = [];
       const realBars = byPrefix(fig.elements, "gantt-bar-").filter((e) => e.type === "rect") as Array<{ x: number; width: number }>;
       if (realBars.length !== 4) bad.push(`expected 4 bars, got ${realBars.length}`);
       if (distinct(realBars.map((b) => Math.round(b.x))) < 3) bad.push("bar start positions not differentiated — start/end likely dropped");
       if (distinct(realBars.map((b) => Math.round(b.width))) < 2) bad.push("bar widths uniform — end likely dropped");
+      if (byPrefix(fig.elements, "gantt-bar-detail-").length) bad.push("gantt bar should not render long detail text inside bars");
+      if (svg.includes("...")) bad.push("gantt SVG should not contain ellipsis-only or truncated bar text");
       return bad;
     }
   },
@@ -238,9 +265,10 @@ for (const c of CASES) {
       failures.push("validation failed: " + v.errors.slice(0, 3).join("; "));
     } else {
       const fig = layoutDiagram(v.diagram);
+      const svg = renderFigureSvg(fig);
       failures.push(...inCanvasIssues(fig.elements));
-      failures.push(...c.assert(fig));
-      if (renderFigureSvg(fig).length < 100) failures.push("svg too small / failed to render");
+      failures.push(...c.assert(fig, svg));
+      if (svg.length < 100) failures.push("svg too small / failed to render");
     }
   } catch (err) {
     failures.push("threw: " + (err instanceof Error ? err.message : String(err)));

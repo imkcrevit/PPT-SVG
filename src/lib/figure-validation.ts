@@ -3,6 +3,7 @@ import { isSkillId } from "@/lib/skills";
 import { estimateTextBlockHeight, sanitizeDisplayText } from "@/lib/text-layout";
 import type {
   ArrowElement,
+  ConnectorElement,
   Figure,
   FigureElement,
   FitAssessment,
@@ -154,7 +155,7 @@ function centerTextGroupsInSmallRects(elements: FigureElement[], canvasWidth: nu
     .sort((a, b) => a.width * a.height - b.width * b.height);
   const assignments = new Map<RectElement, TextElement[]>();
 
-  for (const text of leaves.filter(isTextElement)) {
+  for (const text of leaves.filter(isTextElement).filter((text) => !shouldPreserveTextPosition(text))) {
     const rect = findBestContainingRect(text, rects);
 
     if (!rect) {
@@ -361,6 +362,7 @@ function centerAssociatedContentInBackground(
     if (
       element === background ||
       (isRectElement(element) && isFullCanvasRect(element, canvasWidth, canvasHeight)) ||
+      (isTextElement(element) && shouldPreserveTextPosition(element)) ||
       (isTextElement(element) && isLikelyTitleText(element, canvasWidth, canvasHeight, backgroundBox))
     ) {
       return false;
@@ -522,7 +524,7 @@ function elementBox(element: FigureElement): Box {
     };
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     if (!element.points.length) {
       return { x: 0, y: 0, width: 0, height: 0 };
     }
@@ -560,7 +562,7 @@ function authoredElementPoint(element: FigureElement): { x: number; y: number } 
     };
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     const box = elementBox(element);
     return centerOf(box);
   }
@@ -706,7 +708,7 @@ function constrainElementToCanvas(element: FigureElement, canvasWidth: number, c
     return;
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     element.points = element.points.map((point) => ({
       x: round(clampNumber(point.x, 0, canvasWidth, 0)),
       y: round(clampNumber(point.y, 0, canvasHeight, 0))
@@ -764,7 +766,7 @@ function moveElement(element: FigureElement, dx: number, dy: number): void {
     return;
   }
 
-  if (element.type === "polygon") {
+  if (element.type === "polygon" || element.type === "connector") {
     element.points = element.points.map((point) => ({ x: round(point.x + dx), y: round(point.y + dy) }));
     return;
   }
@@ -819,6 +821,10 @@ function isRectElement(element: FigureElement): element is RectElement {
 
 function isTextElement(element: FigureElement): element is TextElement {
   return element.type === "text";
+}
+
+function shouldPreserveTextPosition(text: TextElement): boolean {
+  return /^(lane-name-\d+|gantt-name-\d+|matrix-ylabel|scatter-ylabel)$/.test(text.id);
 }
 
 function normalizeElement(
@@ -907,6 +913,45 @@ function normalizeElement(
       dash: record.dash === true
     };
     return base;
+  }
+
+  if (type === "connector") {
+    const pointRecords = readArray(record.points, [...path, "points"], errors) ?? [];
+    let points = pointRecords
+      .map((point, index) => {
+        const pointRecord = readRecord(point, [...path, "points", index], errors);
+
+        if (!pointRecord) {
+          return undefined;
+        }
+
+        return {
+          x: readNumber(pointRecord.x, [...path, "points", index, "x"], errors, index === 0 ? 0 : 120, 0, canvasWidth),
+          y: readNumber(pointRecord.y, [...path, "points", index, "y"], errors, index === 0 ? 0 : 120, 0, canvasHeight)
+        };
+      })
+      .filter((point): point is { x: number; y: number } => Boolean(point));
+
+    if (points.length < 2) {
+      errors.push(`${formatPath([...path, "points"])} must contain at least two points.`);
+      points = [
+        { x: 0, y: 0 },
+        { x: Math.min(120, canvasWidth), y: Math.min(120, canvasHeight) }
+      ];
+    }
+
+    const connector: ConnectorElement = {
+      id,
+      type,
+      name,
+      opacity,
+      points,
+      stroke: readColor(record.stroke, "#1D2433"),
+      strokeWidth: typeof record.strokeWidth === "number" ? clampNumber(record.strokeWidth, 0.5, 12, 2) : 2,
+      dash: record.dash === true,
+      endArrow: record.endArrow === true
+    };
+    return connector;
   }
 
   errors.push(`${formatPath(path)} has unsupported element type "${type}".`);

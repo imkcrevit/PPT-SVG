@@ -593,34 +593,15 @@ export function layoutDiagram(
     const points = routeEdge(source, target, obstacles);
     const dash = edge.dashed === true;
 
-    for (let pointIndex = 0; pointIndex < points.length - 2; pointIndex += 1) {
-      elements.push({
-        id: `edge-${index}-seg-${pointIndex}`,
-        type: "line",
-        name: `${edge.from} -> ${edge.to}`,
-        x1: x(points[pointIndex].x),
-        y1: y(points[pointIndex].y),
-        x2: x(points[pointIndex + 1].x),
-        y2: y(points[pointIndex + 1].y),
-        stroke: EDGE,
-        strokeWidth: 2,
-        dash
-      });
-    }
-
-    const beforeHead = points[points.length - 2];
-    const head = points[points.length - 1];
     elements.push({
-      id: `edge-${index}-head`,
-      type: "arrow",
+      id: `edge-${index}-connector`,
+      type: "connector",
       name: `${edge.from} -> ${edge.to}`,
-      x1: x(beforeHead.x),
-      y1: y(beforeHead.y),
-      x2: x(head.x),
-      y2: y(head.y),
+      points: points.map((point) => ({ x: x(point.x), y: y(point.y) })),
       stroke: EDGE,
       strokeWidth: 2,
-      dash
+      dash,
+      endArrow: true
     });
 
     if (edge.label) {

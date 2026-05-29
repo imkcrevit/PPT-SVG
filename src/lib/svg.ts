@@ -38,6 +38,10 @@ function renderElement(element: FigureElement, fontFamily: string): string {
     return `<line data-node-id="${element.id}" x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${element.stroke}" stroke-width="${element.strokeWidth ?? 2}" stroke-linecap="round"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
   }
 
+  if (element.type === "connector") {
+    return renderConnector(element, opacity);
+  }
+
   if (element.type === "polygon") {
     const pts = element.points.map((pt) => `${pt.x},${pt.y}`).join(" ");
     return `<polygon data-node-id="${element.id}" points="${pts}" fill="${element.fill ?? "none"}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
@@ -73,37 +77,63 @@ function renderText(element: TextElement, opacity: string, fontFamily: string): 
 }
 
 function renderArrow(element: Extract<FigureElement, { type: "arrow" }>, opacity: string): string {
-  const strokeWidth = element.strokeWidth ?? 2;
-  const points = arrowHeadPoints(element.x1, element.y1, element.x2, element.y2, 15 + strokeWidth * 1.5, 9 + strokeWidth);
-  const lineEnd = lineEndBeforeArrow(element.x1, element.y1, element.x2, element.y2, 12 + strokeWidth);
+  return renderPolyline({
+    id: element.id,
+    points: [
+      { x: element.x1, y: element.y1 },
+      { x: element.x2, y: element.y2 }
+    ],
+    stroke: element.stroke,
+    strokeWidth: element.strokeWidth,
+    dash: element.dash,
+    endArrow: true,
+    opacity
+  });
+}
+
+function renderConnector(element: Extract<FigureElement, { type: "connector" }>, opacity: string): string {
+  return renderPolyline({
+    id: element.id,
+    points: element.points,
+    stroke: element.stroke,
+    strokeWidth: element.strokeWidth,
+    dash: element.dash,
+    endArrow: element.endArrow === true,
+    opacity
+  });
+}
+
+function renderPolyline(options: {
+  id: string;
+  points: { x: number; y: number }[];
+  stroke: string;
+  strokeWidth?: number;
+  dash?: boolean;
+  endArrow?: boolean;
+  opacity: string;
+}): string {
+  if (options.points.length < 2) {
+    return "";
+  }
+
+  const strokeWidth = options.strokeWidth ?? 2;
+  const markerId = safeMarkerId(options.id);
+  const marker = options.endArrow
+    ? `<defs><marker id="${markerId}" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="${options.stroke}" /></marker></defs>`
+    : "";
+  const markerEnd = options.endArrow ? ` marker-end="url(#${markerId})"` : "";
+  const points = options.points.map((point) => `${round(point.x)},${round(point.y)}`).join(" ");
 
   return [
-    `<g data-node-id="${element.id}"${opacity}>`,
-    `<line x1="${element.x1}" y1="${element.y1}" x2="${round(lineEnd.x)}" y2="${round(lineEnd.y)}" stroke="${element.stroke}" stroke-width="${strokeWidth}" stroke-linecap="round"${element.dash ? ' stroke-dasharray="7 5"' : ""} />`,
-    `<polygon points="${points}" fill="${element.stroke}" />`,
+    `<g data-node-id="${options.id}"${options.opacity}>`,
+    marker,
+    `<polyline points="${points}" fill="none" stroke="${options.stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${options.dash ? ' stroke-dasharray="7 5"' : ""}${markerEnd} />`,
     "</g>"
   ].join("\n");
 }
 
-function arrowHeadPoints(x1: number, y1: number, x2: number, y2: number, length: number, width: number): string {
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const backX = x2 - length * Math.cos(angle);
-  const backY = y2 - length * Math.sin(angle);
-  const perp = angle + Math.PI / 2;
-  const leftX = backX + width * Math.cos(perp);
-  const leftY = backY + width * Math.sin(perp);
-  const rightX = backX - width * Math.cos(perp);
-  const rightY = backY - width * Math.sin(perp);
-
-  return `${round(x2)},${round(y2)} ${round(leftX)},${round(leftY)} ${round(rightX)},${round(rightY)}`;
-}
-
-function lineEndBeforeArrow(x1: number, y1: number, x2: number, y2: number, offset: number) {
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  return {
-    x: x2 - offset * Math.cos(angle),
-    y: y2 - offset * Math.sin(angle)
-  };
+function safeMarkerId(id: string): string {
+  return `marker-${id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 }
 
 function escapeXml(value: string): string {

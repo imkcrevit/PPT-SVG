@@ -83,6 +83,15 @@ export interface ArrowElement extends Omit<BaseElement, "type"> {
   dash?: boolean;
 }
 
+export interface ConnectorElement extends Omit<BaseElement, "type"> {
+  type: "connector";
+  points: { x: number; y: number }[];
+  stroke: string;
+  strokeWidth?: number;
+  dash?: boolean;
+  endArrow?: boolean;
+}
+
 export interface PolygonElement extends Omit<BaseElement, "type"> {
   type: "polygon";
   points: { x: number; y: number }[];
@@ -104,7 +113,15 @@ export interface EllipseElement extends Omit<BaseElement, "type"> {
   dash?: boolean;
 }
 
-export type FigureElement = GroupElement | RectElement | TextElement | LineElement | ArrowElement | PolygonElement | EllipseElement;
+export type FigureElement =
+  | GroupElement
+  | RectElement
+  | TextElement
+  | LineElement
+  | ArrowElement
+  | ConnectorElement
+  | PolygonElement
+  | EllipseElement;
 
 export interface Figure {
   canvas: CanvasSpec;

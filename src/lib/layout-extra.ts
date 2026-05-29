@@ -7,7 +7,7 @@
 // regress the existing flow / architecture layouts. Wire them in by adding early
 // returns at the top of layoutDiagram() (see INTEGRATION notes in the plan).
 //
-// They use ONLY the existing render primitives: rect / text / line / arrow / group.
+// They use ONLY the existing render primitives: rect / text / line / arrow / connector / group.
 // svg.ts wraps text inside an element's width and vertically centers it within
 // the element's height, so we only need to size boxes large enough.
 
@@ -397,9 +397,19 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
     const bx = tx(b.x + b.w / 2);
     const by = ty(b.y);
     const midY = (ay + by) / 2;
-    elements.push({ id: `htree-e${i}-s0`, type: "line", name: e.from + "->" + e.to, x1: ax, y1: ay, x2: ax, y2: midY, stroke: EDGE, strokeWidth: 2 });
-    elements.push({ id: `htree-e${i}-s1`, type: "line", name: e.from + "->" + e.to, x1: ax, y1: midY, x2: bx, y2: midY, stroke: EDGE, strokeWidth: 2 });
-    elements.push({ id: `htree-e${i}-s2`, type: "line", name: e.from + "->" + e.to, x1: bx, y1: midY, x2: bx, y2: by, stroke: EDGE, strokeWidth: 2 });
+    elements.push({
+      id: `htree-e${i}`,
+      type: "connector",
+      name: e.from + "->" + e.to,
+      points: [
+        { x: ax, y: ay },
+        { x: ax, y: midY },
+        { x: bx, y: midY },
+        { x: bx, y: by }
+      ],
+      stroke: EDGE,
+      strokeWidth: 2
+    });
   });
 
   positions.forEach((p, i) => {
@@ -668,22 +678,112 @@ export function layoutFishbone(diagram: SemanticDiagram, theme: DiagramTheme = D
 
 // ============================================================ GANTT (needs node.start / node.end)
 type GanttNode = { start?: string | number; end?: string | number };
+interface GanttRange {
+  start: number;
+  end: number;
+}
+
+function readGanttNumber(value: string | number | undefined): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+
+  return undefined;
+}
+
+function parseGanttRangeText(value: string): GanttRange | undefined {
+  const normalized = value.replace(/\s+/g, "");
+  const rangePatterns = [
+    /第?(\d+(?:\.\d+)?)(?:周|週|天|日|月)?(?:-|–|—|~|至|到)第?(\d+(?:\.\d+)?)(?:周|週|天|日|月)?/i,
+    /(?:week|wk|w)(\d+(?:\.\d+)?)(?:-|–|—|~|to)(?:week|wk|w)?(\d+(?:\.\d+)?)/i,
+    /(\d+(?:\.\d+)?)(?:-|–|—|~|to)(\d+(?:\.\d+)?)(?:周|週|天|日|月|week|wk|w)/i
+  ];
+
+  for (const pattern of rangePatterns) {
+    const match = normalized.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    const a = Number(match[1]);
+    const b = Number(match[2]);
+    if (Number.isFinite(a) && Number.isFinite(b) && a !== b) {
+      return { start: Math.min(a, b), end: Math.max(a, b) };
+    }
+  }
+
+  const single = normalized.match(/第?(\d+(?:\.\d+)?)(?:周|週|天|日|月)|(?:week|wk|w)(\d+(?:\.\d+)?)/i);
+  const singleValue = single ? Number(single[1] ?? single[2]) : NaN;
+  if (Number.isFinite(singleValue)) {
+    return { start: singleValue, end: singleValue + 1 };
+  }
+
+  return undefined;
+}
+
+function rangeFromTask(node: SemanticNode, fallbackStart: number): GanttRange {
+  const typed = node as unknown as GanttNode;
+  const explicitStart = readGanttNumber(typed.start);
+  const explicitEnd = readGanttNumber(typed.end);
+
+  if (explicitStart !== undefined && explicitEnd !== undefined && explicitStart !== explicitEnd) {
+    return { start: Math.min(explicitStart, explicitEnd), end: Math.max(explicitStart, explicitEnd) };
+  }
+
+  if (explicitStart !== undefined) {
+    return { start: explicitStart, end: explicitStart + 1 };
+  }
+
+  const parsed = parseGanttRangeText([node.label, node.detail].filter(Boolean).join(" "));
+  if (parsed) {
+    return parsed;
+  }
+
+  return { start: fallbackStart, end: fallbackStart + 1 };
+}
+
+function baselineRange(diagram: SemanticDiagram): GanttRange | undefined {
+  return parseGanttRangeText([diagram.title, diagram.description].filter(Boolean).join(" "));
+}
+
+function formatGanttTick(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+}
+
+function ganttTicks(minT: number, maxT: number): number[] {
+  const range = Math.max(1, maxT - minT);
+  const integerRange = Number.isInteger(minT) && Number.isInteger(maxT);
+
+  if (integerRange && range <= 10) {
+    return Array.from({ length: range + 1 }, (_, index) => minT + index);
+  }
+
+  const tickCount = 5;
+  return Array.from({ length: tickCount + 1 }, (_, index) => minT + (range * index) / tickCount);
+}
+
+function durationLabel(range: GanttRange): string {
+  return `${formatGanttTick(range.start)}-${formatGanttTick(range.end)}`;
+}
+
+function textFits(value: string, width: number, fontSize: number, padding = 14): boolean {
+  return visualLen(value) * fontSize * 0.62 + padding <= width;
+}
+
 export function layoutGantt(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
   applyTheme(theme);
   const tasks = topLevel(diagram);
   const elements: FigureElement[] = [titleElement(diagram)];
   if (tasks.length === 0) return frame(diagram, elements, canvasBg);
 
-  const starts = tasks.map((t, i) => {
-    const v = Number((t as unknown as GanttNode).start);
-    return Number.isFinite(v) ? v : i;
-  });
-  const ends = tasks.map((t, i) => {
-    const v = Number((t as unknown as GanttNode).end);
-    return Number.isFinite(v) ? v : starts[i] + 1;
-  });
-  const minT = Math.min(...starts);
-  const maxT = Math.max(...ends);
+  const ranges = tasks.map((task, index) => rangeFromTask(task, index));
+  const baseline = baselineRange(diagram);
+  const minT = baseline ? Math.min(baseline.start, ...ranges.map((range) => range.start)) : Math.min(...ranges.map((range) => range.start));
+  const maxT = baseline ? Math.max(baseline.end, ...ranges.map((range) => range.end)) : Math.max(...ranges.map((range) => range.end));
   const range = maxT - minT || 1;
 
   const labelW = 200;
@@ -695,13 +795,12 @@ export function layoutGantt(diagram: SemanticDiagram, theme: DiagramTheme = DEFA
   const mapX = (t: number) => left + ((t - minT) / range) * spanX;
 
   // time gridlines + tick labels
-  const ticks = 5;
-  for (let k = 0; k <= ticks; k += 1) {
-    const tv = minT + (range * k) / ticks;
+  const ticks = ganttTicks(minT, maxT);
+  ticks.forEach((tv, k) => {
     const x = mapX(tv);
     elements.push({ id: `gantt-grid-${k}`, type: "line", name: "grid", x1: x, y1: top - 12, x2: x, y2: top + rowH * tasks.length, stroke: "#E3E7EE", strokeWidth: 1 });
-    elements.push({ id: `gantt-tick-${k}`, type: "text", name: "tick", x: x - 30, y: top - 30, width: 60, height: 16, text: String(Math.round(tv * 10) / 10), fontSize: 10, fontWeight: 500, fill: SUBTEXT, textAnchor: "middle" });
-  }
+    elements.push({ id: `gantt-tick-${k}`, type: "text", name: "tick", x: x - 30, y: top - 30, width: 60, height: 16, text: formatGanttTick(tv), fontSize: 10, fontWeight: 500, fill: SUBTEXT, textAnchor: "middle" });
+  });
 
   tasks.forEach((t, i) => {
     const y = top + i * rowH;
@@ -709,12 +808,14 @@ export function layoutGantt(diagram: SemanticDiagram, theme: DiagramTheme = DEFA
     // task name (left column)
     elements.push({ id: `gantt-name-${i}`, type: "text", name: `${t.label} name`, x: MARGIN, y: y + rowH / 2 - 10, width: labelW - 12, height: 20, text: t.label, fontSize: 13, fontWeight: 700, fill: TEXT, textAnchor: "start" });
     // bar
-    const bx = mapX(starts[i]);
-    const bw = Math.max(mapX(ends[i]) - bx, 14);
+    const taskRange = ranges[i];
+    const bx = mapX(taskRange.start);
+    const bw = Math.max(mapX(taskRange.end) - bx, 14);
     const bh = Math.min(rowH - 14, 30);
     elements.push({ id: `gantt-bar-${i}`, type: "rect", name: t.label, x: bx, y: y + (rowH - bh) / 2, width: bw, height: bh, rx: 6, fill: acc.tint, stroke: acc.stroke, strokeWidth: 2, dash: t.dashed === true });
-    if (t.detail) {
-      elements.push({ id: `gantt-bar-detail-${i}`, type: "text", name: `${t.label} detail`, x: bx, y: y + rowH / 2 - 8, width: bw, height: 16, text: t.detail, fontSize: 10, fontWeight: 500, fill: TEXT, textAnchor: "middle" });
+    const barText = durationLabel(taskRange);
+    if (bw >= 42 && textFits(barText, bw, 10)) {
+      elements.push({ id: `gantt-bar-range-${i}`, type: "text", name: `${t.label} range`, x: bx, y: y + rowH / 2 - 8, width: bw, height: 16, text: barText, fontSize: 10, fontWeight: 600, fill: TEXT, textAnchor: "middle" });
     }
   });
 
@@ -775,9 +876,21 @@ export function layoutSwimlane(diagram: SemanticDiagram, theme: DiagramTheme = D
     const x1 = a.cx + cardW / 2;
     const x2 = b.cx - cardW / 2;
     const midX = (a.cx + b.cx) / 2;
-    elements.push({ id: `lane-e${i}-s0`, type: "line", name: "edge", x1, y1: a.cy, x2: midX, y2: a.cy, stroke: EDGE, strokeWidth: 2, dash: e.dashed === true });
-    elements.push({ id: `lane-e${i}-s1`, type: "line", name: "edge", x1: midX, y1: a.cy, x2: midX, y2: b.cy, stroke: EDGE, strokeWidth: 2, dash: e.dashed === true });
-    elements.push({ id: `lane-e${i}-h`, type: "arrow", name: "edge", x1: midX, y1: b.cy, x2: x2, y2: b.cy, stroke: EDGE, strokeWidth: 2, dash: e.dashed === true });
+    elements.push({
+      id: `lane-e${i}`,
+      type: "connector",
+      name: "edge",
+      points: [
+        { x: x1, y: a.cy },
+        { x: midX, y: a.cy },
+        { x: midX, y: b.cy },
+        { x: x2, y: b.cy }
+      ],
+      stroke: EDGE,
+      strokeWidth: 2,
+      dash: e.dashed === true,
+      endArrow: true
+    });
   });
 
   return frame(diagram, elements, canvasBg);
