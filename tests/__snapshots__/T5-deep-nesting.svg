@@ -36,9 +36,9 @@
 </g>
 </g>
 </g>
-<g data-node-id="edge-0-head">
-<line x1="695" y1="405" x2="703" y2="405" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="717,405 699,416 699,394" fill="#52607A" />
+<g data-node-id="edge-0-connector">
+<defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="695,405 717,405" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
 <rect data-node-id="edge-0-label-bg" x="674" y="393" width="64" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
 <text data-node-id="edge-0-label" x="706" y="404" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="706" y="404">查询用户</tspan></text>

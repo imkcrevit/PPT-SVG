@@ -4,7 +4,7 @@ import path from "node:path";
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
-import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
+import { callOpenRouterWithUsage, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
 import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
 import {
   beginGenerationGuard,
@@ -19,8 +19,10 @@ import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipe
 import { resolveStyleContext } from "@/lib/theme-extract";
 import { resolveThemeIntent } from "@/lib/theme-intent";
 import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
+import { createTokenUsageRecorder, normalizeTokenUsage, type TokenUsageSnapshot } from "@/lib/token-usage";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
+import type { ChatMessage } from "@/lib/prompts";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, Locale, SkillId, UploadedAttachment } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
       const send = (event: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       };
+      let tokenRecorder: ReturnType<typeof createTokenUsageRecorder> | undefined;
 
       try {
         const body = (await request.json()) as Partial<GenerateFigureRequest>;
@@ -100,6 +103,12 @@ export async function POST(request: Request) {
           clientLog: normalizeClientLog(body.clientLog)
         };
         const skill = checked.skill;
+        tokenRecorder = createTokenUsageRecorder({
+          sessionId,
+          conversationId: generationRequest.conversationId,
+          conversationTurn: generationRequest.conversationTurn,
+          requestId
+        });
 
         try {
           send(statusEvent(language, "queued", "Agent received the request.", 0));
@@ -113,15 +122,19 @@ export async function POST(request: Request) {
 
           if (needsCompression) {
             send(statusEvent(language, "compressing", "Compressing context.", 0));
-            compressedContext = await compressContext(generationRequest, safeTimeoutMs(startedAt, CONTEXT_COMPRESSION_TIMEOUT_MS));
+            compressedContext = await compressContext(
+              generationRequest,
+              safeTimeoutMs(startedAt, CONTEXT_COMPRESSION_TIMEOUT_MS),
+              tokenRecorder
+            );
           }
 
           send(statusEvent(language, "generating", "Generating semantic diagram JSON.", 0));
-          const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext), {
+          const rawOutput = await callTrackedOpenRouter(tokenRecorder, "generate", await buildGenerateMessages(generationRequest, skill, compressedContext), {
             timeoutMs: requireTimeoutMs(startedAt, GENERATION_TIMEOUT_MS),
             maxCompletionTokens: GENERATION_MAX_COMPLETION_TOKENS
           });
-          const generated = await validateOrRepair(rawOutput, generationRequest, language, send, startedAt, requestId);
+          const generated = await validateOrRepair(rawOutput, generationRequest, language, send, startedAt, requestId, tokenRecorder);
 
           // The semantic layout engine is deterministic. The old geometric
           // cleanup and visual regeneration passes were built for model-placed
@@ -129,9 +142,11 @@ export async function POST(request: Request) {
           const finalResponse = generated.response;
 
           send(statusEvent(language, "persisting", "Saving session artifacts.", 0));
+          const tokenUsage = await tokenRecorder.snapshot();
           const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, undefined, {
             userDescription: generationRequest.userDescription,
-            conversationTurn: generationRequest.conversationTurn
+            conversationTurn: generationRequest.conversationTurn,
+            tokenUsage
           });
           await recordCompletedConversation({
             request: generationRequest,
@@ -139,6 +154,7 @@ export async function POST(request: Request) {
             response: finalResponse,
             compressedContext,
             artifacts,
+            tokenUsage,
             durationMs: Date.now() - startedAt
           });
 
@@ -160,12 +176,14 @@ export async function POST(request: Request) {
       } catch (error) {
         const message = error instanceof OpenRouterError ? error.message : error instanceof Error ? error.message : "Unexpected generation error.";
         send({ type: "error", error: message, details: [`requestId: ${requestId}`] });
+        const tokenUsage = tokenRecorder ? await tokenRecorder.snapshot() : undefined;
         await recordConversation({
           requestId,
           language: "unknown",
           skillId: "unknown",
           userDescription: "",
           attachments: [],
+          tokenUsage,
           status: "failed",
           error: message,
           durationMs: Date.now() - startedAt
@@ -191,13 +209,14 @@ async function validateOrRepair(
   language: "en" | "zh",
   send: (event: Record<string, unknown>) => void,
   startedAt: number,
-  requestId: string
+  requestId: string,
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>
 ): Promise<ValidatedGeneration> {
   const { theme: sessionTheme, detectedBackground } = await resolveStyleContext(request.attachments);
   const intent = await resolveThemeIntent(
     request.userDescription,
     { detectedBackground },
-    (msgs) => callOpenRouter(msgs as Parameters<typeof callOpenRouter>[0])
+    (msgs) => callTrackedOpenRouter(tokenRecorder, "theme-intent", msgs as ChatMessage[])
   );
   const override = { ...(request.themeOverride ?? {}), ...(intent ?? {}) };
   const requestedTheme = mergeTheme(sessionTheme, Object.keys(override).length ? override : undefined);
@@ -225,7 +244,7 @@ async function validateOrRepair(
   });
 
   send(statusEvent(language, "repairing", "Repairing generated JSON.", 0));
-  const repairedOutput = await callOpenRouter(await buildRepairMessages(rawOutput, validation.errors), {
+  const repairedOutput = await callTrackedOpenRouter(tokenRecorder, "repair", await buildRepairMessages(rawOutput, validation.errors), {
     timeoutMs: requireTimeoutMs(startedAt, REPAIR_TIMEOUT_MS),
     maxCompletionTokens: REPAIR_MAX_COMPLETION_TOKENS
   });
@@ -616,13 +635,19 @@ function tryParseJsonObject(content: string): ParseResult {
   }
 }
 
-async function compressContext(request: GenerateFigureRequest, timeoutMs: number): Promise<string> {
+async function compressContext(
+  request: GenerateFigureRequest,
+  timeoutMs: number,
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>
+): Promise<string> {
   try {
     if (timeoutMs < 1000) {
       return fallbackContext(request);
     }
 
-    const rawOutput = await callOpenRouter(await buildContextCompressionMessages(request), { timeoutMs });
+    const rawOutput = await callTrackedOpenRouter(tokenRecorder, "context-compression", await buildContextCompressionMessages(request), {
+      timeoutMs
+    });
     const parsed = parseJsonObject(rawOutput) as Record<string, unknown>;
     const compressed = typeof parsed.compressed_context === "string" ? parsed.compressed_context.trim() : "";
 
@@ -634,6 +659,22 @@ async function compressContext(request: GenerateFigureRequest, timeoutMs: number
   }
 
   return fallbackContext(request);
+}
+
+async function callTrackedOpenRouter(
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>,
+  operation: string,
+  messages: ChatMessage[],
+  options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
+): Promise<string> {
+  const result = await callOpenRouterWithUsage(messages, options);
+  await tokenRecorder.record({
+    operation,
+    usage: normalizeTokenUsage(result.usage),
+    model: result.model,
+    generationId: result.generationId
+  });
+  return result.text;
 }
 
 function fallbackContext(request: GenerateFigureRequest): string {
@@ -708,6 +749,7 @@ async function recordCompletedConversation({
   response,
   compressedContext,
   artifacts,
+  tokenUsage,
   durationMs
 }: {
   request: GenerateFigureRequest;
@@ -715,6 +757,7 @@ async function recordCompletedConversation({
   response: GenerateFigureResponse;
   compressedContext: string;
   artifacts: unknown;
+  tokenUsage?: TokenUsageSnapshot;
   durationMs: number;
 }) {
   await recordConversation({
@@ -732,6 +775,7 @@ async function recordCompletedConversation({
     figure: response.figure,
     fit: response.fit,
     artifacts,
+    tokenUsage,
     model: getConfiguredModelLabel(),
     status: "completed",
     durationMs

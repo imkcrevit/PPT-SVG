@@ -1,4 +1,4 @@
-export type ExportExtension = "svg" | "pptx";
+export type ExportExtension = "svg" | "png" | "pptx" | "zip";
 
 export function buildExportFilename(sessionId: string, downloadIndex: number, extension: ExportExtension): string {
   const safeSessionId = sanitizeFilenamePart(sessionId) || "download";

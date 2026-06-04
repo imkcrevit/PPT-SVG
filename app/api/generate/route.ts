@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
-import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
+import { callOpenRouterWithUsage, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
 import { buildContextCompressionMessages, buildGenerateMessages, buildRepairMessages } from "@/lib/prompts";
 import {
   beginGenerationGuard,
@@ -18,8 +18,10 @@ import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipe
 import { resolveStyleContext } from "@/lib/theme-extract";
 import { resolveThemeIntent } from "@/lib/theme-intent";
 import { mergeTheme, normalizeThemeOverride } from "@/lib/theme";
+import { createTokenUsageRecorder, normalizeTokenUsage, type TokenUsageSnapshot } from "@/lib/token-usage";
 import { getInternalSkill, isSkillId } from "@/lib/skills";
 import { isLocale } from "@/lib/i18n";
+import type { ChatMessage } from "@/lib/prompts";
 import type { Figure, FitAssessment, GenerateFigureRequest, GenerateFigureResponse, UploadedAttachment } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
   const requestId = crypto.randomUUID().slice(0, 8);
   const startedAt = Date.now();
   let releaseGeneration: (() => void) | undefined;
+  let tokenRecorder: ReturnType<typeof createTokenUsageRecorder> | undefined;
   const contentLengthDecision = enforceGenerationContentLength(request);
 
   if (!contentLengthDecision.ok) {
@@ -100,6 +103,12 @@ export async function POST(request: Request) {
       referenceFigure: normalizeReferenceFigure(body.referenceFigure),
       clientLog: normalizeClientLog(body.clientLog)
     };
+    tokenRecorder = createTokenUsageRecorder({
+      sessionId,
+      conversationId: generationRequest.conversationId,
+      conversationTurn,
+      requestId
+    });
 
     console.info(`[generate:${requestId}] started`, {
       skillId: generationRequest.skillId,
@@ -118,14 +127,14 @@ export async function POST(request: Request) {
       Boolean(generationRequest.referenceFigure) ||
       (generationRequest.attachments?.length ?? 0) > 0;
     const compressedContext = needsCompression
-      ? await compressContext(generationRequest)
+      ? await compressContext(generationRequest, tokenRecorder)
       : generationRequest.userDescription;
-    const rawOutput = await callOpenRouter(await buildGenerateMessages(generationRequest, skill, compressedContext));
+    const rawOutput = await callTrackedOpenRouter(tokenRecorder, "generate", await buildGenerateMessages(generationRequest, skill, compressedContext));
     const { theme: sessionTheme, detectedBackground } = await resolveStyleContext(generationRequest.attachments);
     const intent = await resolveThemeIntent(
       generationRequest.userDescription,
       { detectedBackground },
-      (msgs) => callOpenRouter(msgs as Parameters<typeof callOpenRouter>[0])
+      (msgs) => callTrackedOpenRouter(tokenRecorder!, "theme-intent", msgs as ChatMessage[])
     );
     const override = { ...(normalizeThemeOverride(body.themeOverride) ?? {}), ...(intent ?? {}) };
     const requestedTheme = mergeTheme(sessionTheme, Object.keys(override).length ? override : undefined);
@@ -138,9 +147,11 @@ export async function POST(request: Request) {
         };
 
     if (validation.ok && validation.response) {
+      const tokenUsage = await tokenRecorder.snapshot();
       const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId, undefined, {
         userDescription: generationRequest.userDescription,
-        conversationTurn
+        conversationTurn,
+        tokenUsage
       });
       await recordCompletedConversation({
         request: generationRequest,
@@ -148,6 +159,7 @@ export async function POST(request: Request) {
         response: validation.response,
         compressedContext,
         artifacts,
+        tokenUsage,
         durationMs: Date.now() - startedAt
       });
       console.info(`[generate:${requestId}] completed`, {
@@ -166,7 +178,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const repairedOutput = await callOpenRouter(await buildRepairMessages(rawOutput, validation.errors));
+    const repairedOutput = await callTrackedOpenRouter(tokenRecorder, "repair", await buildRepairMessages(rawOutput, validation.errors));
     const repairedParsed = tryParseJsonObject(repairedOutput);
 
     if (!repairedParsed.ok) {
@@ -199,6 +211,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const tokenUsage = await tokenRecorder.snapshot();
     const artifacts = await persistGeneratedArtifacts(
       repairedValidation.response.figure,
       repairedValidation.response.fit,
@@ -207,7 +220,8 @@ export async function POST(request: Request) {
       undefined,
       {
         userDescription: generationRequest.userDescription,
-        conversationTurn
+        conversationTurn,
+        tokenUsage
       }
     );
     await recordCompletedConversation({
@@ -216,6 +230,7 @@ export async function POST(request: Request) {
       response: repairedValidation.response,
       compressedContext,
       artifacts,
+      tokenUsage,
       durationMs: Date.now() - startedAt
     });
     console.info(`[generate:${requestId}] completed`, {
@@ -243,12 +258,14 @@ export async function POST(request: Request) {
     }
 
     const message = error instanceof Error ? error.message : "Unexpected generation error.";
+    const tokenUsage = tokenRecorder ? await tokenRecorder.snapshot() : undefined;
     await recordConversation({
       requestId,
       language: "unknown",
       skillId: "unknown",
       userDescription: "",
       attachments: [],
+      tokenUsage,
       status: "failed",
       error: message,
       durationMs: Date.now() - startedAt
@@ -271,9 +288,12 @@ function tryParseJsonObject(content: string): ParseResult {
   }
 }
 
-async function compressContext(request: GenerateFigureRequest): Promise<string> {
+async function compressContext(
+  request: GenerateFigureRequest,
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>
+): Promise<string> {
   try {
-    const rawOutput = await callOpenRouter(await buildContextCompressionMessages(request));
+    const rawOutput = await callTrackedOpenRouter(tokenRecorder, "context-compression", await buildContextCompressionMessages(request));
     const parsed = parseJsonObject(rawOutput) as Record<string, unknown>;
     const compressed = typeof parsed.compressed_context === "string" ? parsed.compressed_context.trim() : "";
 
@@ -301,6 +321,22 @@ async function compressContext(request: GenerateFigureRequest): Promise<string> 
   ]
     .join("\n\n")
     .slice(0, 6000);
+}
+
+async function callTrackedOpenRouter(
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>,
+  operation: string,
+  messages: ChatMessage[],
+  options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
+): Promise<string> {
+  const result = await callOpenRouterWithUsage(messages, options);
+  await tokenRecorder.record({
+    operation,
+    usage: normalizeTokenUsage(result.usage),
+    model: result.model,
+    generationId: result.generationId
+  });
+  return result.text;
 }
 
 function normalizeConversationTurn(value: unknown): number {
@@ -355,6 +391,7 @@ async function recordCompletedConversation({
   response,
   compressedContext,
   artifacts,
+  tokenUsage,
   durationMs
 }: {
   request: GenerateFigureRequest;
@@ -362,6 +399,7 @@ async function recordCompletedConversation({
   response: GenerateFigureResponse;
   compressedContext: string;
   artifacts: unknown;
+  tokenUsage?: TokenUsageSnapshot;
   durationMs: number;
 }) {
   await recordConversation({
@@ -379,6 +417,7 @@ async function recordCompletedConversation({
     figure: response.figure,
     fit: response.fit,
     artifacts,
+    tokenUsage,
     model: getConfiguredModelLabel(),
     status: "completed",
     durationMs

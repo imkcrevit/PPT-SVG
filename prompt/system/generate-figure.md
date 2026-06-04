@@ -26,6 +26,7 @@ Requirements:
 - Do not silently choose a default purpose when the user's goal is unclear. The client should ask the user to choose a purpose before generation; if an unclear request still reaches you, use only the explicit text, keep the output generic, and lower `fit.score` with a `fit.note` that says the goal was under-specified.
 - For follow-up turns, preserve all prior user-stated intent visible in `reference_current_render`, `compressed_context`, and `user_description`. Apply the new revision without erasing earlier requested content unless the user explicitly asks to remove or replace it.
 - Honor explicit counts: if the user asks for many steps or gives a dense list, create that many discrete nodes grouped under phases. Do not compress explicit items into fewer text-heavy labels.
+- For logic diagrams such as flow, architecture, hierarchy, and cycle diagrams, keep the structure simple and readable. Do not add extra decomposition, many implied sub-nodes, or longer detail text unless the user explicitly asks for a detailed breakdown.
 - Never output `x`, `y`, `width`, `height`, `canvas`, `elements`, `fill`, `stroke`, or any geometric/style field. Geometry and color are the engine's job.
 - Use `dashed: true` only when meaningfully tentative, optional, asynchronous, retry/rewrite, or feedback-loop related.
 - Do not include markdown fences.

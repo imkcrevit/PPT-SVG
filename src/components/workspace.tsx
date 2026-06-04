@@ -5,20 +5,27 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Clock,
+  Copy,
   Database,
   Download,
   ExternalLink,
+  FileArchive,
   FileDown,
+  ImageDown,
   Loader2,
+  Maximize2,
   MessageSquarePlus,
   PanelRightClose,
+  RefreshCcw,
   Send,
   SlidersHorizontal,
-  Undo2
+  Undo2,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import ThemeOverridePanel from "@/components/ThemeOverridePanel";
@@ -27,6 +34,7 @@ import { buildExportFilename, type ExportExtension } from "@/lib/export-filename
 import { ACCEPTED_CONTEXT_EXTENSIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_NAME_CHARS } from "@/lib/file-limits";
 import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
+import { createIconCoverageTestFigure, ICON_TEST_OPTIONS, type IconTestId } from "@/lib/icon-test";
 import { dictionaries } from "@/lib/i18n";
 import { INTERNAL_SKILLS } from "@/lib/skills";
 import type { ThemeOverride } from "@/lib/theme";
@@ -91,6 +99,17 @@ interface OptimizeApiResponse {
   error?: string;
 }
 
+interface SessionArtifactResponse {
+  sessionId?: string;
+  requestId?: string;
+  userDescription?: string;
+  conversationTurn?: number;
+  figure?: Figure;
+  fit?: FitAssessment;
+  layoutReview?: GenerateApiResponse["layoutReview"];
+  error?: string;
+}
+
 const HELP_URLS: Record<Locale, string> = {
   en: "https://blog.graptolite.ai/help/ppt-svg.en/",
   zh: "https://blog.graptolite.ai/help/ppt-svg/"
@@ -101,6 +120,9 @@ const CASE_URLS: Record<Locale, string> = {
 };
 const HELP_TYPES_ANCHOR = "#supported-diagram-types";
 const MAX_CONVERSATION_TURNS = 5;
+const SESSION_STORAGE_KEY = "ppt-svg-session-id";
+const RECENT_SESSIONS_STORAGE_KEY = "ppt-svg-recent-sessions";
+const MAX_RECENT_SESSIONS = 6;
 
 interface ChatEntry {
   id: string;
@@ -124,6 +146,15 @@ interface RenderHistoryEntry {
   fit: FitAssessment;
 }
 
+interface RecentSessionEntry {
+  sessionId: string;
+  requestId?: string;
+  title: string;
+  userDescription?: string;
+  conversationTurn?: number;
+  updatedAt: string;
+}
+
 interface ClarificationChoice {
   id: string;
   label: string;
@@ -141,6 +172,13 @@ export function Workspace({ locale }: WorkspaceProps) {
   const caseUrl = CASE_URLS[locale];
   const caseTypesUrl = `${caseUrl}${HELP_TYPES_ANCHOR}`;
   const [skillId, setSkillId] = useState<SkillId>("freeform");
+  const [iconTestId, setIconTestId] = useState<IconTestId>("triangle");
+  const [currentSessionId, setCurrentSessionId] = useState(() => crypto.randomUUID());
+  const [sessionLookup, setSessionLookup] = useState("");
+  const [sessionNotice, setSessionNotice] = useState("");
+  const [recentSessions, setRecentSessions] = useState<RecentSessionEntry[]>([]);
+  const [restoredConversationTurn, setRestoredConversationTurn] = useState(0);
+  const [currentRequestId, setCurrentRequestId] = useState("");
   const [description, setDescription] = useState("");
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const [optimizedPromptReady, setOptimizedPromptReady] = useState(false);
@@ -166,18 +204,26 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [generationSeconds, setGenerationSeconds] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(false);
+  const [isDownloadingPng, setIsDownloadingPng] = useState(false);
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
+  const [isDownloadingBundle, setIsDownloadingBundle] = useState(false);
   const [clarificationRequest, setClarificationRequest] = useState<ClarificationRequest | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  const sessionIdRef = useRef(crypto.randomUUID());
+  const deckBlockStackRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef(currentSessionId);
   const exportDownloadIndexRef = useRef(0);
   const thinkingStatus = generationStatus ? `${generationStatus} ${generationSeconds}s` : "";
-  const conversationTurnCount = chatEntries.filter((entry) => entry.role === "user").length;
+  const conversationTurnCount = Math.max(
+    restoredConversationTurn,
+    chatEntries.filter((entry) => entry.role === "user").length
+  );
   const remainingTurns = Math.max(0, MAX_CONVERSATION_TURNS - conversationTurnCount);
   const canReferenceCurrentRender = Boolean(figure);
   const shouldReferenceCurrentRender = referenceCurrentRender && canReferenceCurrentRender;
   const isEditDeckOpen = Boolean(figure && selectedIds.length);
+  const selectedIdsSignature = selectedIds.join("|");
 
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
@@ -192,6 +238,30 @@ export function Workspace({ locale }: WorkspaceProps) {
     [chatEntries]
   );
   const jsonPayload = useMemo(() => (figure ? JSON.stringify({ figure, fit }, null, 2) : ""), [figure, fit]);
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      let storedSessionId = "";
+
+      try {
+        storedSessionId = window.localStorage.getItem(SESSION_STORAGE_KEY) ?? "";
+      } catch {
+        storedSessionId = "";
+      }
+
+      if (isClientSessionId(storedSessionId)) {
+        sessionIdRef.current = storedSessionId;
+        setCurrentSessionId(storedSessionId);
+        setSessionLookup(storedSessionId);
+      } else {
+        setSessionLookup(sessionIdRef.current);
+      }
+
+      setRecentSessions(readRecentSessionsFromStorage());
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
+  }, []);
 
   useEffect(() => {
     if (generationStartedAt === null) {
@@ -210,6 +280,151 @@ export function Workspace({ locale }: WorkspaceProps) {
       behavior: "smooth"
     });
   }, [chatEntries, generationStatus]);
+
+  useEffect(() => {
+    if (!isEditDeckOpen) {
+      return;
+    }
+
+    deckBlockStackRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, [isEditDeckOpen, selectedIdsSignature]);
+
+  function setActiveSessionId(sessionId: string) {
+    sessionIdRef.current = sessionId;
+    setCurrentSessionId(sessionId);
+    setSessionLookup(sessionId);
+
+    try {
+      window.localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+    } catch {
+      // Storage is optional; the visible restore input still carries the id.
+    }
+  }
+
+  async function copySessionId() {
+    try {
+      await navigator.clipboard.writeText(currentSessionId);
+      setSessionNotice(t.sessionCopied);
+    } catch {
+      setSessionNotice(currentSessionId);
+    }
+  }
+
+  async function restoreSession(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    await restoreSessionById(sessionLookup.trim());
+  }
+
+  async function restoreSessionById(rawSessionId: string) {
+    const sessionId = rawSessionId.trim();
+    if (!isClientSessionId(sessionId)) {
+      setSessionNotice(t.sessionRestoreInvalid);
+      return;
+    }
+
+    setIsLoadingSession(true);
+    setError("");
+    setSessionNotice("");
+    setSessionLookup(sessionId);
+
+    try {
+      const response = await fetch(appUrl(`/api/sessions/${encodeURIComponent(sessionId)}/latest`));
+      const payload = (await response.json().catch(() => ({}))) as SessionArtifactResponse;
+
+      if (!response.ok || !payload.figure || !payload.fit) {
+        throw new Error(payload.error || t.sessionRestoreFailed);
+      }
+
+      const turn = typeof payload.conversationTurn === "number" && Number.isFinite(payload.conversationTurn)
+        ? Math.max(0, Math.floor(payload.conversationTurn))
+        : 0;
+      const requestId = payload.requestId ?? "";
+      const restoredFigure = cloneFigure(payload.figure);
+      const restoredFit = payload.fit;
+      const restoredEntries: ChatEntry[] = [];
+
+      if (payload.userDescription?.trim()) {
+        restoredEntries.push({
+          id: crypto.randomUUID(),
+          role: "user",
+          content: payload.userDescription.trim(),
+          turn: Math.max(1, turn),
+          referencedRender: false
+        });
+      }
+
+      restoredEntries.push({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `${t.sessionRestored}: ${restoredFigure.metadata.title}`,
+        turn: Math.max(1, turn),
+        status: "done",
+        requestId
+      });
+
+      setActiveSessionId(sessionId);
+      exportDownloadIndexRef.current = 0;
+      setRestoredConversationTurn(turn);
+      setCurrentRequestId(requestId);
+      setFigure(restoredFigure);
+      setCurrentRenderTurn(turn);
+      setFit(restoredFit);
+      setSkillId(restoredFigure.metadata.skillId);
+      setModel(t.restoredSessionModel);
+      setSelectedId("");
+      setSelectedIds([]);
+      setJsonDraft("");
+      setJsonError("");
+      setHistory([]);
+      setChatEntries(restoredEntries);
+      setRenderHistory([
+        {
+          id: requestId || crypto.randomUUID(),
+          turn: Math.max(1, turn),
+          requestId: requestId || "-",
+          title: restoredFigure.metadata.title,
+          userDescription: payload.userDescription ?? "",
+          fitScore: restoredFit.score,
+          referencedRender: false,
+          figure: cloneFigure(restoredFigure),
+          fit: restoredFit
+        }
+      ]);
+      rememberRecentSession({
+        sessionId,
+        requestId,
+        title: restoredFigure.metadata.title,
+        userDescription: payload.userDescription,
+        conversationTurn: turn,
+        updatedAt: new Date().toISOString()
+      });
+      setClarificationRequest(null);
+      setActiveTab("preview");
+      setOptimizedPromptReady(false);
+      setSessionNotice(t.sessionRestoredNotice.replace("{sessionId}", shortenSessionId(sessionId)));
+    } catch (restoreError) {
+      setSessionNotice(restoreError instanceof Error ? restoreError.message : t.sessionRestoreFailed);
+    } finally {
+      setIsLoadingSession(false);
+    }
+  }
+
+  function rememberRecentSession(entry: RecentSessionEntry) {
+    const [normalizedEntry] = normalizeRecentSessions([entry]);
+
+    if (!normalizedEntry) {
+      return;
+    }
+
+    setRecentSessions((entries) => {
+      const nextEntries = normalizeRecentSessions([normalizedEntry, ...entries]);
+      writeRecentSessionsToStorage(nextEntries);
+      return nextEntries;
+    });
+  }
 
   async function handleGenerate(startedAtMs: number) {
     const userMessage = description.trim();
@@ -269,6 +484,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setGenerationSeconds(0);
     setSelectedId("");
     setSelectedIds([]);
+    setRestoredConversationTurn(turn);
 
     try {
       const generateUrl = appUrl("/api/generate-agent");
@@ -328,9 +544,24 @@ export function Workspace({ locale }: WorkspaceProps) {
       setCurrentRenderTurn(turn);
       setFit(payload.fit);
       setModel(payload.model ?? "");
+      setCurrentRequestId(payload.requestId ?? "");
       setHistory([]);
       setActiveTab("preview");
       setOptimizedPromptReady(false);
+      const generatedSessionId = payload.sessionId && isClientSessionId(payload.sessionId)
+        ? payload.sessionId
+        : sessionIdRef.current;
+      if (generatedSessionId !== sessionIdRef.current) {
+        setActiveSessionId(generatedSessionId);
+      }
+      rememberRecentSession({
+        sessionId: generatedSessionId,
+        requestId: payload.requestId,
+        title: payload.figure.metadata.title,
+        userDescription: userMessage,
+        conversationTurn: turn,
+        updatedAt: new Date().toISOString()
+      });
       setChatEntries((entries) =>
         entries.map((entry) =>
           entry.id === pendingMessageId
@@ -417,7 +648,23 @@ export function Workspace({ locale }: WorkspaceProps) {
           sessionId: sessionIdRef.current,
           conversationId: sessionIdRef.current,
           conversationTurn: conversationTurnCount + 1,
-          referenceFigure: shouldReferenceCurrentRender && figure ? { source: "current-render", figure, fit } : undefined
+          referenceFigure: shouldReferenceCurrentRender && figure ? { source: "current-render", figure, fit } : undefined,
+          conversationHistory: chatEntries
+            .filter((entry) => entry.status !== "pending")
+            .slice(-10)
+            .map((entry) => ({
+              role: entry.role,
+              turn: entry.turn,
+              content: entry.content,
+              referencedRender: entry.referencedRender
+            })),
+          renderHistory: renderHistory.slice(0, 5).map((entry) => ({
+            turn: entry.turn,
+            title: entry.title,
+            userDescription: entry.userDescription,
+            fitScore: entry.fitScore,
+            referencedRender: entry.referencedRender
+          }))
         })
       });
       const payload = (await response.json()) as OptimizeApiResponse;
@@ -437,12 +684,14 @@ export function Workspace({ locale }: WorkspaceProps) {
   }
 
   function startNewConversation() {
-    sessionIdRef.current = crypto.randomUUID();
+    setActiveSessionId(crypto.randomUUID());
     exportDownloadIndexRef.current = 0;
     setDescription("");
     setClarificationRequest(null);
     setChatEntries([]);
     setRenderHistory([]);
+    setRestoredConversationTurn(0);
+    setCurrentRequestId("");
     setFigure(null);
     setCurrentRenderTurn(0);
     setFit(null);
@@ -454,6 +703,27 @@ export function Workspace({ locale }: WorkspaceProps) {
     setError("");
     setAttachment(null);
     setThemeOverride(null);
+    setActiveTab("preview");
+    setOptimizedPromptReady(false);
+    setSessionNotice("");
+  }
+
+  function createIconTestFigure() {
+    if (figure) {
+      pushHistory(figure);
+    }
+
+    const result = createIconCoverageTestFigure(iconTestId, locale);
+    setFigure(result.figure);
+    setFit(result.fit);
+    setModel(t.localTestModel);
+    setCurrentRequestId("");
+    setSelectedId("");
+    setSelectedIds([]);
+    setJsonDraft("");
+    setJsonError("");
+    setError("");
+    setClarificationRequest(null);
     setActiveTab("preview");
     setOptimizedPromptReady(false);
   }
@@ -604,27 +874,72 @@ export function Workspace({ locale }: WorkspaceProps) {
     setFigure(cloneFigure(entry.figure));
     setCurrentRenderTurn(entry.turn);
     setFit(entry.fit);
+    setCurrentRequestId(entry.requestId === "-" ? "" : entry.requestId);
     setSelectedId("");
     setSelectedIds([]);
     setActiveTab("preview");
   }
 
   function downloadSvg() {
-    const svg = document.getElementById("figure-svg");
-    if (!svg) {
+    const serialized = serializeCurrentSvg();
+    if (!serialized) {
       return;
     }
 
-    const serialized = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n${serialized}\n`], {
       type: "image/svg+xml;charset=utf-8"
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = nextExportFilename("svg");
-    link.click();
-    URL.revokeObjectURL(url);
+    triggerBlobDownload(blob, nextExportFilename("svg"));
+  }
+
+  async function downloadPng() {
+    if (!figure || isDownloadingPng) {
+      return;
+    }
+
+    const serialized = serializeCurrentSvg();
+    if (!serialized) {
+      return;
+    }
+
+    setError("");
+    setIsDownloadingPng(true);
+
+    try {
+      const svgBlob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      try {
+        const image = new Image();
+        image.decoding = "async";
+        const loaded = new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error(t.pngExportFailed));
+        });
+        image.src = svgUrl;
+        await loaded;
+
+        const scale = 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = figure.canvas.width * scale;
+        canvas.height = figure.canvas.height * scale;
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          throw new Error(t.pngExportFailed);
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await canvasToPngBlob(canvas, t.pngExportFailed);
+        triggerBlobDownload(blob, nextExportFilename("png"));
+      } finally {
+        URL.revokeObjectURL(svgUrl);
+      }
+    } catch (pngError) {
+      setError(pngError instanceof Error ? pngError.message : t.pngExportFailed);
+    } finally {
+      setIsDownloadingPng(false);
+    }
   }
 
   function nextExportFilename(extension: ExportExtension): string {
@@ -656,17 +971,54 @@ export function Workspace({ locale }: WorkspaceProps) {
       }
 
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = nextExportFilename("pptx");
-      link.click();
-      URL.revokeObjectURL(url);
+      triggerBlobDownload(blob, nextExportFilename("pptx"));
     } catch (downloadError) {
       setError(downloadError instanceof Error ? downloadError.message : t.pptxExportFailed);
     } finally {
       setIsDownloadingPptx(false);
     }
+  }
+
+  async function downloadBundle() {
+    if (!figure || isDownloadingBundle) {
+      return;
+    }
+
+    setError("");
+    setIsDownloadingBundle(true);
+
+    try {
+      const response = await fetch(appUrl("/api/export/bundle"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          figure,
+          fit,
+          sessionId: currentSessionId,
+          requestId: currentRequestId || undefined
+        })
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string; details?: string[] };
+        const message = [payload.error, ...(payload.details ?? [])].filter(Boolean).join(" ");
+        throw new Error(message || t.bundleExportFailed);
+      }
+
+      const blob = await response.blob();
+      triggerBlobDownload(blob, nextExportFilename("zip"));
+    } catch (bundleError) {
+      setError(bundleError instanceof Error ? bundleError.message : t.bundleExportFailed);
+    } finally {
+      setIsDownloadingBundle(false);
+    }
+  }
+
+  function serializeCurrentSvg(): string | undefined {
+    const svg = document.getElementById("figure-svg");
+    return svg ? new XMLSerializer().serializeToString(svg) : undefined;
   }
 
   return (
@@ -841,7 +1193,89 @@ export function Workspace({ locale }: WorkspaceProps) {
               </div>
               {uploadError ? <p className="chat-inline-error">{uploadError}</p> : null}
 
+              <section className="session-restore-panel" aria-label={t.sessionPanel}>
+                <div className="session-restore-current">
+                  <span>{t.sessionCurrent}</span>
+                  <code title={currentSessionId}>{shortenSessionId(currentSessionId)}</code>
+                  <button type="button" onClick={() => void copySessionId()} title={t.copySessionId}>
+                    <Copy size={14} />
+                  </button>
+                </div>
+                <form className="session-restore-form" onSubmit={(event) => void restoreSession(event)}>
+                  <input
+                    value={sessionLookup}
+                    onChange={(event) => {
+                      setSessionLookup(event.target.value);
+                      setSessionNotice("");
+                    }}
+                    placeholder={t.sessionRestorePlaceholder}
+                  />
+                  <button type="submit" disabled={isLoadingSession || isGenerating || isUploading}>
+                    {isLoadingSession ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                    <span>{isLoadingSession ? t.sessionLoading : t.sessionLoad}</span>
+                  </button>
+                </form>
+                {recentSessions.length ? (
+                  <div className="session-recent-list" aria-label={t.recentSessions}>
+                    <div className="session-recent-heading">
+                      <span>{t.recentSessions}</span>
+                      <strong>{recentSessions.length}/{MAX_RECENT_SESSIONS}</strong>
+                    </div>
+                    <div className="session-recent-items">
+                      {recentSessions.map((entry) => {
+                        const metaParts = [
+                          entry.conversationTurn ? `${t.recentSessionTurn} ${entry.conversationTurn}` : "",
+                          shortenSessionId(entry.sessionId)
+                        ].filter(Boolean);
+                        const displayTitle = entry.title || shortenSessionId(entry.sessionId);
+
+                        return (
+                          <button
+                            key={entry.sessionId}
+                            type="button"
+                            className={`session-recent-item ${entry.sessionId === currentSessionId ? "is-current" : ""}`}
+                            disabled={isLoadingSession || isGenerating || isUploading}
+                            title={entry.userDescription || entry.sessionId}
+                            aria-label={t.restoreRecentSession.replace("{sessionId}", shortenSessionId(entry.sessionId))}
+                            onClick={() => void restoreSessionById(entry.sessionId)}
+                          >
+                            <Clock size={13} />
+                            <span className="session-recent-copy">
+                              <span className="session-recent-title">{displayTitle}</span>
+                              <span className="session-recent-meta">{metaParts.join(" · ")}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+                {sessionNotice ? <div className="session-restore-notice">{sessionNotice}</div> : null}
+              </section>
+
               <ThemeOverridePanel key={themeOverride ? "theme-custom" : "theme-auto"} value={themeOverride} onChange={setThemeOverride} />
+
+              <section className="icon-test-panel" aria-label={t.iconTestTitle}>
+                <div className="icon-test-heading">
+                  <span>{t.iconTestTitle}</span>
+                  <strong>{t.iconTestCoverage}</strong>
+                </div>
+                <div className="icon-test-controls">
+                  <label className="icon-test-select">
+                    <span>{t.iconTestIcon}</span>
+                    <select value={iconTestId} onChange={(event) => setIconTestId(event.target.value as IconTestId)}>
+                      {ICON_TEST_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label[locale]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="button" onClick={createIconTestFigure} className="icon-test-button">
+                    {t.createIconTest}
+                  </button>
+                </div>
+              </section>
 
               <div className="workspace-chat-history flex flex-col">
                 <div ref={chatScrollRef} className="workspace-chat-scroll chat-thread">
@@ -1003,6 +1437,16 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </button>
                 <button
                   type="button"
+                  onClick={() => void downloadPng()}
+                  disabled={!figure || isDownloadingPng}
+                  title={t.downloadPngTitle}
+                  className="flex h-9 min-w-0 items-center justify-center gap-2 border border-line bg-panel px-3 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
+                >
+                  {isDownloadingPng ? <Loader2 size={16} className="animate-spin" /> : <ImageDown size={16} />}
+                  <span className="truncate">{isDownloadingPng ? t.downloadingPng : t.downloadPng}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => void downloadPptx()}
                   disabled={!figure || isDownloadingPptx}
                   title={t.downloadPptxTitle}
@@ -1010,6 +1454,16 @@ export function Workspace({ locale }: WorkspaceProps) {
                 >
                   {isDownloadingPptx ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                   <span className="truncate">{isDownloadingPptx ? t.downloadingPptx : t.downloadPptx}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void downloadBundle()}
+                  disabled={!figure || isDownloadingBundle}
+                  title={t.downloadBundleTitle}
+                  className="flex h-9 min-w-0 items-center justify-center gap-2 border border-line bg-panel px-3 text-sm font-semibold text-ink transition hover:border-accent/40 hover:bg-bg2 disabled:opacity-40"
+                >
+                  {isDownloadingBundle ? <Loader2 size={16} className="animate-spin" /> : <FileArchive size={16} />}
+                  <span className="truncate">{isDownloadingBundle ? t.downloadingBundle : t.downloadBundle}</span>
                 </button>
               </div>
             </div>
@@ -1088,9 +1542,9 @@ export function Workspace({ locale }: WorkspaceProps) {
                 ) : null}
               </div>
 
-              <div className="deck-block-stack">
+              <div ref={deckBlockStackRef} className="deck-block-stack">
                 <DeckBlock
-                  key={isEditDeckOpen ? "edit-active" : "edit-idle"}
+                  key={isEditDeckOpen ? `edit-active-${selectedIdsSignature}` : "edit-idle"}
                   title={t.elementEdit}
                   kicker="Edit"
                   badge={selectedIds.length ? String(selectedIds.length) : undefined}
@@ -1183,6 +1637,140 @@ export function Workspace({ locale }: WorkspaceProps) {
 
 function isNetworkLoadError(message: string): boolean {
   return /^(load failed|failed to fetch|networkerror when attempting to fetch resource)$/i.test(message.trim());
+}
+
+function isClientSessionId(value: string): boolean {
+  return /^[a-zA-Z0-9][a-zA-Z0-9_-]{7,127}$/.test(value.trim());
+}
+
+function readRecentSessionsFromStorage(): RecentSessionEntry[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(RECENT_SESSIONS_STORAGE_KEY);
+    return normalizeRecentSessions(rawValue ? JSON.parse(rawValue) : []);
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentSessionsToStorage(entries: RecentSessionEntry[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(RECENT_SESSIONS_STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // Recent sessions are a convenience cache; restore by pasted id still works.
+  }
+}
+
+function normalizeRecentSessions(value: unknown): RecentSessionEntry[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const entriesBySession = new Map<string, RecentSessionEntry>();
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    const sessionId = compactText(record.sessionId, 128);
+
+    if (!isClientSessionId(sessionId)) {
+      continue;
+    }
+
+    const updatedAt = normalizeIsoDate(record.updatedAt);
+    const entry: RecentSessionEntry = {
+      sessionId,
+      title: compactText(record.title, 96),
+      updatedAt
+    };
+    const requestId = compactText(record.requestId, 128);
+    const userDescription = compactText(record.userDescription, 180);
+    const conversationTurn = normalizeConversationTurn(record.conversationTurn);
+
+    if (requestId) {
+      entry.requestId = requestId;
+    }
+
+    if (userDescription) {
+      entry.userDescription = userDescription;
+    }
+
+    if (conversationTurn !== undefined) {
+      entry.conversationTurn = conversationTurn;
+    }
+
+    const existingEntry = entriesBySession.get(sessionId);
+    if (!existingEntry || Date.parse(entry.updatedAt) >= Date.parse(existingEntry.updatedAt)) {
+      entriesBySession.set(sessionId, entry);
+    }
+  }
+
+  return Array.from(entriesBySession.values())
+    .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+    .slice(0, MAX_RECENT_SESSIONS);
+}
+
+function compactText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function normalizeIsoDate(value: unknown): string {
+  if (typeof value === "string" && Number.isFinite(Date.parse(value))) {
+    return value;
+  }
+
+  return new Date(0).toISOString();
+}
+
+function normalizeConversationTurn(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return undefined;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
+function shortenSessionId(sessionId: string): string {
+  if (sessionId.length <= 18) {
+    return sessionId;
+  }
+
+  return `${sessionId.slice(0, 8)}...${sessionId.slice(-6)}`;
+}
+
+function triggerBlobDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function canvasToPngBlob(canvas: HTMLCanvasElement, errorMessage: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error(errorMessage));
+      }
+    }, "image/png");
+  });
 }
 
 function shouldAskForIntentClarification(
@@ -1438,14 +2026,34 @@ function ElementPanel({
   labels: typeof dictionaries.en;
   onPatch: (updater: (element: FigureElement) => FigureElement) => void;
 }) {
-  if (!selectedCount) {
-    return <p className="text-sm leading-5 text-mid">{labels.noSelection}</p>;
-  }
-
+  const [textDialogElementKey, setTextDialogElementKey] = useState<string | null>(null);
+  const textEditorRef = useRef<HTMLTextAreaElement>(null);
+  const elementKey = element?.id ?? "";
   const fillElement = elements.find((item) => "fill" in item);
   const strokeElement = elements.find((item) => "stroke" in item);
   const canEditText = selectedCount === 1 && element?.type === "text";
   const elementName = selectedCount > 1 ? `${labels.selectedElements}: ${selectedCount}` : (element?.name || element?.id || labels.selectedElement);
+  const textValue = canEditText ? element.text : "";
+  const isTextDialogOpen = canEditText && textDialogElementKey === elementKey;
+
+  useEffect(() => {
+    if (!canEditText) {
+      return;
+    }
+
+    const focusTimer = window.setTimeout(() => {
+      textEditorRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [canEditText, elementKey]);
+
+  function patchText(value: string) {
+    onPatch((current) => (current.type === "text" ? { ...current, text: value } : current));
+  }
+
+  if (!selectedCount) {
+    return <p className="text-sm leading-5 text-mid">{labels.noSelection}</p>;
+  }
 
   return (
     <div>
@@ -1456,16 +2064,26 @@ function ElementPanel({
       {selectedCount > 1 ? <p className="mt-2 text-sm leading-5 text-mid">{labels.multiSelectHint}</p> : null}
       <div className="mt-3 space-y-4">
         {canEditText ? (
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-faint">{labels.text}</span>
-            <input
-              value={element.text}
-              onChange={(event) =>
-                onPatch((current) => (current.type === "text" ? { ...current, text: event.target.value } : current))
-              }
-              className="h-10 w-full border border-line bg-bg px-3 text-sm text-ink transition hover:border-accent/40"
+          <div className="element-edit-field">
+            <div className="element-edit-label-row">
+              <span>{labels.text}</span>
+              <button
+                type="button"
+                onClick={() => setTextDialogElementKey(elementKey)}
+                title={labels.openTextDialog}
+                className="element-edit-tool"
+              >
+                <Maximize2 size={14} />
+              </button>
+            </div>
+            <textarea
+              ref={textEditorRef}
+              value={textValue}
+              onChange={(event) => patchText(event.target.value)}
+              rows={4}
+              className="element-textarea"
             />
-          </label>
+          </div>
         ) : null}
 
         {fillElement && "fill" in fillElement ? (
@@ -1496,6 +2114,41 @@ function ElementPanel({
           </label>
         ) : null}
       </div>
+
+      {canEditText && isTextDialogOpen ? (
+        <div className="text-edit-dialog-backdrop" role="presentation" onMouseDown={() => setTextDialogElementKey(null)}>
+          <section
+            className="text-edit-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="text-edit-dialog-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="text-edit-dialog-header">
+              <div className="min-w-0">
+                <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-accent">Edit</div>
+                <h3 id="text-edit-dialog-title" className="truncate text-sm font-semibold text-ink">
+                  {labels.textDialogTitle}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTextDialogElementKey(null)}
+                title={labels.closeTextDialog}
+                className="deck-icon-button"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <textarea
+              value={textValue}
+              onChange={(event) => patchText(event.target.value)}
+              autoFocus
+              className="text-edit-dialog-input"
+            />
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

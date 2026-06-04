@@ -132,17 +132,15 @@
 <text data-node-id="d6-3-title" x="1041" y="557" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1041" y="557">任务调度</tspan></text>
 </g>
 </g>
-<g data-node-id="edge-0-head">
-<line x1="831" y1="269" x2="837" y2="269" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="851,269 833,280 833,258" fill="#52607A" />
+<g data-node-id="edge-0-connector">
+<defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="831,269 851,269" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
 <rect data-node-id="edge-0-label-bg" x="811" y="257" width="59" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
 <text data-node-id="edge-0-label" x="840.5" y="268" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="840.5" y="268">扣减库存</tspan></text>
-<line data-node-id="edge-1-seg-0" x1="449" y1="269" x2="439" y2="269" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<line data-node-id="edge-1-seg-1" x1="439" y1="269" x2="439" y2="507" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<g data-node-id="edge-1-head">
-<line x1="439" y1="507" x2="443" y2="507" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="429,507 447,496 447,518" fill="#52607A" />
+<g data-node-id="edge-1-connector">
+<defs><marker id="marker-edge-1-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="449,269 439,269 439,507 429,507" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
 </g>
 <rect data-node-id="edge-1-label-bg" x="414" y="257" width="59" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
 <text data-node-id="edge-1-label" x="443.5" y="268" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="443.5" y="268">核销优惠</tspan></text>

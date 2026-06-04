@@ -112,24 +112,24 @@
 <rect data-node-id="end-rect" x="1166" y="372" width="66" height="31" rx="12" fill="#FDF1DF" stroke="#E08A1E" stroke-width="2" />
 <text data-node-id="end-title" x="1199" y="388" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1199" y="388">落地交付</tspan></text>
 </g>
-<g data-node-id="edge-0-head">
-<line x1="114" y1="388" x2="113" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="127,388 109,399 109,377" fill="#52607A" />
+<g data-node-id="edge-0-connector">
+<defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="114,388 127,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
-<g data-node-id="edge-1-head">
-<line x1="374" y1="388" x2="373" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="387,388 369,399 369,377" fill="#52607A" />
+<g data-node-id="edge-1-connector">
+<defs><marker id="marker-edge-1-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="374,388 387,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
 </g>
-<g data-node-id="edge-2-head">
-<line x1="633" y1="388" x2="633" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="647,388 629,399 629,377" fill="#52607A" />
+<g data-node-id="edge-2-connector">
+<defs><marker id="marker-edge-2-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="633,388 647,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-2-connector)" />
 </g>
-<g data-node-id="edge-3-head">
-<line x1="893" y1="388" x2="892" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="906,388 888,399 888,377" fill="#52607A" />
+<g data-node-id="edge-3-connector">
+<defs><marker id="marker-edge-3-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="893,388 906,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-3-connector)" />
 </g>
-<g data-node-id="edge-4-head">
-<line x1="1153" y1="388" x2="1152" y2="388" stroke="#52607A" stroke-width="2" stroke-linecap="round" />
-<polygon points="1166,388 1148,399 1148,377" fill="#52607A" />
+<g data-node-id="edge-4-connector">
+<defs><marker id="marker-edge-4-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
+<polyline points="1153,388 1166,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-4-connector)" />
 </g>
 </svg>

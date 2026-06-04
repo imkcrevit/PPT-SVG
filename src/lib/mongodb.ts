@@ -33,6 +33,7 @@ interface ConversationRecord {
   fit?: FitAssessment;
   layoutReview?: unknown;
   artifacts?: unknown;
+  tokenUsage?: unknown;
   model?: string;
   status: "completed" | "failed";
   error?: string;
