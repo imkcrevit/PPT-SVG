@@ -27,15 +27,47 @@ Open `http://localhost:3000/en` or `http://localhost:3000/zh`.
 ```bash
 OPENROUTER_API_KEY=your_openrouter_key
 OPENROUTER_MODEL=google/gemini-2.5-flash
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_SITE_URL=http://localhost:3000
 OPENROUTER_APP_NAME=PPT-SVG
+PPT_SVG_LLM_API_KEY=
+PPT_SVG_LLM_MODEL=
+PPT_SVG_LLM_BASE_URL=
+OPENAI_API_KEY=
+OPENAI_MODEL=
+OPENAI_BASE_URL=https://api.openai.com/v1
 MONGODB_URI=
 MONGODB_DB=ppt_svg
 ```
 
 `OPENROUTER_MODEL` controls the active model. Use any OpenRouter chat model, including Gemini, GPT, DeepSeek, and Claude model IDs.
 
+For local Hermes/OpenClaw installs, users can bring their own OpenAI-compatible API by setting `PPT_SVG_LLM_API_KEY`, `PPT_SVG_LLM_MODEL`, and `PPT_SVG_LLM_BASE_URL`. If `OPENROUTER_*` is set, the existing OpenRouter path remains the default.
+
 `MONGODB_URI` is optional. When configured, conversations and hash-coded attachment paths are recorded in MongoDB.
+
+## Hermes / OpenClaw Agent Skill
+
+PPT-SVG can also run as an installable Agent skill while keeping the current Web app form. The skill calls the same local or deployed service, so the UI, `/api/generate`, prompt files, SVG export, and PPTX export remain the source of truth.
+
+```bash
+cd /dev/ppt-svg/PPT-SVG
+bash scripts/install-agent-skill.sh hermes
+bash scripts/install-agent-skill.sh openclaw
+```
+
+Use a user-owned API key by running the local service with `OPENROUTER_*`, `PPT_SVG_LLM_*`, or `OPENAI_*` environment variables. The Agent side only needs the service URL:
+
+```bash
+export PPT_SVG_BASE_URL=http://127.0.0.1:3000/ppt
+node scripts/ppt-svg-agent.mjs \
+  --language zh \
+  --skill freeform \
+  --prompt "生成一页产品路线图，包含 Q1 调研、Q2 MVP、Q3 公测、Q4 商用" \
+  --bundle /tmp/ppt-svg-export.zip
+```
+
+See [`docs/agent-skill.md`](docs/agent-skill.md) for the install notes.
 
 ## Why SVG-Driven
 

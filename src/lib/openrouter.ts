@@ -9,7 +9,9 @@ interface OpenRouterChoice {
 type OpenRouterContent = string | Array<{ type?: string; text?: string }>;
 
 interface OpenRouterResponse {
+  id?: string;
   choices?: OpenRouterChoice[];
+  usage?: unknown;
   error?: {
     message?: string;
   };
@@ -23,6 +25,22 @@ interface OpenRouterCallOptions {
   timeoutMs?: number;
 }
 
+interface LlmProviderConfig {
+  apiKey?: string;
+  apiKeyLabel: string;
+  model?: string;
+  modelLabel: string;
+  baseUrl: string;
+  isOpenRouter: boolean;
+}
+
+export interface OpenRouterCallResult {
+  text: string;
+  model: string;
+  generationId?: string;
+  usage?: unknown;
+}
+
 export class OpenRouterError extends Error {
   constructor(
     message: string,
@@ -33,15 +51,22 @@ export class OpenRouterError extends Error {
 }
 
 export async function callOpenRouter(messages: ChatMessage[], options: OpenRouterCallOptions = {}): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  const model = options.model || process.env.OPENROUTER_MODEL;
+  const result = await callOpenRouterWithUsage(messages, options);
+  return result.text;
+}
 
-  if (!apiKey) {
-    throw new OpenRouterError("OPENROUTER_API_KEY is not configured.", 500);
+export async function callOpenRouterWithUsage(
+  messages: ChatMessage[],
+  options: OpenRouterCallOptions = {}
+): Promise<OpenRouterCallResult> {
+  const provider = resolveLlmProvider(options);
+
+  if (!provider.apiKey) {
+    throw new OpenRouterError(`${provider.apiKeyLabel} is not configured.`, 500);
   }
 
-  if (!model) {
-    throw new OpenRouterError("OPENROUTER_MODEL is not configured.", 500);
+  if (!provider.model) {
+    throw new OpenRouterError(`${provider.modelLabel} is not configured.`, 500);
   }
 
   let response: Response;
@@ -53,17 +78,17 @@ export async function callOpenRouter(messages: ChatMessage[], options: OpenRoute
       : undefined;
 
   try {
-    response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    response = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: "POST",
       signal: controller.signal,
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
         "Content-Type": "application/json",
-        ...(process.env.OPENROUTER_SITE_URL ? { "HTTP-Referer": process.env.OPENROUTER_SITE_URL } : {}),
-        ...(process.env.OPENROUTER_APP_NAME ? { "X-Title": process.env.OPENROUTER_APP_NAME } : {})
+        ...(provider.isOpenRouter && process.env.OPENROUTER_SITE_URL ? { "HTTP-Referer": process.env.OPENROUTER_SITE_URL } : {}),
+        ...(provider.isOpenRouter && process.env.OPENROUTER_APP_NAME ? { "X-Title": process.env.OPENROUTER_APP_NAME } : {})
       },
       body: JSON.stringify({
-        model,
+        model: provider.model,
         messages,
         temperature: options.temperature ?? 0.25,
         max_completion_tokens: options.maxCompletionTokens ?? 4000,
@@ -107,11 +132,16 @@ export async function callOpenRouter(messages: ChatMessage[], options: OpenRoute
     throw new OpenRouterError("OpenRouter response did not include assistant content.", 502);
   }
 
-  return text;
+  return {
+    text,
+    model: provider.model,
+    generationId: typeof payload.id === "string" ? payload.id : undefined,
+    usage: payload.usage
+  };
 }
 
 export function getConfiguredModelLabel(): string {
-  return process.env.OPENROUTER_MODEL || "OPENROUTER_MODEL";
+  return process.env.OPENROUTER_MODEL || process.env.PPT_SVG_LLM_MODEL || process.env.OPENAI_MODEL || "OPENROUTER_MODEL";
 }
 
 export function getConfiguredVisionModelLabel(): string {
@@ -131,4 +161,56 @@ function flattenContent(content: OpenRouterContent | undefined): string {
   }
 
   return "";
+}
+
+function resolveLlmProvider(options: OpenRouterCallOptions): LlmProviderConfig {
+  const openRouterBaseUrl = normalizeBaseUrl(process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1");
+  const genericBaseUrl = normalizeBaseUrl(process.env.PPT_SVG_LLM_BASE_URL || "");
+  const openAiBaseUrl = normalizeBaseUrl(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1");
+
+  if (process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_MODEL || process.env.OPENROUTER_BASE_URL) {
+    return {
+      apiKey: process.env.OPENROUTER_API_KEY || process.env.PPT_SVG_LLM_API_KEY,
+      apiKeyLabel: process.env.OPENROUTER_API_KEY ? "OPENROUTER_API_KEY" : "OPENROUTER_API_KEY or PPT_SVG_LLM_API_KEY",
+      model: options.model || process.env.OPENROUTER_MODEL || process.env.PPT_SVG_LLM_MODEL,
+      modelLabel: options.model ? "model" : "OPENROUTER_MODEL or PPT_SVG_LLM_MODEL",
+      baseUrl: openRouterBaseUrl,
+      isOpenRouter: openRouterBaseUrl.includes("openrouter.ai")
+    };
+  }
+
+  if (process.env.PPT_SVG_LLM_API_KEY || process.env.PPT_SVG_LLM_MODEL || process.env.PPT_SVG_LLM_BASE_URL) {
+    return {
+      apiKey: process.env.PPT_SVG_LLM_API_KEY,
+      apiKeyLabel: "PPT_SVG_LLM_API_KEY",
+      model: options.model || process.env.PPT_SVG_LLM_MODEL,
+      modelLabel: options.model ? "model" : "PPT_SVG_LLM_MODEL",
+      baseUrl: genericBaseUrl || openRouterBaseUrl,
+      isOpenRouter: (genericBaseUrl || openRouterBaseUrl).includes("openrouter.ai")
+    };
+  }
+
+  if (process.env.OPENAI_API_KEY || process.env.OPENAI_MODEL || process.env.OPENAI_BASE_URL) {
+    return {
+      apiKey: process.env.OPENAI_API_KEY,
+      apiKeyLabel: "OPENAI_API_KEY",
+      model: options.model || process.env.OPENAI_MODEL,
+      modelLabel: options.model ? "model" : "OPENAI_MODEL",
+      baseUrl: openAiBaseUrl,
+      isOpenRouter: false
+    };
+  }
+
+  return {
+    apiKey: undefined,
+    apiKeyLabel: "OPENROUTER_API_KEY",
+    model: options.model || process.env.OPENROUTER_MODEL,
+    modelLabel: options.model ? "model" : "OPENROUTER_MODEL",
+    baseUrl: openRouterBaseUrl,
+    isOpenRouter: true
+  };
+}
+
+function normalizeBaseUrl(value: string): string {
+  return value.trim().replace(/\/+$/, "");
 }
