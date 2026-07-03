@@ -1823,6 +1823,16 @@ function buildClarificationChoices(labels: typeof dictionaries.en): Clarificatio
       id: "architecture",
       label: labels.clarificationArchitecture,
       instruction: labels.clarificationArchitectureInstruction
+    },
+    {
+      id: "board",
+      label: labels.clarificationBoard,
+      instruction: labels.clarificationBoardInstruction
+    },
+    {
+      id: "metrics",
+      label: labels.clarificationMetrics,
+      instruction: labels.clarificationMetricsInstruction
     }
   ];
 }
