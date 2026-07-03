@@ -1,6 +1,7 @@
 import type { Figure, FigureElement } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
 import { DEFAULT_THEME, resolveTheme, type DiagramTheme } from "@/lib/theme";
+import { estimateLineCount, measureSvgText } from "@/lib/text-layout";
 import {
   layoutCycle,
   layoutFishbone,
@@ -68,16 +69,6 @@ let TEXT = DEFAULT_THEME.text;
 let SUBTEXT = DEFAULT_THEME.subtext;
 let EDGE = DEFAULT_THEME.edge;
 
-function visualLen(value: string): number {
-  let length = 0;
-
-  for (const char of value) {
-    length += /[\u3000-\u9fff\uff00-\uffef]/.test(char) ? 1 : 0.58;
-  }
-
-  return length;
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -85,13 +76,14 @@ function clamp(value: number, min: number, max: number): number {
 function measureLeaf(layoutNode: LayoutNode): void {
   const title = layoutNode.node.label ?? "";
   const detail = layoutNode.node.detail ?? "";
-  const titleWidth = visualLen(title) * TITLE_FONT * 0.62;
-  const detailWidth = visualLen(detail) * DETAIL_FONT * 0.62;
+  const titleWidth = measureSvgText(title, TITLE_FONT);
+  const detailWidth = measureSvgText(detail, DETAIL_FONT);
   const width = clamp(Math.max(titleWidth, detailWidth) * 1.12 + BOX_PAD_X * 2, MIN_W, MAX_W);
-  const titleCharsPerLine = Math.max(3, Math.floor((width - BOX_PAD_X * 2) / (TITLE_FONT * 0.62)));
-  const detailCharsPerLine = Math.max(3, Math.floor((width - BOX_PAD_X * 2) / (DETAIL_FONT * 0.62)));
-  const titleLines = Math.max(1, Math.ceil(visualLen(title) / titleCharsPerLine));
-  const detailLines = detail ? Math.max(1, Math.ceil(visualLen(detail) / detailCharsPerLine)) : 0;
+  // Count lines with the same width/measurement the renderer uses (the text
+  // element receives the full box width), so provisioned height matches the
+  // rendered wrap exactly and text neither overflows nor mis-centers.
+  const titleLines = estimateLineCount(title, width, TITLE_FONT);
+  const detailLines = detail ? estimateLineCount(detail, width, DETAIL_FONT) : 0;
   const contentHeight = titleLines * TITLE_LH + (detailLines ? 4 + detailLines * DETAIL_LH : 0);
 
   layoutNode.titleLines = titleLines;
@@ -623,7 +615,7 @@ export function layoutDiagram(
         }
       }
 
-      const plateW = Math.max(34, visualLen(edge.label) * 13 + 12);
+      const plateW = Math.max(34, measureSvgText(edge.label, 12) + 12);
       elements.push({
         id: `edge-${index}-label-bg`,
         type: "rect",

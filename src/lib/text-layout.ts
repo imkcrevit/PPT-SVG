@@ -108,6 +108,27 @@ export function measureSvgText(text: string, fontSize: number): number {
   return Array.from(text).reduce((total, char) => total + charWidth(char), 0) * fontSize;
 }
 
+/**
+ * Single source of truth for how many lines a label occupies inside a box of
+ * the given width. Delegates to the same wrapper the SVG/PPTX renderers use, so
+ * box sizing and rendered wrapping never diverge (the root cause of text
+ * overflowing or looking off-center). Pass the full element width the renderer
+ * will receive, not an inner/padded width.
+ */
+export function estimateLineCount(
+  text: string,
+  width: number,
+  fontSize: number,
+  maxLines = DEFAULT_MAX_LINES
+): number {
+  const clean = sanitizeDisplayText(text);
+  if (!clean) {
+    return 1;
+  }
+
+  return Math.max(1, wrapSvgText(clean, width, fontSize, maxLines).length);
+}
+
 function appendToken(current: string, token: string, granular: boolean): string {
   if (granular) {
     return `${current}${token}`;

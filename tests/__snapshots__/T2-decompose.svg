@@ -24,11 +24,11 @@
 <text data-node-id="p1-2-title" x="330" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="330" y="376">方案比选</tspan></text>
 </g>
 <g data-node-id="p1-3-group">
-<rect data-node-id="p1-3-rect" x="178" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="p1-3-title" x="211" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="211" y="421">估算校核</tspan></text>
+<rect data-node-id="p1-3-rect" x="176" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="p1-3-title" x="209" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="209" y="421">估算校核</tspan></text>
 </g>
 <g data-node-id="p1-4-group">
-<rect data-node-id="p1-4-rect" x="257" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<rect data-node-id="p1-4-rect" x="255" y="405" width="70" height="31" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
 <text data-node-id="p1-4-title" x="290" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="290" y="421">设计任务书</tspan></text>
 </g>
 </g>
@@ -72,12 +72,12 @@
 <text data-node-id="p3-2-title" x="849" y="376" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="849" y="376">招采文件</tspan></text>
 </g>
 <g data-node-id="p3-3-group">
-<rect data-node-id="p3-3-rect" x="697" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="p3-3-title" x="730" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="730" y="421">清单预算</tspan></text>
+<rect data-node-id="p3-3-rect" x="695" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-3-title" x="728" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="728" y="421">清单预算</tspan></text>
 </g>
 <g data-node-id="p3-4-group">
-<rect data-node-id="p3-4-rect" x="776" y="405" width="66" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="p3-4-title" x="809" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="809" y="421">供应商确认</tspan></text>
+<rect data-node-id="p3-4-rect" x="775" y="405" width="70" height="31" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="p3-4-title" x="810" y="421" fill="#1D2433" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="810" y="421">供应商确认</tspan></text>
 </g>
 </g>
 <g data-node-id="p4-group">

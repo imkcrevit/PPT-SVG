@@ -15,6 +15,7 @@ import type { Figure, FigureElement } from "@/lib/types";
 import { SKILL_IDS, type SkillId } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
 import { DEFAULT_THEME, type DiagramTheme } from "@/lib/theme";
+import { estimateLineCount, measureSvgText } from "@/lib/text-layout";
 
 const W = 1280;
 const H = 720;
@@ -39,12 +40,6 @@ function applyTheme(theme: DiagramTheme): void {
   FONT = theme.fontFamily;
 }
 
-function visualLen(value: string): number {
-  let length = 0;
-  for (const char of value) length += /[\u3000-\u9fff\uff00-\uffef]/.test(char) ? 1 : 0.58;
-  return length;
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -65,10 +60,10 @@ function childrenOf(diagram: SemanticDiagram, id: string): SemanticNode[] {
   return diagram.nodes.filter((node) => node.parent === id);
 }
 
-// estimated wrapped line count for a label of width `w` at font `fs`
-function estLines(text: string, w: number, fs: number, padX = 16): number {
-  const perLine = Math.max(2, Math.floor((w - padX * 2) / (fs * 0.62)));
-  return Math.max(1, Math.ceil(visualLen(text) / perLine));
+// Wrapped line count for a label rendered inside a text element of width `w`.
+// Delegates to the shared measurement so box height matches the rendered wrap.
+function estLines(text: string, w: number, fs: number): number {
+  return estimateLineCount(text, w, fs);
 }
 
 function titleElement(diagram: SemanticDiagram): FigureElement {
@@ -197,7 +192,7 @@ export function layoutTimeline(diagram: SemanticDiagram, theme: DiagramTheme = D
     const acc = accent(i);
     const above = i % 2 === 0;
 
-    const cardW = clamp(visualLen(node.label) * 16 * 0.62 + 28, 120, 220);
+    const cardW = clamp(measureSvgText(node.label, 16) + 28, 120, 220);
     const titleLines = estLines(node.label, cardW, 16);
     const detailLines = node.detail ? estLines(node.detail, cardW, DETAIL_FONT) : 0;
     const cardH = titleLines * (16 * 1.28) + (detailLines ? 4 + detailLines * DETAIL_LH : 0) + 22;
@@ -771,7 +766,7 @@ function durationLabel(range: GanttRange): string {
 }
 
 function textFits(value: string, width: number, fontSize: number, padding = 14): boolean {
-  return visualLen(value) * fontSize * 0.62 + padding <= width;
+  return measureSvgText(value, fontSize) + padding <= width;
 }
 
 export function layoutGantt(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
