@@ -118,6 +118,42 @@ const CASES: Case[] = [
     }
   },
   {
+    id: "heatmap", skill: "heatmap",
+    raw: { type: "heatmap", title: "风险热度", language: "zh", nodes: [
+      { id: "a", label: "数据泄露", score: { x: "0.9", y: "0.9" }, parent: null },
+      { id: "b", label: "服务中断", score: { x: "0.6", y: "0.6" }, parent: null },
+      { id: "c", label: "合规", score: { x: "0.3", y: "0.3" }, parent: null },
+      { id: "d", label: "成本超支", score: { x: "0.5", y: "0.5" }, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const cellRects = byPrefix(fig.elements, "heat-cell-").filter((e) => e.type === "rect");
+      if (cellRects.length !== 4) bad.push(`expected 4 heatmap cells, got ${cellRects.length}`);
+      const fills = new Set(cellRects.map((e) => (e.type === "rect" ? e.fill : "")));
+      if (fills.size < 3) bad.push(`expected distinct intensity fills, got ${fills.size}`);
+      return bad;
+    }
+  },
+  {
+    id: "waterfall", skill: "waterfall",
+    raw: { type: "waterfall", title: "利润拆解", language: "zh", nodes: [
+      { id: "a", label: "收入", score: { x: "100", y: "100" }, parent: null },
+      { id: "b", label: "成本", score: { x: "-40", y: "-40" }, parent: null },
+      { id: "c", label: "费用", score: { x: "-20", y: "-20" }, parent: null },
+      { id: "d", label: "税", score: { x: "-8", y: "-8" }, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const bars = byPrefix(fig.elements, "waterfall-bar-").filter((e) => e.type === "rect");
+      if (bars.length !== 4) bad.push(`expected 4 waterfall bars, got ${bars.length}`);
+      const links = byPrefix(fig.elements, "waterfall-link-").filter((e) => e.type === "line");
+      if (links.length !== 3) bad.push(`expected 3 connectors, got ${links.length}`);
+      const colors = new Set(bars.map((e) => (e.type === "rect" ? e.fill : "")));
+      if (colors.size < 2) bad.push("expected both positive and negative bar colors");
+      return bad;
+    }
+  },
+  {
     id: "radar", skill: "radar",
     raw: { type: "radar", title: "能力评估", language: "zh", nodes: [
       { id: "a", label: "性能", score: { x: "0.8", y: "0.8" }, parent: null },

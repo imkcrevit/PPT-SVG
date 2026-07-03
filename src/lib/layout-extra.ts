@@ -1099,6 +1099,129 @@ export function layoutRadar(diagram: SemanticDiagram, theme: DiagramTheme = DEFA
   return frame(diagram, elements, canvasBg);
 }
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const int = parseInt(full, 16);
+  return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 };
+}
+
+function mixHex(from: string, to: string, t: number): string {
+  const a = hexToRgb(from);
+  const b = hexToRgb(to);
+  const k = clamp(t, 0, 1);
+  const ch = (x: number, y: number) => Math.round(x + (y - x) * k).toString(16).padStart(2, "0");
+  return `#${ch(a.r, b.r)}${ch(a.g, b.g)}${ch(a.b, b.b)}`;
+}
+
+function normUnit(value: number | undefined, fallback: number): number {
+  if (typeof value !== "number") return fallback;
+  return clamp(value > 1 ? value / 100 : value, 0, 1);
+}
+
+// ============================================================ HEATMAP grid (intensity = score.x 0..1)
+export function layoutHeatmap(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const cells = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (cells.length === 0) return frame(diagram, elements, canvasBg);
+
+  const bodyTop = MARGIN + TITLE_H + 12;
+  const cols = Math.ceil(Math.sqrt(cells.length));
+  const rows = Math.ceil(cells.length / cols);
+  const gap = 10;
+  const gridW = W - MARGIN * 2;
+  const gridH = H - MARGIN - bodyTop;
+  const cw = (gridW - gap * (cols - 1)) / cols;
+  const ch = (gridH - gap * (rows - 1)) / rows;
+  const base = accent(0).stroke;
+
+  cells.forEach((node, i) => {
+    const r = Math.floor(i / cols);
+    const c = i % cols;
+    const x = MARGIN + c * (cw + gap);
+    const y = bodyTop + r * (ch + gap);
+    const v = normUnit((node as unknown as { score?: { x?: number } }).score?.x, 0.5);
+    const fill = mixHex("#EEF1F6", base, v);
+    const textFill = v > 0.55 ? "#FFFFFF" : TEXT;
+
+    elements.push({ id: `heat-cell-${i}`, type: "rect", name: node.label, x, y, width: cw, height: ch, rx: 8, fill, stroke: "none", strokeWidth: 0 });
+    const hasDetail = Boolean(node.detail);
+    elements.push({ id: `heat-label-${i}`, type: "text", name: `${node.label} label`, x, y, width: cw, height: hasDetail ? ch * 0.6 : ch, text: node.label, fontSize: 14, fontWeight: 700, fill: textFill, textAnchor: "middle" });
+    if (hasDetail) {
+      elements.push({ id: `heat-detail-${i}`, type: "text", name: `${node.label} detail`, x, y: y + ch * 0.55, width: cw, height: ch * 0.4, text: node.detail as string, fontSize: 11, fontWeight: 500, fill: textFill, textAnchor: "middle", opacity: 0.9 });
+    }
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
+// ============================================================ WATERFALL (delta per step = score.x)
+export function layoutWaterfall(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const steps = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (steps.length === 0) return frame(diagram, elements, canvasBg);
+
+  const POS = "#2E9E76";
+  const NEG = "#E4572E";
+  const deltas = steps.map((n) => (n as unknown as { score?: { x?: number } }).score?.x ?? 0);
+
+  // Running totals: bar i spans [before, after].
+  const before: number[] = [];
+  const after: number[] = [];
+  let run = 0;
+  deltas.forEach((d) => {
+    before.push(run);
+    run += d;
+    after.push(run);
+  });
+
+  const values = [0, ...before, ...after];
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const span = maxV - minV || 1;
+
+  const left = MARGIN + 20;
+  const right = W - MARGIN - 20;
+  const plotTop = MARGIN + TITLE_H + 20;
+  const plotBottom = H - MARGIN - 40;
+  const plotH = plotBottom - plotTop;
+  const yOf = (value: number) => plotBottom - ((value - minV) / span) * plotH;
+  const slot = (right - left) / steps.length;
+  const barW = Math.min(slot * 0.6, 120);
+
+  // Zero baseline.
+  const zeroY = yOf(0);
+  elements.push({ id: "waterfall-baseline", type: "line", name: "baseline", x1: left, y1: zeroY, x2: right, y2: zeroY, stroke: "#C4C9D2", strokeWidth: 1 });
+
+  steps.forEach((node, i) => {
+    const cx = left + slot * (i + 0.5);
+    const up = after[i] >= before[i];
+    const yTop = yOf(Math.max(before[i], after[i]));
+    const yBot = yOf(Math.min(before[i], after[i]));
+    const h = Math.max(2, yBot - yTop);
+    const color = up ? POS : NEG;
+
+    elements.push({ id: `waterfall-bar-${i}`, type: "rect", name: node.label, x: cx - barW / 2, y: yTop, width: barW, height: h, rx: 3, fill: color, stroke: "none", strokeWidth: 0 });
+
+    // Connector to the next bar's start level (dashed).
+    if (i < steps.length - 1) {
+      const y = yOf(after[i]);
+      elements.push({ id: `waterfall-link-${i}`, type: "line", name: "link", x1: cx + barW / 2, y1: y, x2: left + slot * (i + 1.5) - barW / 2, y2: y, stroke: "#9AA0AB", strokeWidth: 1.2, dash: true });
+    }
+
+    // Step label under the axis.
+    elements.push({ id: `waterfall-label-${i}`, type: "text", name: `${node.label} label`, x: cx - slot / 2, y: plotBottom + 6, width: slot, height: 30, text: node.label, fontSize: 12, fontWeight: 600, fill: TEXT, textAnchor: "middle" });
+    // Delta value above/below the bar.
+    const vy = up ? yTop - 20 : yBot + 2;
+    const shown = Math.round(deltas[i] * 100) / 100;
+    elements.push({ id: `waterfall-val-${i}`, type: "text", name: `${node.label} value`, x: cx - barW / 2 - 10, y: vy, width: barW + 20, height: 18, text: `${shown > 0 ? "+" : ""}${shown}`, fontSize: 11, fontWeight: 600, fill: color, textAnchor: "middle" });
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
 // ============================================================ SCATTER / 2D positioning (needs node.score {x,y})
 type ScoreNode = { score?: { x: number; y: number } };
 type AxesDiagram = { axes?: { xLabel?: string; yLabel?: string } };

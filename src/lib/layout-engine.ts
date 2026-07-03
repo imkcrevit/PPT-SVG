@@ -7,6 +7,7 @@ import {
   layoutFishbone,
   layoutFunnel,
   layoutGantt,
+  layoutHeatmap,
   layoutHierarchy,
   layoutKanban,
   layoutMatrix,
@@ -17,7 +18,8 @@ import {
   layoutScatter,
   layoutSwimlane,
   layoutTimeline,
-  layoutVenn
+  layoutVenn,
+  layoutWaterfall
 } from "@/lib/layout-extra";
 
 // Deterministic semantic-to-geometry compiler.
@@ -371,6 +373,8 @@ export function layoutDiagram(
   if (diagram.type === "kanban") return layoutKanban(diagram, theme, canvasBg);
   if (diagram.type === "network") return layoutNetwork(diagram, theme, canvasBg);
   if (diagram.type === "radar") return layoutRadar(diagram, theme, canvasBg);
+  if (diagram.type === "heatmap") return layoutHeatmap(diagram, theme, canvasBg);
+  if (diagram.type === "waterfall") return layoutWaterfall(diagram, theme, canvasBg);
 
   const width = 1280;
   const height = 720;

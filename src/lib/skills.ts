@@ -159,6 +159,26 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/radar.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "heatmap",
+    name: { en: "Heatmap", zh: "热力图" },
+    description: {
+      en: "Grid of cells shaded by intensity (score per cell).",
+      zh: "网格单元按强度着色，每格一个评分。"
+    },
+    promptFile: "skills/heatmap.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "waterfall",
+    name: { en: "Waterfall", zh: "瀑布图" },
+    description: {
+      en: "Cumulative increases/decreases across steps.",
+      zh: "逐步累计的增减变化。"
+    },
+    promptFile: "skills/waterfall.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 
