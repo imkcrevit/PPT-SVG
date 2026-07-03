@@ -118,6 +118,28 @@ const CASES: Case[] = [
     }
   },
   {
+    id: "network", skill: "network",
+    raw: { type: "network", title: "系统关系", language: "zh", nodes: [
+      { id: "a", label: "订单服务", parent: null, emphasis: "primary" },
+      { id: "b", label: "支付服务", parent: null },
+      { id: "c", label: "库存服务", parent: null },
+      { id: "d", label: "用户服务", parent: null }
+    ], edges: [
+      { from: "a", to: "b", label: "调用" }, { from: "a", to: "c", label: "扣减" },
+      { from: "a", to: "d", label: "校验" }, { from: "b", to: "d" }
+    ] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const cards = byPrefix(fig.elements, "net-node-").filter((e) => e.type === "group").length;
+      if (cards !== 4) bad.push(`expected 4 network nodes, got ${cards}`);
+      const conns = byPrefix(fig.elements, "net-edge-").filter((e) => e.type === "connector").length;
+      if (conns !== 4) bad.push(`expected 4 network edges, got ${conns}`);
+      const labels = byPrefix(fig.elements, "net-edge-").filter((e) => e.type === "text").length;
+      if (labels !== 3) bad.push(`expected 3 network edge labels, got ${labels}`);
+      return bad;
+    }
+  },
+  {
     id: "scatter", skill: "scatter",
     raw: { type: "scatter", title: "项目定位", language: "zh", axes: { xLabel: "成本", yLabel: "价值" }, nodes: [
       { id: "a", label: "A", score: { x: "20", y: "80" }, parent: null }, { id: "b", label: "B", score: { x: "70", y: "60" }, parent: null },

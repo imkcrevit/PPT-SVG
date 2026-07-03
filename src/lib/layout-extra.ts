@@ -964,6 +964,81 @@ export function layoutKanban(diagram: SemanticDiagram, theme: DiagramTheme = DEF
   return frame(diagram, elements, canvasBg);
 }
 
+// ============================================================ NETWORK / relationship graph (nodes + edges, no tree)
+export function layoutNetwork(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const nodes = diagram.nodes;
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (nodes.length === 0) return frame(diagram, elements, canvasBg);
+
+  const bodyTop = MARGIN + TITLE_H + 12;
+  const centerX = W / 2;
+  const centerY = (bodyTop + (H - MARGIN)) / 2;
+  const maxR = Math.min(centerX - MARGIN - 96, (H - MARGIN - bodyTop) / 2 - 40);
+  const count = nodes.length;
+
+  // Card width is capped by the chord between adjacent ring positions so that
+  // neighbours never collide, then floored so text stays legible.
+  const chord = count > 1 ? 2 * maxR * Math.sin(Math.PI / count) : 2 * maxR;
+  const cardW = clamp(Math.min(measureSvgText(nodesLabelMax(nodes), 14) + 28, chord - 18), 96, 200);
+
+  const pos = new Map<string, { x: number; y: number }>();
+  nodes.forEach((n, i) => {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / count;
+    const x = count === 1 ? centerX : centerX + maxR * Math.cos(angle);
+    const y = count === 1 ? centerY : centerY + maxR * Math.sin(angle);
+    pos.set(n.id, { x, y });
+  });
+
+  // Edges first so cards render on top of the connectors.
+  (diagram.edges ?? []).forEach((e, i) => {
+    const a = pos.get(e.from);
+    const b = pos.get(e.to);
+    if (!a || !b) return;
+    elements.push({
+      id: `net-edge-${i}`,
+      type: "connector",
+      name: `${e.from} -> ${e.to}`,
+      points: [
+        { x: a.x, y: a.y },
+        { x: b.x, y: b.y }
+      ],
+      stroke: EDGE,
+      strokeWidth: 2,
+      dash: e.dashed === true,
+      endArrow: true
+    });
+    if (e.label) {
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const plateW = Math.max(34, measureSvgText(e.label, 12) + 12);
+      elements.push({ id: `net-edge-${i}-bg`, type: "rect", name: `${e.label} bg`, x: mx - plateW / 2, y: my - 11, width: plateW, height: 22, rx: 4, fill: "#FFFFFF", stroke: "none", strokeWidth: 0 });
+      elements.push({ id: `net-edge-${i}-label`, type: "text", name: e.label, x: mx - plateW / 2, y: my - 11, width: plateW, height: 22, text: e.label, fontSize: 12, fontWeight: 500, fill: SUBTEXT, textAnchor: "middle" });
+    }
+  });
+
+  nodes.forEach((n, i) => {
+    const p = pos.get(n.id)!;
+    const acc = accent(i);
+    const titleLines = estLines(n.label, cardW, 14);
+    const detailLines = n.detail ? estLines(n.detail, cardW, DETAIL_FONT) : 0;
+    const cardH = titleLines * (14 * 1.28) + (detailLines ? 4 + detailLines * DETAIL_LH : 0) + 20;
+    const emph = (n as unknown as { emphasis?: string }).emphasis;
+    elements.push(
+      card(`net-node-${i}`, n.label, n.detail, p.x - cardW / 2, p.y - cardH / 2, cardW, cardH, acc, {
+        dashed: n.dashed === true,
+        titleFont: 14,
+        fill: emph === "primary" ? acc.tint : "#FFFFFF"
+      })
+    );
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
+function nodesLabelMax(nodes: SemanticNode[]): string {
+  return nodes.reduce((longest, n) => (n.label.length > longest.length ? n.label : longest), "");
+}
 
 // ============================================================ SCATTER / 2D positioning (needs node.score {x,y})
 type ScoreNode = { score?: { x: number; y: number } };

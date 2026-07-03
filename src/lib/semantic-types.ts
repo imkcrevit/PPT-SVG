@@ -6,7 +6,7 @@
 export type DiagramType =
   | "freeform" | "flow" | "matrix" | "timeline" | "pyramid" | "architecture"
   | "hierarchy" | "cycle" | "funnel" | "venn" | "mindmap" | "fishbone"
-  | "gantt" | "swimlane" | "scatter" | "kanban";
+  | "gantt" | "swimlane" | "scatter" | "kanban" | "network";
 
 export type NodeEmphasis = "normal" | "primary" | "muted";
 

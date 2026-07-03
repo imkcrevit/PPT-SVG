@@ -139,6 +139,16 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/kanban.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "network",
+    name: { en: "Network", zh: "网络关系图" },
+    description: {
+      en: "Entities linked by relationships, arranged on a ring.",
+      zh: "实体之间的关系连接，环形排布。"
+    },
+    promptFile: "skills/network.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 
