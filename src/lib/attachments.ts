@@ -14,6 +14,7 @@ import {
 import type { UploadedAttachment } from "@/lib/types";
 import { extractTheme } from "@/lib/theme-extract";
 import { AttachmentValidationError, assertSafeZip } from "@/lib/zip-safety";
+import { scheduleArtifactReap } from "@/lib/artifact-cleanup";
 
 export { AttachmentValidationError } from "@/lib/zip-safety";
 
@@ -46,6 +47,7 @@ export async function persistAttachment(file: File): Promise<UploadedAttachment>
   const storedName = `${hash}.${extension}`;
   const storedPath = path.join(directory, storedName);
 
+  scheduleArtifactReap();
   await mkdir(directory, { recursive: true });
   await writeFile(storedPath, bytes);
 

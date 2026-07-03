@@ -1,6 +1,7 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { scheduleArtifactReap } from "@/lib/artifact-cleanup";
 import { renderFigureSvg } from "@/lib/svg";
 import type { Figure, FitAssessment } from "@/lib/types";
 
@@ -38,6 +39,7 @@ export async function persistGeneratedArtifacts(
   const svg = renderFigureSvg(figure);
   const json = `${JSON.stringify({ sessionId, requestId, ...metadata, figure, fit, layoutReview }, null, 2)}\n`;
 
+  scheduleArtifactReap();
   await mkdir(directory, { recursive: true });
   await Promise.all([
     writeFile(svgPath, `${svg}\n`, "utf8"),
