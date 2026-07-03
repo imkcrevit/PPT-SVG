@@ -1,0 +1,4 @@
+# SVG snapshots are compared byte-for-byte against the LF output of the
+# renderer. Force LF on checkout so autocrlf=true doesn't turn them into CRLF
+# and cause spurious snapshot-test failures on Windows.
+tests/__snapshots__/*.svg text eol=lf
