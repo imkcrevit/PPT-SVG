@@ -1,6 +1,7 @@
 import pptxgen from "pptxgenjs";
 
 import type { Figure, FigureElement } from "@/lib/types";
+import { wrapSvgText } from "@/lib/text-layout";
 
 const SLIDE_WIDTH_IN = 13.333;
 const SLIDE_HEIGHT_IN = 7.5;
@@ -53,7 +54,7 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       line: {
         color: stripHash(element.stroke ?? "#1D2433"),
         transparency: element.stroke ? 0 : 100,
-        width: element.strokeWidth ?? 1.5,
+        width: pxStrokeToPt(element.strokeWidth ?? 1.5, figure.canvas.height),
         dashType: element.dash ? ("dash" as const) : ("solid" as const)
       }
     });
@@ -61,20 +62,31 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
   }
 
   if (element.type === "text") {
-    slide.addText(element.text, {
+    const width = element.width ?? 240;
+    const fontSize = element.fontSize ?? 22;
+    // Wrap with the same algorithm the SVG renderer uses, then emit one run per
+    // line so PPTX line breaks match the preview instead of relying on
+    // pptxgenjs' own (divergent) auto-wrap metrics.
+    const lines = wrapSvgText(element.text, width, fontSize);
+    const runs: pptxgen.TextProps[] = lines.map((line) => ({
+      text: line,
+      options: { breakLine: true }
+    }));
+
+    slide.addText(runs, {
       objectName: element.id,
       x: pxToIn(element.x, figure.canvas.width),
       y: pyToIn(element.y, figure.canvas.height),
-      w: pxToIn(element.width ?? 240, figure.canvas.width),
+      w: pxToIn(width, figure.canvas.width),
       h: pyToIn(element.height ?? 70, figure.canvas.height),
       fontFace: figure.canvas.fontFamily ?? PPTX_DEFAULT_FONT_FACE,
-      fontSize: pxFontToPt(element.fontSize ?? 22, figure.canvas.height),
+      fontSize: pxFontToPt(fontSize, figure.canvas.height),
       bold: (element.fontWeight ?? 500) >= 600,
       color: stripHash(element.fill ?? "#1D2433"),
       align: pptxTextAlign(element),
       valign: "middle",
       margin: pptxTextMargin(element),
-      breakLine: false
+      wrap: false
     });
     return;
   }
@@ -93,7 +105,7 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       line: {
         color: stripHash(element.stroke ?? "#1D2433"),
         transparency: element.stroke ? 0 : 100,
-        width: element.strokeWidth ?? 1.5,
+        width: pxStrokeToPt(element.strokeWidth ?? 1.5, figure.canvas.height),
         dashType: element.dash ? ("dash" as const) : ("solid" as const)
       }
     });
@@ -102,22 +114,43 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
 
   if (element.type === "polygon") {
     const pts = element.points;
-    for (let i = 0; i < pts.length; i += 1) {
-      const a = pts[i];
-      const b = pts[(i + 1) % pts.length];
-      slide.addShape("line" as pptxgen.ShapeType, {
-        objectName: element.id,
-        x: pxToIn(a.x, figure.canvas.width),
-        y: pyToIn(a.y, figure.canvas.height),
-        w: pxToIn(b.x - a.x, figure.canvas.width),
-        h: pyToIn(b.y - a.y, figure.canvas.height),
-        line: {
-          color: stripHash(element.stroke ?? "#1D2433"),
-          width: element.strokeWidth ?? 1.5,
-          dashType: element.dash ? ("dash" as const) : ("solid" as const)
-        }
-      });
+    if (pts.length < 2) {
+      return;
     }
+
+    const minX = Math.min(...pts.map((point) => point.x));
+    const minY = Math.min(...pts.map((point) => point.y));
+    const maxX = Math.max(...pts.map((point) => point.x));
+    const maxY = Math.max(...pts.map((point) => point.y));
+    const boxW = Math.max(1, maxX - minX);
+    const boxH = Math.max(1, maxY - minY);
+    const hasFill = element.fill !== undefined && element.fill !== "none";
+
+    // A single closed custom-geometry shape preserves the fill and stroke of the
+    // polygon (funnel/venn wedges). The previous per-edge line approach dropped
+    // the fill and split one shape into disconnected segments.
+    const geomPoints: pptxgen.ShapeProps["points"] = pts.map((point, index) => ({
+      x: pxToIn(point.x - minX, figure.canvas.width),
+      y: pyToIn(point.y - minY, figure.canvas.height),
+      ...(index === 0 ? { moveTo: true } : {})
+    }));
+    geomPoints.push({ close: true });
+
+    slide.addShape("custGeom" as pptxgen.ShapeType, {
+      objectName: element.id,
+      x: pxToIn(minX, figure.canvas.width),
+      y: pyToIn(minY, figure.canvas.height),
+      w: pxToIn(boxW, figure.canvas.width),
+      h: pyToIn(boxH, figure.canvas.height),
+      points: geomPoints,
+      fill: { color: hasFill ? stripHash(element.fill as string) : "FFFFFF", transparency: hasFill ? 0 : 100 },
+      line: {
+        color: stripHash(element.stroke ?? "#1D2433"),
+        transparency: element.stroke ? 0 : 100,
+        width: pxStrokeToPt(element.strokeWidth ?? 1.5, figure.canvas.height),
+        dashType: element.dash ? ("dash" as const) : ("solid" as const)
+      }
+    });
     return;
   }
 
@@ -203,7 +236,7 @@ function addConnector(
     flipV: last.y < first.y,
     line: {
       color: stripHash(element.stroke),
-      width: element.strokeWidth ?? 2,
+      width: pxStrokeToPt(element.strokeWidth ?? 2, figure.canvas.height),
       endArrowType: element.endArrow === true ? ("triangle" as const) : undefined,
       dashType: element.dash ? ("dash" as const) : ("solid" as const)
     }
@@ -262,7 +295,7 @@ function addStraightLine(
     h: pyToIn(line.y2 - line.y1, figure.canvas.height),
     line: {
       color: stripHash(line.stroke),
-      width: line.strokeWidth ?? 2,
+      width: pxStrokeToPt(line.strokeWidth ?? 2, figure.canvas.height),
       endArrowType: line.endArrow ? ("triangle" as const) : undefined,
       dashType: line.dash ? ("dash" as const) : ("solid" as const)
     }
@@ -288,6 +321,13 @@ function pyToIn(value: number, canvasHeight: number): number {
 
 function pxFontToPt(value: number, canvasHeight: number): number {
   return (value / canvasHeight) * SLIDE_HEIGHT_IN * 72;
+}
+
+// SVG stroke widths are pixels on the canvas; PPTX line widths are points.
+// Convert through the same canvas-height scale used for fonts so borders match
+// the SVG/preview weight instead of rendering noticeably thicker.
+function pxStrokeToPt(value: number, canvasHeight: number): number {
+  return Math.round(((value / canvasHeight) * SLIDE_HEIGHT_IN * 72) * 100) / 100;
 }
 
 function stripHash(color: string): string {

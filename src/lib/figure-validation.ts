@@ -68,7 +68,11 @@ export function validateAndNormalizeFigureResponse(
   const canvas = {
     width: readNumber(canvasRecord.width, ["figure", "canvas", "width"], errors, 1280, 320, 2400),
     height: readNumber(canvasRecord.height, ["figure", "canvas", "height"], errors, 720, 240, 1600),
-    background: readColor(canvasRecord.background, "#FFFFFF")
+    background: readColor(canvasRecord.background, "#FFFFFF"),
+    // Preserve the resolved theme font so SVG preview, SVG download, and PPTX
+    // export all render the same typeface. Sanitized to keep it safe inside SVG
+    // attributes and PPTX XML.
+    fontFamily: readFontFamily(canvasRecord.fontFamily)
   };
 
   const rawSkillId = readString(metadataRecord.skillId, ["figure", "metadata", "skillId"], errors, expectedSkillId);
@@ -1017,6 +1021,15 @@ function readColor(value: unknown, fallback: string): string {
   }
 
   return fallback;
+}
+
+function readFontFamily(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const cleaned = value.replace(/["'<>`;{}]/g, "").trim().slice(0, 60);
+  return cleaned || undefined;
 }
 
 function uniqueId(value: string, seenIds: Set<string>): string {
