@@ -1040,6 +1040,65 @@ function nodesLabelMax(nodes: SemanticNode[]): string {
   return nodes.reduce((longest, n) => (n.label.length > longest.length ? n.label : longest), "");
 }
 
+// ============================================================ RADAR / spider chart (axes = nodes, value = score.x 0..1)
+export function layoutRadar(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const axes = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (axes.length === 0) return frame(diagram, elements, canvasBg);
+
+  const bodyTop = MARGIN + TITLE_H + 12;
+  const cx = W / 2;
+  const cy = (bodyTop + (H - MARGIN)) / 2;
+  const R = Math.min(cx - MARGIN - 140, (H - MARGIN - bodyTop) / 2 - 24);
+  const n = axes.length;
+  const acc = accent(0);
+  const dir = (i: number) => {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    return { dx: Math.cos(a), dy: Math.sin(a) };
+  };
+  const valueOf = (node: SemanticNode) => {
+    const v = (node as unknown as { score?: { x?: number } }).score?.x;
+    return clamp(typeof v === "number" ? (v > 1 ? v / 100 : v) : 0.6, 0, 1);
+  };
+
+  // Concentric grid rings (light, no fill).
+  const rings = 4;
+  for (let r = 1; r <= rings; r += 1) {
+    const rr = (R * r) / rings;
+    const pts = axes.map((_, i) => {
+      const d = dir(i);
+      return { x: cx + d.dx * rr, y: cy + d.dy * rr };
+    });
+    elements.push({ id: `radar-ring-${r}`, type: "polygon", name: `grid ${r}`, points: pts, fill: "none", stroke: "#D8DCE3", strokeWidth: 1, dash: false });
+  }
+
+  // Axis spokes + labels.
+  axes.forEach((node, i) => {
+    const d = dir(i);
+    elements.push({ id: `radar-axis-${i}`, type: "line", name: `axis ${i}`, x1: cx, y1: cy, x2: cx + d.dx * R, y2: cy + d.dy * R, stroke: "#C4C9D2", strokeWidth: 1 });
+    const lx = cx + d.dx * (R + 26);
+    const ly = cy + d.dy * (R + 18);
+    const anchor: "start" | "middle" | "end" = d.dx > 0.3 ? "start" : d.dx < -0.3 ? "end" : "middle";
+    const lw = 150;
+    const x = anchor === "start" ? lx : anchor === "end" ? lx - lw : lx - lw / 2;
+    elements.push({ id: `radar-label-${i}`, type: "text", name: `${node.label} label`, x: clamp(x, 4, W - lw - 4), y: ly - 12, width: lw, height: 24, text: node.label, fontSize: 13, fontWeight: 600, fill: TEXT, textAnchor: anchor });
+  });
+
+  // Data polygon (filled) + vertex dots.
+  const dataPts = axes.map((node, i) => {
+    const d = dir(i);
+    const v = valueOf(node);
+    return { x: cx + d.dx * R * v, y: cy + d.dy * R * v };
+  });
+  elements.push({ id: "radar-area", type: "polygon", name: "series", points: dataPts, fill: acc.tint, stroke: acc.stroke, strokeWidth: 2, dash: false, opacity: 0.72 });
+  dataPts.forEach((p, i) => {
+    elements.push({ id: `radar-dot-${i}`, type: "ellipse", name: `point ${i}`, cx: p.x, cy: p.y, rx: 4.5, ry: 4.5, fill: acc.stroke, stroke: acc.stroke, strokeWidth: 1 });
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
 // ============================================================ SCATTER / 2D positioning (needs node.score {x,y})
 type ScoreNode = { score?: { x: number; y: number } };
 type AxesDiagram = { axes?: { xLabel?: string; yLabel?: string } };

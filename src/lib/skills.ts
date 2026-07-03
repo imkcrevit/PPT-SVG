@@ -149,6 +149,16 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/network.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "radar",
+    name: { en: "Radar", zh: "雷达图" },
+    description: {
+      en: "Multi-dimension comparison on radial axes (score per axis).",
+      zh: "多维度雷达对比，每个维度一个评分。"
+    },
+    promptFile: "skills/radar.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 

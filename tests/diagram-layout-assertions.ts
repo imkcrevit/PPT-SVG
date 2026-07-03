@@ -118,6 +118,27 @@ const CASES: Case[] = [
     }
   },
   {
+    id: "radar", skill: "radar",
+    raw: { type: "radar", title: "能力评估", language: "zh", nodes: [
+      { id: "a", label: "性能", score: { x: "0.8", y: "0.8" }, parent: null },
+      { id: "b", label: "成本", score: { x: "0.5", y: "0.5" }, parent: null },
+      { id: "c", label: "易用性", score: { x: "0.9", y: "0.9" }, parent: null },
+      { id: "d", label: "稳定性", score: { x: "0.7", y: "0.7" }, parent: null },
+      { id: "e", label: "生态", score: { x: "0.4", y: "0.4" }, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const axes = byPrefix(fig.elements, "radar-axis-").filter((e) => e.type === "line").length;
+      if (axes !== 5) bad.push(`expected 5 radar axes, got ${axes}`);
+      const area = flatten(fig.elements).find((e) => e.id === "radar-area");
+      if (!area || area.type !== "polygon") bad.push("radar-area data polygon missing");
+      else if (area.points.length !== 5) bad.push(`radar-area should have 5 vertices, got ${area.points.length}`);
+      const rings = byPrefix(fig.elements, "radar-ring-").length;
+      if (rings !== 4) bad.push(`expected 4 grid rings, got ${rings}`);
+      return bad;
+    }
+  },
+  {
     id: "network", skill: "network",
     raw: { type: "network", title: "系统关系", language: "zh", nodes: [
       { id: "a", label: "订单服务", parent: null, emphasis: "primary" },

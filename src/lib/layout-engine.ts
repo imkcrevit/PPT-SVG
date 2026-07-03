@@ -13,6 +13,7 @@ import {
   layoutMindmap,
   layoutNetwork,
   layoutPyramid,
+  layoutRadar,
   layoutScatter,
   layoutSwimlane,
   layoutTimeline,
@@ -369,6 +370,7 @@ export function layoutDiagram(
   if (diagram.type === "scatter") return layoutScatter(diagram, theme, canvasBg);
   if (diagram.type === "kanban") return layoutKanban(diagram, theme, canvasBg);
   if (diagram.type === "network") return layoutNetwork(diagram, theme, canvasBg);
+  if (diagram.type === "radar") return layoutRadar(diagram, theme, canvasBg);
 
   const width = 1280;
   const height = 720;
