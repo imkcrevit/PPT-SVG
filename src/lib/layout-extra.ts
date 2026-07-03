@@ -891,6 +891,80 @@ export function layoutSwimlane(diagram: SemanticDiagram, theme: DiagramTheme = D
   return frame(diagram, elements, canvasBg);
 }
 
+// ============================================================ KANBAN board (columns by node.lane)
+export function layoutKanban(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const nodes = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (nodes.length === 0) return frame(diagram, elements, canvasBg);
+
+  // Columns come from diagram.lanes (explicit order) or are derived from the
+  // distinct node.lane values in first-seen order.
+  let columns = (diagram as unknown as LaneDiagram).lanes;
+  if (!columns || columns.length === 0) {
+    columns = [];
+    for (const n of nodes) {
+      const l = (n as unknown as LaneNode).lane ?? "待办";
+      if (!columns.includes(l)) columns.push(l);
+    }
+  }
+  const colOf = (n: SemanticNode) => Math.max(0, columns!.indexOf((n as unknown as LaneNode).lane ?? columns![0]));
+
+  const top = MARGIN + TITLE_H + 8;
+  const headerH = 40;
+  const bodyTop = top + headerH + 14;
+  const bodyBottom = H - MARGIN;
+  const availH = bodyBottom - bodyTop - 10;
+  const gutter = 16;
+  const colCount = Math.max(1, columns.length);
+  const colW = (W - MARGIN * 2 - gutter * (colCount - 1)) / colCount;
+  const cardGap = 12;
+  const titleFont = 13;
+
+  // Column backgrounds + headers (with card counts).
+  columns.forEach((col, c) => {
+    const acc = accent(c);
+    const cx = MARGIN + c * (colW + gutter);
+    const count = nodes.filter((n) => colOf(n) === c).length;
+    elements.push({ id: `kanban-col-${c}`, type: "rect", name: col, x: cx, y: top, width: colW, height: bodyBottom - top, rx: 12, fill: "#F4F5F7", stroke: "none", strokeWidth: 0 });
+    elements.push({ id: `kanban-head-${c}`, type: "rect", name: `${col} header`, x: cx, y: top, width: colW, height: headerH, rx: 12, fill: acc.tint, stroke: acc.stroke, strokeWidth: 1.5 });
+    elements.push({ id: `kanban-headtext-${c}`, type: "text", name: `${col} title`, x: cx, y: top, width: colW, height: headerH, text: `${col} · ${count}`, fontSize: titleFont + 1, fontWeight: 700, fill: acc.stroke, textAnchor: "middle" });
+  });
+
+  // Cards stacked within each column. Heights are measured from content, then
+  // compressed uniformly if a column's stack would exceed the available height,
+  // so cards always stay inside the canvas.
+  const cardW = colW - 16;
+  columns.forEach((_, c) => {
+    const acc = accent(c);
+    const cx = MARGIN + c * (colW + gutter) + 8;
+    const colNodes = nodes.filter((n) => colOf(n) === c);
+    const heights = colNodes.map((n) => {
+      const titleLines = estLines(n.label, cardW, titleFont);
+      const detailLines = n.detail ? estLines(n.detail, cardW, DETAIL_FONT) : 0;
+      return titleLines * (titleFont * 1.28) + (detailLines ? 4 + detailLines * DETAIL_LH : 0) + 22;
+    });
+    const stackH = heights.reduce((sum, h) => sum + h, 0) + cardGap * Math.max(0, colNodes.length - 1);
+    const scale = stackH > availH ? availH / stackH : 1;
+
+    let cursorY = bodyTop;
+    colNodes.forEach((n, i) => {
+      const ch = Math.max(34, Math.round(heights[i] * scale));
+      elements.push(
+        card(`kanban-card-${c}-${i}`, n.label, n.detail, cx, cursorY, cardW, ch, acc, {
+          dashed: n.dashed === true,
+          titleFont,
+          fill: "#FFFFFF"
+        })
+      );
+      cursorY += ch + cardGap * scale;
+    });
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
+
 // ============================================================ SCATTER / 2D positioning (needs node.score {x,y})
 type ScoreNode = { score?: { x: number; y: number } };
 type AxesDiagram = { axes?: { xLabel?: string; yLabel?: string } };

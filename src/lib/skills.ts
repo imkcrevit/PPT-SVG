@@ -129,6 +129,16 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     description: { en: "2D positioning by score.", zh: "按评分二维定位。" },
     promptFile: "skills/scatter.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "kanban",
+    name: { en: "Kanban", zh: "看板" },
+    description: {
+      en: "Board of columns (status/stage) with stacked cards.",
+      zh: "按状态/阶段分栏的看板，卡片纵向堆叠。"
+    },
+    promptFile: "skills/kanban.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 

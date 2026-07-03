@@ -5,7 +5,7 @@ export type Locale = (typeof LOCALES)[number];
 export const SKILL_IDS = [
   "freeform", "flow", "matrix", "timeline", "pyramid", "architecture",
   "hierarchy", "cycle", "funnel", "venn", "mindmap", "fishbone",
-  "gantt", "swimlane", "scatter"
+  "gantt", "swimlane", "scatter", "kanban"
 ] as const;
 export type SkillId = (typeof SKILL_IDS)[number];
 

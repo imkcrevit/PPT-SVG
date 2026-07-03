@@ -98,6 +98,26 @@ const CASES: Case[] = [
     }
   },
   {
+    id: "kanban", skill: "kanban",
+    raw: { type: "kanban", title: "迭代看板", language: "zh", lanes: ["待办", "进行中", "已完成"], nodes: [
+      { id: "t1", label: "登录改版", detail: "支持第三方登录", lane: "待办", parent: null },
+      { id: "t2", label: "支付对接", detail: "接入微信/支付宝", lane: "待办", parent: null },
+      { id: "t3", label: "搜索优化", detail: "召回率提升", lane: "进行中", parent: null },
+      { id: "t4", label: "埋点上报", lane: "进行中", parent: null },
+      { id: "t5", label: "首页重构", detail: "已灰度发布", lane: "已完成", parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const cols = byPrefix(fig.elements, "kanban-col-").length;
+      if (cols !== 3) bad.push(`expected 3 kanban columns, got ${cols} (lane/lanes likely dropped)`);
+      const cardGroups = byPrefix(fig.elements, "kanban-card-").filter((e) => e.type === "group");
+      if (cardGroups.length !== 5) bad.push(`expected 5 kanban cards, got ${cardGroups.length}`);
+      const cardX = distinct(cardGroups.map((g) => (g.type === "group" ? Math.round(((g.children.find((c) => c.type === "rect") as { x?: number })?.x ?? 0) / 20) : 0)));
+      if (cardX < 3) bad.push(`cards occupy only ${cardX} distinct columns (expected 3)`);
+      return bad;
+    }
+  },
+  {
     id: "scatter", skill: "scatter",
     raw: { type: "scatter", title: "项目定位", language: "zh", axes: { xLabel: "成本", yLabel: "价值" }, nodes: [
       { id: "a", label: "A", score: { x: "20", y: "80" }, parent: null }, { id: "b", label: "B", score: { x: "70", y: "60" }, parent: null },

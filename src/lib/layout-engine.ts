@@ -8,6 +8,7 @@ import {
   layoutFunnel,
   layoutGantt,
   layoutHierarchy,
+  layoutKanban,
   layoutMatrix,
   layoutMindmap,
   layoutPyramid,
@@ -365,6 +366,7 @@ export function layoutDiagram(
   if (diagram.type === "gantt") return layoutGantt(diagram, theme, canvasBg);
   if (diagram.type === "swimlane") return layoutSwimlane(diagram, theme, canvasBg);
   if (diagram.type === "scatter") return layoutScatter(diagram, theme, canvasBg);
+  if (diagram.type === "kanban") return layoutKanban(diagram, theme, canvasBg);
 
   const width = 1280;
   const height = 720;
