@@ -28,6 +28,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
+import { PreviewViewport } from "@/components/preview-viewport";
 import ThemeOverridePanel from "@/components/ThemeOverridePanel";
 import { appUrl } from "@/lib/app-url";
 import { buildExportFilename, type ExportExtension } from "@/lib/export-filename";
@@ -1477,14 +1478,14 @@ export function Workspace({ locale }: WorkspaceProps) {
                   </div>
                 ) : figure ? (
                   activeTab === "preview" ? (
-                    <div className="aspect-video w-full max-w-[1080px] overflow-hidden border border-line bg-panel">
+                    <PreviewViewport>
                       <FigureSvg
                         figure={figure}
                         selectedIds={selectedIds}
                         onSelect={handleSelectId}
                         onSelectIds={handleSelectIds}
                       />
-                    </div>
+                    </PreviewViewport>
                   ) : (
                     <div className="flex h-full max-h-[420px] w-full max-w-[1080px] flex-col gap-2 sm:max-h-[560px] lg:max-h-[650px]">
                       <textarea
