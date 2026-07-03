@@ -70,9 +70,11 @@
 - 修改：绑定认证主体授权；至少加限流 + 强制服务端签发高熵 sessionId。
 
 ### 11. 依赖与 TLS
-- `next@16.2.6` 打包有漏洞 postcss（<8.5.10，GHSA-qx2v-qp2m-jg93，moderate，构建期）→ 升 `next@^16.3`。`npm audit` 全量 1 low + 3 moderate（其余 dev 链路 @babel/core、js-yaml）。
-- nginx 示例仅 `listen 80` 无 TLS/HSTS → 补 443 或文档化 Cloudflare Full-Strict。
+- `next` 已从 16.2.6 升到最新稳定 **16.2.10**。postcss 构建期 XSS（GHSA-qx2v-qp2m-jg93）**仍告警**：修复落在 `next@16.3.0-canary.6+`，而 16.3.0 稳定版尚未发布（仅 canary/preview）。该问题仅构建期、本应用不处理不可信 CSS、实际不可利用 → 保持 16.2.10，待 16.3 稳定版再升。dev 链路 @babel/core、js-yaml 不影响运行时。
+- nginx：`client_max_body_size` 提到 13m；补边缘安全头；追加 443/TLS 模板注释（Cloudflare Full-Strict）。
 - CVE-2025-29927 不受影响（无 middleware.ts 且版本 >15.2.3）。
+
+> 处理状态（2026-07-03）：#1/#2/#4/#5/#6/#7/#8/#9/#10 已修复；#3 已沙箱化（完全 de-root 需主机侧移动 node）；#11 已升最新稳定版，postcss 待上游稳定版。
 
 ---
 
