@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
+import { reviewFigureLayout } from "@/lib/layout-review-agent";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
 import { callOpenRouterWithUsage, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
@@ -143,7 +144,8 @@ export async function POST(request: Request) {
 
           send(statusEvent(language, "persisting", "Saving session artifacts.", 0));
           const tokenUsage = await tokenRecorder.snapshot();
-          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, undefined, {
+          const layoutReview = reviewFigureLayout(finalResponse.figure);
+          const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, layoutReview, {
             userDescription: generationRequest.userDescription,
             conversationTurn: generationRequest.conversationTurn,
             tokenUsage

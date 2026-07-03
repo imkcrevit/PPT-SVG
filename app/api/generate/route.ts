@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
+import { reviewFigureLayout } from "@/lib/layout-review-agent";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
 import { callOpenRouterWithUsage, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
@@ -148,7 +149,8 @@ export async function POST(request: Request) {
 
     if (validation.ok && validation.response) {
       const tokenUsage = await tokenRecorder.snapshot();
-      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId, undefined, {
+      const layoutReview = reviewFigureLayout(validation.response.figure);
+      const artifacts = await persistGeneratedArtifacts(validation.response.figure, validation.response.fit, requestId, sessionId, layoutReview, {
         userDescription: generationRequest.userDescription,
         conversationTurn,
         tokenUsage
@@ -212,12 +214,13 @@ export async function POST(request: Request) {
     }
 
     const tokenUsage = await tokenRecorder.snapshot();
+    const layoutReview = reviewFigureLayout(repairedValidation.response.figure);
     const artifacts = await persistGeneratedArtifacts(
       repairedValidation.response.figure,
       repairedValidation.response.fit,
       requestId,
       sessionId,
-      undefined,
+      layoutReview,
       {
         userDescription: generationRequest.userDescription,
         conversationTurn,

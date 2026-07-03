@@ -1,8 +1,12 @@
 import type { Figure, FigureElement, RectElement, TextElement } from "@/lib/types";
 
 export interface LayoutReviewResult {
+  /** True when there are no unambiguous defects (out-of-canvas or true overlaps). */
   ok: boolean;
+  /** All findings: hard defects first, then soft centering/containment advisories. */
   issues: string[];
+  /** Unambiguous geometric defects only. Soft centering heuristics are excluded. */
+  hardIssues: string[];
 }
 
 interface Box {
@@ -22,22 +26,69 @@ const MAX_TITLE_CONTENT_GAP = 44;
 const TITLE_CONTENT_GAP_RATIO = 0.045;
 
 export function reviewFigureLayout(figure: Figure): LayoutReviewResult {
-  const issues: string[] = [];
+  const hardIssues: string[] = [];
+  const softIssues: string[] = [];
   const leaves = flattenLeaves(figure.elements);
   const rects = leaves.filter(isRectElement);
   const canvasBox = { x: 0, y: 0, width: figure.canvas.width, height: figure.canvas.height };
 
+  // Hard defects: geometry that is unambiguously wrong regardless of intent.
   for (const element of leaves) {
     const box = elementBox(element);
     if (!containsBox(canvasBox, box, 0.5)) {
-      issues.push(`${element.id} exceeds canvas bounds.`);
+      hardIssues.push(`${element.id} exceeds canvas bounds.`);
     }
   }
+  reviewNodeOverlaps(figure, rects, hardIssues);
 
-  reviewTextGroupsInSmallRects(figure, leaves, rects, issues);
-  reviewBackgroundContentRelations(figure, leaves, rects, issues);
+  // Soft advisories: centering/containment heuristics. These fire on many
+  // deliberate layouts (title-at-top containers, headings above content), so
+  // they inform tuning but must not mark an otherwise-valid figure as failed.
+  reviewTextGroupsInSmallRects(figure, leaves, rects, softIssues);
+  reviewBackgroundContentRelations(figure, leaves, rects, softIssues);
 
-  return { ok: issues.length === 0, issues };
+  return { ok: hardIssues.length === 0, issues: [...hardIssues, ...softIssues], hardIssues };
+}
+
+const NODE_OVERLAP_MIN_RATIO = 0.16;
+
+// Flags peer content cards that visually collide. Nesting (one rect fully inside
+// another, e.g. a child card in its container) is intentional and ignored; only
+// partial overlaps between similarly-scaled cards where neither contains the
+// other are reported. This catches the crowding that radial/circular layouts
+// (cycle, mindmap, venn) can produce when many items share limited space.
+function reviewNodeOverlaps(figure: Figure, rects: RectElement[], issues: string[]): void {
+  // Only compare real content cards. Edge-label plates (`*-label-bg`) and other
+  // decorative rects have no coloured stroke and legitimately sit over nodes, so
+  // including them produces false positives.
+  const cards = rects.filter(
+    (rect) =>
+      !isFullCanvasRect(rect, figure.canvas.width, figure.canvas.height) &&
+      typeof rect.stroke === "string" &&
+      rect.stroke !== "none" &&
+      !/label-bg$/.test(rect.id)
+  );
+
+  for (let i = 0; i < cards.length; i += 1) {
+    for (let j = i + 1; j < cards.length; j += 1) {
+      const a = elementBox(cards[i]);
+      const b = elementBox(cards[j]);
+
+      if (containsBox(a, b, BACKGROUND_ASSOCIATION_TOLERANCE) || containsBox(b, a, BACKGROUND_ASSOCIATION_TOLERANCE)) {
+        continue;
+      }
+
+      const overlap = intersectionArea(a, b);
+      if (overlap <= 0) {
+        continue;
+      }
+
+      const smaller = Math.max(1, Math.min(boxArea(a), boxArea(b)));
+      if (overlap / smaller >= NODE_OVERLAP_MIN_RATIO) {
+        issues.push(`${cards[i].id} overlaps ${cards[j].id}.`);
+      }
+    }
+  }
 }
 
 function reviewTextGroupsInSmallRects(
