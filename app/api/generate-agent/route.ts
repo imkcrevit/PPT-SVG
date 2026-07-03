@@ -11,10 +11,12 @@ import {
   beginGenerationGuard,
   checkGenerationAbuse,
   enforceGenerationContentLength,
+  readLimitedJson,
   sanitizeUploadedAttachments,
   securityJson,
   validateGenerationPayload
 } from "@/lib/request-security";
+import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 import { resolveStyleContext } from "@/lib/theme-extract";
@@ -58,7 +60,12 @@ export async function POST(request: Request) {
       let tokenRecorder: ReturnType<typeof createTokenUsageRecorder> | undefined;
 
       try {
-        const body = (await request.json()) as Partial<GenerateFigureRequest>;
+        const parsed = await readLimitedJson(request, MAX_GENERATION_JSON_BODY_BYTES);
+        if (!parsed.ok) {
+          send({ type: "error", error: parsed.decision.error });
+          return;
+        }
+        const body = (parsed.value ?? {}) as Partial<GenerateFigureRequest>;
         const checked = validateRequestBody(body);
         const language = body.language === "zh" ? "zh" : "en";
         const payloadDecision = validateGenerationPayload(body);

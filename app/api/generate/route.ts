@@ -10,10 +10,12 @@ import {
   beginGenerationGuard,
   checkGenerationAbuse,
   enforceGenerationContentLength,
+  readLimitedJson,
   sanitizeUploadedAttachments,
   securityJson,
   validateGenerationPayload
 } from "@/lib/request-security";
+import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { normalizeSessionId } from "@/lib/session";
 import { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 import { resolveStyleContext } from "@/lib/theme-extract";
@@ -43,7 +45,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as Partial<GenerateFigureRequest>;
+    const parsedBody = await readLimitedJson(request, MAX_GENERATION_JSON_BODY_BYTES);
+    if (!parsedBody.ok) {
+      return securityJson(parsedBody.decision);
+    }
+    const body = (parsedBody.value ?? {}) as Partial<GenerateFigureRequest>;
     const payloadDecision = validateGenerationPayload(body);
 
     if (!payloadDecision.ok) {

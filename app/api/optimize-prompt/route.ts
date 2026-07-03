@@ -6,9 +6,11 @@ import { callOpenRouterWithUsage, OpenRouterError } from "@/lib/openrouter";
 import {
   checkOptimizeAbuse,
   enforceGenerationContentLength,
+  readLimitedJson,
   securityJson,
   validateGenerationPayload
 } from "@/lib/request-security";
+import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { normalizeSessionId } from "@/lib/session";
 import { isSkillId } from "@/lib/skills";
 import { createTokenUsageRecorder, normalizeTokenUsage } from "@/lib/token-usage";
@@ -49,7 +51,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as {
+    const parsedBody = await readLimitedJson(request, MAX_GENERATION_JSON_BODY_BYTES);
+    if (!parsedBody.ok) {
+      return securityJson(parsedBody.decision);
+    }
+    const body = (parsedBody.value ?? {}) as {
       userDescription?: string;
       language?: string;
       skillId?: string;

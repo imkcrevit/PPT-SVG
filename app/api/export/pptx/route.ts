@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
+import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { figureToPptx } from "@/lib/pptx";
+import { readLimitedJson, securityJson } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const parsed = await readLimitedJson(request, MAX_GENERATION_JSON_BODY_BYTES);
+    if (!parsed.ok) {
+      return securityJson(parsed.decision);
+    }
+    const body = parsed.value;
     const validation = validateAndNormalizeFigureResponse(body, "flow", "en");
 
     if (!validation.ok || !validation.response) {

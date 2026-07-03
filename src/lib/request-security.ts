@@ -94,6 +94,53 @@ export function enforceUploadContentLength(request: Request): SecurityDecision {
   return enforceContentLength(request, MAX_UPLOAD_REQUEST_BYTES, "Upload request");
 }
 
+export type LimitedJsonResult =
+  | { ok: true; value: unknown }
+  | { ok: false; decision: Exclude<SecurityDecision, { ok: true }> };
+
+// Reads and parses a JSON body while enforcing a hard byte cap as the stream is
+// consumed. Unlike a Content-Length check (which an attacker skips by sending a
+// chunked body with no length header), this bounds actual memory use.
+export async function readLimitedJson(request: Request, maxBytes: number): Promise<LimitedJsonResult> {
+  const body = request.body;
+  if (!body) {
+    return { ok: true, value: undefined };
+  }
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (value) {
+        total += value.byteLength;
+        if (total > maxBytes) {
+          await reader.cancel();
+          return { ok: false, decision: { ok: false, error: "Request body is too large.", status: 413 } };
+        }
+        chunks.push(value);
+      }
+    }
+  } catch {
+    return { ok: false, decision: { ok: false, error: "Failed to read request body.", status: 400 } };
+  }
+
+  if (total === 0) {
+    return { ok: true, value: undefined };
+  }
+
+  try {
+    return { ok: true, value: JSON.parse(Buffer.concat(chunks).toString("utf8")) };
+  } catch {
+    return { ok: false, decision: { ok: false, error: "Invalid JSON body.", status: 400 } };
+  }
+}
+
 export function enforceGenerationContentLength(request: Request): SecurityDecision {
   return enforceContentLength(request, MAX_GENERATION_JSON_BODY_BYTES, "Generation request");
 }
@@ -111,11 +158,28 @@ export function checkUploadAbuse(request: Request, sessionId: string, fileSize: 
 export function checkGenerationAbuse(request: Request, sessionId: string): SecurityDecision {
   const clientKey = clientRateKey(request);
   return firstBlocked([
+    // Global backstop first: per-session and per-IP limits key on client-supplied
+    // values (sessionId, X-Forwarded-For) that an attacker can rotate to get a
+    // fresh bucket each request. This instance-wide cap bounds total LLM spend
+    // regardless of spoofing. Override with PPT_SVG_GLOBAL_GENERATION_* if needed.
+    () => hitRateLimit("generation-minute:global", globalLimit("PPT_SVG_GLOBAL_GENERATION_PER_MIN", 30), 60 * 1000),
+    () => hitRateLimit("generation-hour:global", globalLimit("PPT_SVG_GLOBAL_GENERATION_PER_HOUR", 300), 60 * 60 * 1000),
     () => hitRateLimit(`generation-minute:session:${sessionId}`, 3, 60 * 1000),
     () => hitRateLimit(`generation-hour:session:${sessionId}`, 15, 60 * 60 * 1000),
     () => hitRateLimit(`generation-minute:${clientKey}`, 8, 60 * 1000),
     () => hitRateLimit(`generation-hour:${clientKey}`, 60, 60 * 60 * 1000)
   ]);
+}
+
+function globalLimit(envName: string, fallback: number): number {
+  const raw = process.env[envName];
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+  return fallback;
 }
 
 export function checkOptimizeAbuse(request: Request, sessionId: string): SecurityDecision {
@@ -240,13 +304,14 @@ function sanitizeUploadedAttachment(value: unknown): UploadedAttachment | undefi
   }
 
   const extension = record.extension.toLowerCase();
+  const hash = record.hash.toLowerCase();
   if (
     !isAllowedAttachmentExtension(extension) ||
-    !/^[a-f0-9]{64}$/i.test(record.hash) ||
+    !/^[a-f0-9]{64}$/.test(hash) ||
     !Number.isFinite(record.size) ||
     record.size <= 0 ||
     record.size > MAX_ATTACHMENT_BYTES ||
-    !record.path.startsWith("/tmp/ppt-svg/uploads/")
+    !isTrustedUploadPath(record.path, hash, extension)
   ) {
     return undefined;
   }
@@ -266,6 +331,23 @@ function sanitizeUploadedAttachment(value: unknown): UploadedAttachment | undefi
     path: record.path,
     extractedText
   };
+}
+
+// The stored path is always /tmp/ppt-svg/uploads/<YYYY-MM-DD>/<sha256>.<ext>.
+// Binding the accepted path to the already-validated hash + extension (rather
+// than a loose startsWith prefix) blocks path traversal ("../../etc/passwd"
+// passes startsWith but not this) and cross-file access: an attacker cannot
+// point at another stored upload without knowing that file's sha256.
+function isTrustedUploadPath(path: string, hash: string, extension: string): boolean {
+  if (path.includes("..") || path.includes("\0")) {
+    return false;
+  }
+
+  // Normalize separators so Windows-dev paths (path.join uses "\") still match;
+  // this cannot weaken the check because ".." is already rejected above.
+  const normalized = path.replace(/\\/g, "/");
+  const pattern = new RegExp(`^/tmp/ppt-svg/uploads/\\d{4}-\\d{2}-\\d{2}/${hash}\\.${extension}$`);
+  return pattern.test(normalized);
 }
 
 function firstBlocked(checks: Array<() => SecurityDecision>): SecurityDecision {
