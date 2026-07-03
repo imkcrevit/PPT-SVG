@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 
 import { readLatestGeneratedArtifact } from "@/lib/generated-artifacts";
+import { checkSessionReadAbuse, securityJson } from "@/lib/request-security";
 import { normalizeSessionId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
-export async function GET(_request: Request, context: { params: Promise<{ sessionId: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ sessionId: string }> }) {
+  const requestId = crypto.randomUUID().slice(0, 8);
   try {
+    const abuseDecision = checkSessionReadAbuse(request);
+    if (!abuseDecision.ok) {
+      return securityJson(abuseDecision);
+    }
+
     const { sessionId: rawSessionId } = await context.params;
     const sessionId = normalizeSessionId(rawSessionId);
 
@@ -24,8 +31,9 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
       return NextResponse.json({ error: "No generated artifact found for this sessionId." }, { status: 404 });
     }
 
-    const message = error instanceof Error ? error.message : "Unexpected session artifact lookup error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Don't echo internal error details (paths, stack) to the client.
+    console.error(`[sessions:latest:${requestId}] lookup failed`, error);
+    return NextResponse.json({ error: "Session artifact lookup failed.", requestId }, { status: 500 });
   }
 }
 

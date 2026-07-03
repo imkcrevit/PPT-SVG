@@ -182,6 +182,16 @@ function globalLimit(envName: string, fallback: number): number {
   return fallback;
 }
 
+// Session artifacts are readable by anyone who knows the (client-chosen)
+// sessionId, so limit per-IP read volume to slow enumeration/scraping.
+export function checkSessionReadAbuse(request: Request): SecurityDecision {
+  const clientKey = clientRateKey(request);
+  return firstBlocked([
+    () => hitRateLimit(`session-read-minute:${clientKey}`, 60, 60 * 1000),
+    () => hitRateLimit(`session-read-hour:${clientKey}`, 600, 60 * 60 * 1000)
+  ]);
+}
+
 export function checkOptimizeAbuse(request: Request, sessionId: string): SecurityDecision {
   const clientKey = clientRateKey(request);
   return firstBlocked([
