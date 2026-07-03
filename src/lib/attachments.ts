@@ -13,19 +13,9 @@ import {
 } from "@/lib/file-limits";
 import type { UploadedAttachment } from "@/lib/types";
 import { extractTheme } from "@/lib/theme-extract";
+import { AttachmentValidationError, assertSafeZip } from "@/lib/zip-safety";
 
-const MAX_ZIP_ENTRIES = 500;
-const MAX_ZIP_UNCOMPRESSED_BYTES = 80 * 1024 * 1024;
-
-export class AttachmentValidationError extends Error {
-  constructor(
-    message: string,
-    public readonly status = 400
-  ) {
-    super(message);
-    this.name = "AttachmentValidationError";
-  }
-}
+export { AttachmentValidationError } from "@/lib/zip-safety";
 
 export function isAllowedAttachmentName(fileName: string): boolean {
   return isAllowedAttachmentExtension(extensionFromFileName(fileName));
@@ -214,28 +204,6 @@ function assertTextBytes(bytes: Buffer): void {
   }
 }
 
-function assertSafeZip(zip: JSZip): void {
-  const files = Object.values(zip.files).filter((file) => !file.dir);
-
-  if (files.length > MAX_ZIP_ENTRIES) {
-    throw new AttachmentValidationError("Attachment archive contains too many files.");
-  }
-
-  const totalUncompressedBytes = files.reduce((sum, file) => sum + zipEntrySize(file), 0);
-  if (totalUncompressedBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
-    throw new AttachmentValidationError("Attachment archive expands to too much data.", 413);
-  }
-}
-
-function zipEntrySize(file: JSZip.JSZipObject): number {
-  const metadata = file as JSZip.JSZipObject & {
-    _data?: {
-      uncompressedSize?: number;
-    };
-  };
-
-  return typeof metadata._data?.uncompressedSize === "number" ? metadata._data.uncompressedSize : 0;
-}
 
 function startsWithAscii(bytes: Buffer, value: string): boolean {
   return bytes.subarray(0, value.length).equals(Buffer.from(value, "ascii"));

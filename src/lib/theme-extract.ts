@@ -13,6 +13,7 @@
 import { readFile } from "node:fs/promises";
 import JSZip from "jszip";
 import sharp from "sharp";
+import { assertSafeZip } from "@/lib/zip-safety";
 import { type DiagramTheme, buildAccents, deriveTint, normalizeHex, pickReadableText } from "@/lib/theme";
 
 export interface ExtractedStyle {
@@ -37,6 +38,7 @@ function colorOf(block: string, name: string): string | null {
 export async function extractThemeFromPptx(bytes: Buffer): Promise<DiagramTheme | undefined> {
   try {
     const zip = await JSZip.loadAsync(bytes);
+    assertSafeZip(zip);
     const themeFile = Object.values(zip.files).find((f) => !f.dir && /ppt\/theme\/theme\d+\.xml$/.test(f.name));
     if (!themeFile) return undefined;
     const xml = await themeFile.async("string");
