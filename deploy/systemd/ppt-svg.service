@@ -13,5 +13,24 @@ ExecStart=/root/.nvm/versions/node/v24.15.0/bin/npm run start -- --hostname 127.
 Restart=always
 RestartSec=5
 
+# --- Sandboxing (limits blast radius of any RCE, e.g. in image parsing) ---
+# Best practice is to also run as a non-root user. That requires node to be
+# reachable outside /root (e.g. install to /usr/local via nodesource, or move
+# nvm to /opt), then add:
+#   User=ppt-svg
+#   Group=ppt-svg
+#   ProtectHome=yes
+# and relocate WorkingDirectory/EnvironmentFile out of /dev to /opt or /srv.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/dev/ppt-svg/PPT-SVG
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+
 [Install]
 WantedBy=multi-user.target
