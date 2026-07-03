@@ -31,6 +31,11 @@ interface Box {
 }
 
 const MAX_LAYOUT_NORMALIZATION_PASSES = 5;
+// Bound the geometry the (quadratic, multi-pass) layout normalizer runs over so
+// a crafted export payload can't pin a worker. The body-size cap already limits
+// input, but a small JSON can still describe thousands of tiny elements.
+const MAX_TOTAL_FIGURE_ELEMENTS = 1500;
+const MAX_GROUP_DEPTH = 12;
 const LARGE_BACKGROUND_AREA_RATIO = 0.18;
 const BACKGROUND_ASSOCIATION_TOLERANCE = 12;
 const MIN_BACKGROUND_OVERLAP_RATIO = 0.14;
@@ -90,6 +95,13 @@ export function validateAndNormalizeFigureResponse(
       normalizeElement(element, ["figure", "elements", index], errors, seenIds, canvas.width, canvas.height)
     )
     .filter((element): element is FigureElement => Boolean(element));
+
+  const totalElements = countElements(elements);
+  if (totalElements > MAX_TOTAL_FIGURE_ELEMENTS) {
+    // Reject before running the quadratic layout normalizer over the payload.
+    errors.push(`figure has too many elements (${totalElements} > ${MAX_TOTAL_FIGURE_ELEMENTS}).`);
+    return { ok: false, errors };
+  }
 
   normalizeFigureLayout(elements, canvas.width, canvas.height);
 
@@ -831,13 +843,25 @@ function shouldPreserveTextPosition(text: TextElement): boolean {
   return /^(lane-name-\d+|gantt-name-\d+|matrix-ylabel|scatter-ylabel)$/.test(text.id);
 }
 
+function countElements(elements: FigureElement[]): number {
+  let total = 0;
+  for (const element of elements) {
+    total += 1;
+    if (element.type === "group") {
+      total += countElements(element.children);
+    }
+  }
+  return total;
+}
+
 function normalizeElement(
   value: unknown,
   path: Path,
   errors: string[],
   seenIds: Set<string>,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  depth = 0
 ): FigureElement | undefined {
   const record = readRecord(value, path, errors);
 
@@ -851,6 +875,13 @@ function normalizeElement(
   const opacity = typeof record.opacity === "number" ? clampNumber(record.opacity, 0, 1, 1) : undefined;
 
   if (type === "group") {
+    // Stop recursing past the depth cap so a deeply nested payload cannot drive
+    // unbounded recursion (stack overflow) while building the tree.
+    if (depth >= MAX_GROUP_DEPTH) {
+      errors.push(`${formatPath(path)} exceeds the maximum group nesting depth (${MAX_GROUP_DEPTH}).`);
+      return { id, type, name, opacity, children: [] };
+    }
+
     const children = readArray(record.children, [...path, "children"], errors) ?? [];
     const group: GroupElement = {
       id,
@@ -858,7 +889,7 @@ function normalizeElement(
       name,
       opacity,
       children: children
-        .map((child, index) => normalizeElement(child, [...path, "children", index], errors, seenIds, canvasWidth, canvasHeight))
+        .map((child, index) => normalizeElement(child, [...path, "children", index], errors, seenIds, canvasWidth, canvasHeight, depth + 1))
         .filter((child): child is FigureElement => Boolean(child))
     };
     return group;
