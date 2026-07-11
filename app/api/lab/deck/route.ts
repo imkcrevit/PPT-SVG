@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { buildDeckMessages } from "@/lib/deck-prompts";
-import { validateAndCompileDeck } from "@/lib/deck-pipeline";
+import {
+  buildPalette,
+  classifySlide,
+  compileDiagram,
+  MAX_DECK_SLIDES,
+  readDeck,
+  textSlideFrom
+} from "@/lib/deck-pipeline";
+import type { Deck, DeckSlide } from "@/lib/deck-types";
 import { deckToPptx } from "@/lib/deck-pptx";
+import { buildRepairMessages } from "@/lib/prompts";
 import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { isLocale } from "@/lib/i18n";
 import { parseJsonObject } from "@/lib/json";
@@ -104,18 +113,75 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "The deck generator returned invalid JSON.", requestId }, { status: 502 });
     }
 
-    const compiled = validateAndCompileDeck(parsedDeck, theme, language);
-    if (!compiled.ok || !compiled.deck) {
-      return NextResponse.json({ error: "The deck could not be compiled.", details: compiled.errors.slice(0, 5), requestId }, { status: 502 });
+    const shell = readDeck(parsedDeck, language);
+    if (!shell) {
+      return NextResponse.json({ error: "The deck generator returned an unexpected shape.", requestId }, { status: 502 });
     }
 
-    const pptx = await deckToPptx(compiled.deck);
+    const slides: DeckSlide[] = [];
+    const warnings: string[] = [];
+    for (const raw of shell.slidesRaw) {
+      if (slides.length >= MAX_DECK_SLIDES) {
+        break;
+      }
+      const classified = classifySlide(raw);
+      if (!classified) {
+        continue;
+      }
+      if (classified.kind !== "diagram") {
+        const slide = textSlideFrom(classified);
+        if (slide) {
+          slides.push(slide);
+        }
+        continue;
+      }
+
+      let result = compileDiagram(classified.diagram, classified.title, classified.skill, theme, language);
+      if (!result.ok) {
+        // Reuse the single-figure repair pass to salvage an invalid diagram
+        // before degrading it to a plain section.
+        try {
+          const repairMessages = await buildRepairMessages(JSON.stringify(classified.diagram), result.errors);
+          const repairedRaw = await callOpenRouter(repairMessages, {
+            temperature: 0,
+            maxCompletionTokens: 8_000,
+            responseFormat: "json_object",
+            timeoutMs: 30_000
+          });
+          const repaired = parseJsonObject(repairedRaw);
+          const retry = compileDiagram(repaired as Record<string, unknown>, classified.title, classified.skill, theme, language);
+          if (retry.ok) {
+            result = retry;
+            warnings.push(`repaired diagram "${classified.title || "(untitled)"}"`);
+          }
+        } catch {
+          /* fall through to degrade */
+        }
+      }
+
+      if (result.ok && result.slide) {
+        slides.push(result.slide);
+      } else if (classified.title) {
+        slides.push({ kind: "section", title: classified.title });
+        warnings.push(`diagram "${classified.title}" could not be rendered`);
+      }
+    }
+
+    if (slides.length === 0) {
+      return NextResponse.json({ error: "The deck could not be compiled.", requestId }, { status: 502 });
+    }
+    if (slides[0].kind !== "cover") {
+      slides.unshift({ kind: "cover", title: shell.title });
+    }
+
+    const deck: Deck = { title: shell.title, language: shell.language, palette: buildPalette(theme), slides };
+    const pptx = await deckToPptx(deck);
 
     return NextResponse.json({
       requestId,
       model: getConfiguredModelLabel(),
-      deck: compiled.deck,
-      warnings: compiled.errors.slice(0, 5),
+      deck,
+      warnings: warnings.slice(0, 8),
       pptxBase64: pptx.toString("base64")
     });
   } catch (error) {
