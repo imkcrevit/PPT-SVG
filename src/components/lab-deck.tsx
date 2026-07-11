@@ -31,7 +31,6 @@ export function LabDeck() {
   const [error, setError] = useState("");
   const [deck, setDeck] = useState<Deck | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [pptxBase64, setPptxBase64] = useState("");
 
   const uploadAttachment = useCallback(async (file: File): Promise<UploadedAttachment> => {
     const formData = new FormData();
@@ -87,7 +86,6 @@ export function LabDeck() {
     setBusy(true);
     setError("");
     setDeck(null);
-    setPptxBase64("");
     setWarnings([]);
     try {
       const response = await fetch(appUrl("/api/lab/deck"), {
@@ -107,7 +105,6 @@ export function LabDeck() {
       }
       setDeck(payload.deck);
       setWarnings(payload.warnings ?? []);
-      setPptxBase64(payload.pptxBase64 ?? "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed.");
     } finally {
@@ -115,19 +112,97 @@ export function LabDeck() {
     }
   }, [context, language, styleHint, template]);
 
-  const downloadPptx = useCallback(() => {
-    if (!pptxBase64) return;
-    const bytes = Uint8Array.from(atob(pptxBase64), (c) => c.charCodeAt(0));
-    const blob = new Blob([bytes], {
-      type: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const downloadBlob = useCallback(
+    (blob: Blob) => {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${(deck?.title || "deck").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 60)}.pptx`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    },
+    [deck]
+  );
+
+  // Re-export from the current (possibly edited/reordered) deck so downloads
+  // always reflect on-screen edits.
+  const exportDeck = useCallback(async () => {
+    if (!deck) return;
+    setExporting(true);
+    setError("");
+    try {
+      const response = await fetch(appUrl("/api/lab/deck/export"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deck })
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error || "Export failed.");
+      }
+      downloadBlob(await response.blob());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setExporting(false);
+    }
+  }, [deck, downloadBlob]);
+
+  const moveSlide = useCallback((index: number, dir: -1 | 1) => {
+    setDeck((prev) => {
+      if (!prev) return prev;
+      const target = index + dir;
+      if (target < 0 || target >= prev.slides.length) return prev;
+      const slides = [...prev.slides];
+      [slides[index], slides[target]] = [slides[target], slides[index]];
+      return { ...prev, slides };
     });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${(deck?.title || "deck").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 60)}.pptx`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }, [pptxBase64, deck]);
+  }, []);
+
+  const deleteSlide = useCallback((index: number) => {
+    setDeck((prev) => (prev ? { ...prev, slides: prev.slides.filter((_, i) => i !== index) } : prev));
+  }, []);
+
+  const regenerateSlide = useCallback(
+    async (index: number) => {
+      if (!deck) return;
+      const slide = deck.slides[index];
+      if (slide.kind !== "diagram") return;
+      setRegeneratingIndex(index);
+      setError("");
+      try {
+        const response = await fetch(appUrl("/api/lab/deck/slide"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context,
+            title: slide.title,
+            language,
+            palette: deck.palette,
+            sessionId: sessionId.current
+          })
+        });
+        const payload = (await response.json()) as { slide?: DeckSlide; error?: string };
+        if (!response.ok || !payload.slide) {
+          throw new Error(payload.error || "Regeneration failed.");
+        }
+        setDeck((prev) => {
+          if (!prev) return prev;
+          const slides = [...prev.slides];
+          slides[index] = payload.slide as DeckSlide;
+          return { ...prev, slides };
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Regeneration failed.");
+      } finally {
+        setRegeneratingIndex(null);
+      }
+    },
+    [deck, context, language]
+  );
 
   const t = useMemo(() => strings[language], [language]);
 
@@ -212,13 +287,14 @@ export function LabDeck() {
           >
             {busy ? t.generating : t.generate}
           </button>
-          {deck && pptxBase64 ? (
+          {deck ? (
             <button
               type="button"
-              onClick={downloadPptx}
-              className="border border-line bg-panel px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-accent/60"
+              onClick={exportDeck}
+              disabled={exporting}
+              className="border border-line bg-panel px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-accent/60 disabled:opacity-50"
             >
-              {t.download}
+              {exporting ? t.exporting : t.download}
             </button>
           ) : null}
           {error ? <div className="whitespace-pre-wrap text-sm text-coral">{error}</div> : null}
@@ -238,7 +314,18 @@ export function LabDeck() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {deck.slides.map((slide, index) => (
-              <SlideCard key={index} slide={slide} deck={deck} index={index} />
+              <SlideCard
+                key={index}
+                slide={slide}
+                deck={deck}
+                index={index}
+                total={deck.slides.length}
+                regenerating={regeneratingIndex === index}
+                onMove={moveSlide}
+                onDelete={deleteSlide}
+                onRegenerate={regenerateSlide}
+                t={t}
+              />
             ))}
           </div>
         </section>
@@ -247,14 +334,45 @@ export function LabDeck() {
   );
 }
 
-function SlideCard({ slide, deck, index }: { slide: DeckSlide; deck: Deck; index: number }) {
+function SlideCard({
+  slide,
+  deck,
+  index,
+  total,
+  regenerating,
+  onMove,
+  onDelete,
+  onRegenerate,
+  t
+}: {
+  slide: DeckSlide;
+  deck: Deck;
+  index: number;
+  total: number;
+  regenerating: boolean;
+  onMove: (index: number, dir: -1 | 1) => void;
+  onDelete: (index: number) => void;
+  onRegenerate: (index: number) => void;
+  t: (typeof strings)["zh"];
+}) {
   const { palette } = deck;
+  const ctrl = "flex h-6 w-6 items-center justify-center border border-line bg-panel text-mid transition hover:text-accent disabled:opacity-30";
   return (
     <div className="overflow-hidden border border-line bg-panel">
       <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
         <span className="font-mono text-[11px] text-faint">
           #{index + 1} · {slide.kind}
         </span>
+        <div className="flex items-center gap-1">
+          <button type="button" className={ctrl} title={t.moveUp} disabled={index === 0} onClick={() => onMove(index, -1)}>↑</button>
+          <button type="button" className={ctrl} title={t.moveDown} disabled={index === total - 1} onClick={() => onMove(index, 1)}>↓</button>
+          {slide.kind === "diagram" ? (
+            <button type="button" className={ctrl} title={t.regenerate} disabled={regenerating} onClick={() => onRegenerate(index)}>
+              {regenerating ? "…" : "⟳"}
+            </button>
+          ) : null}
+          <button type="button" className={ctrl} title={t.deleteSlide} onClick={() => onDelete(index)}>✕</button>
+        </div>
       </div>
       <div className="aspect-video w-full overflow-hidden">
         {slide.kind === "diagram" ? (
@@ -289,7 +407,7 @@ function SlideCard({ slide, deck, index }: { slide: DeckSlide; deck: Deck; index
   );
 }
 
-const strings = {
+const strings: Record<"zh" | "en", Record<string, string>> = {
   zh: {
     title: "整套 PPT 生成（实验）",
     subtitle: "粘贴内容或上传文档，一次生成多页 PPT：文字页 + 复用现有 SVG 引擎的图表页。可上传 PPTX 模板或用文字描述风格。",
@@ -304,9 +422,14 @@ const strings = {
     generate: "生成整套 PPT",
     generating: "生成中…",
     download: "下载 PPTX",
+    exporting: "导出中…",
     result: "结果",
     slides: "页",
-    warnings: "提示"
+    warnings: "提示",
+    moveUp: "上移",
+    moveDown: "下移",
+    regenerate: "重新生成此页",
+    deleteSlide: "删除此页"
   },
   en: {
     title: "Full deck generation (lab)",
@@ -322,8 +445,13 @@ const strings = {
     generate: "Generate deck",
     generating: "Generating…",
     download: "Download PPTX",
+    exporting: "Exporting…",
     result: "Result",
     slides: "slides",
-    warnings: "Notes"
+    warnings: "Notes",
+    moveUp: "Move up",
+    moveDown: "Move down",
+    regenerate: "Regenerate this slide",
+    deleteSlide: "Delete this slide"
   }
-} as const;
+};
