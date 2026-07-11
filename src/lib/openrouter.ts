@@ -42,11 +42,11 @@ export interface OpenRouterCallResult {
 }
 
 export class OpenRouterError extends Error {
-  constructor(
-    message: string,
-    public readonly status = 500
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status = 500) {
     super(message);
+    this.status = status;
   }
 }
 
@@ -92,13 +92,21 @@ export async function callOpenRouterWithUsage(
         messages,
         temperature: options.temperature ?? 0.25,
         max_completion_tokens: options.maxCompletionTokens ?? 4000,
-        ...(options.responseFormat === null
-          ? {}
-          : {
+        // Let OpenRouter fall back to another provider when the first-picked one
+        // rejects the request (e.g. a region-locked provider returning 403/400).
+        // Without this a single unavailable provider fails the whole call.
+        ...(provider.isOpenRouter ? { provider: { allow_fallbacks: true } } : {}),
+        // response_format:json_object is opt-in: several providers/models (e.g.
+        // the GPT-5.6 series) reject it alongside max_completion_tokens and fail
+        // the request. Prompts already require JSON and parseJsonObject tolerates
+        // fences/prose, so this is off unless OPENROUTER_JSON_MODE=1.
+        ...(process.env.OPENROUTER_JSON_MODE === "1" && options.responseFormat !== null
+          ? {
               response_format: {
                 type: options.responseFormat ?? "json_object"
               }
-            })
+            }
+          : {})
       })
     });
   } catch (error) {
