@@ -1139,6 +1139,10 @@ export function Workspace({ locale }: WorkspaceProps) {
                   <strong>{remainingTurns} {t.turnsLeft}</strong>
                 </div>
 
+                <a href={appUrl("/lab")} className="chat-toolbar-field" style={{ textDecoration: "none" }}>
+                  <span>{locale === "zh" ? "🧪 整套 PPT（实验）" : "🧪 Full deck (lab)"}</span>
+                </a>
+
                 <label className="chat-toolbar-field">
                   <span>{t.skillLabel}</span>
                   <select value={skillId} onChange={(event) => setSkillId(event.target.value as SkillId)}>
