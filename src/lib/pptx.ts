@@ -3,35 +3,50 @@ import pptxgen from "pptxgenjs";
 import type { Figure, FigureElement } from "@/lib/types";
 import { wrapSvgText } from "@/lib/text-layout";
 
-const SLIDE_WIDTH_IN = 13.333;
-const SLIDE_HEIGHT_IN = 7.5;
-const PPTX_DEFAULT_FONT_FACE = "Microsoft YaHei";
+export const SLIDE_WIDTH_IN = 13.333;
+export const SLIDE_HEIGHT_IN = 7.5;
+export const PPTX_DEFAULT_FONT_FACE = "Microsoft YaHei";
 
-export async function figureToPptx(figure: Figure): Promise<Buffer> {
+// Create a wide (16:9) deck with the common metadata/theme applied. Shared by
+// single-figure export and the multi-slide lab deck builder.
+export function createDeck(options: { title?: string; subject?: string; fontFamily?: string } = {}): pptxgen {
   const deck = new pptxgen();
   deck.layout = "LAYOUT_WIDE";
   deck.author = "PPT-SVG";
-  deck.subject = figure.metadata.description;
-  deck.title = figure.metadata.title;
   deck.company = "PPT-SVG";
-  const fontFace = figure.canvas.fontFamily ?? PPTX_DEFAULT_FONT_FACE;
-  deck.theme = {
-    headFontFace: fontFace,
-    bodyFontFace: fontFace
-  };
+  deck.title = options.title ?? "PPT-SVG";
+  deck.subject = options.subject ?? "";
+  const fontFace = options.fontFamily ?? PPTX_DEFAULT_FONT_FACE;
+  deck.theme = { headFontFace: fontFace, bodyFontFace: fontFace };
+  return deck;
+}
 
+// Append one slide rendering a compiled Figure. Reused per diagram slide.
+export function addFigureSlide(deck: pptxgen, figure: Figure): void {
   const slide = deck.addSlide();
   slide.background = { color: stripHash(figure.canvas.background) };
-
   for (const element of figure.elements) {
     addElement(slide, element, figure);
   }
+}
 
+export async function writeDeck(deck: pptxgen): Promise<Buffer> {
   const raw = await (deck as unknown as { write: (options: { outputType: "nodebuffer" }) => Promise<Buffer> }).write({
     outputType: "nodebuffer"
   });
-
   return Buffer.from(raw);
+}
+
+export { stripHash as pptxColor };
+
+export async function figureToPptx(figure: Figure): Promise<Buffer> {
+  const deck = createDeck({
+    title: figure.metadata.title,
+    subject: figure.metadata.description,
+    fontFamily: figure.canvas.fontFamily
+  });
+  addFigureSlide(deck, figure);
+  return writeDeck(deck);
 }
 
 function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure): void {
