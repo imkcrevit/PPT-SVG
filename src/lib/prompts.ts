@@ -21,6 +21,7 @@ export interface ChatMessage {
 }
 
 const PROMPT_ROOT = path.resolve(process.cwd(), "prompt");
+const UPLOAD_ROOT = path.join("/tmp", "ppt-svg", "uploads");
 
 export async function loadPrompt(relativePath: string): Promise<string> {
   const fullPath = path.resolve(PROMPT_ROOT, relativePath);
@@ -53,6 +54,48 @@ export async function buildGenerateMessages(
     loadPrompt(skill.promptFile)
   ]);
 
+  const userPayload = {
+    selected_skill: skill.id,
+    output_language: request.language,
+    ui_language_environment: request.language === "zh" ? "Simplified Chinese" : "English",
+    language_instruction:
+      request.language === "zh"
+        ? "The active UI language is Simplified Chinese. Output every visible label, title, note, and metadata value directly in Simplified Chinese unless the user explicitly asks for another language."
+        : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
+    canvas: skill.defaultCanvas,
+    user_description: request.userDescription,
+    image_reference_instruction:
+      "If image attachments are present, inspect their visual content directly. Use them as source material for objects, labels, relationships, steps, visual evidence, and user follow-up requests. Do not say an image was not provided when image_reference parts are attached.",
+    intent_fidelity_policy: {
+      preserve: "Preserve every explicit user-provided item, sequence, relationship, label, constraint, and revision.",
+      preserve_scoped_entities:
+        "Keep scoped or qualified entities intact. For example, 'A系统中的B子系统' means both A系统 and B子系统 must remain visible, not just B子系统.",
+      preserve_intermediaries:
+        "Keep explicit access mechanisms and intermediaries such as middleware, gateway, API, queue, protocol, or database names.",
+      no_fabrication: "Do not invent unstated goals, metrics, actors, dates, stages, product names, or causal relationships.",
+      no_silent_defaults:
+        "If purpose is unclear, do not silently choose a business goal. Use only explicit text and lower fit, because the client should ask the user to choose a purpose before generation."
+    },
+    conversation: {
+      session_id: request.sessionId ?? request.conversationId ?? null,
+      id: request.conversationId ?? null,
+      turn: request.conversationTurn ?? 1,
+      max_turns: 5,
+      instruction:
+        "If reference_current_render is present, treat it as the currently rendered right-side SVG data. Use it as source material for revisions instead of starting over, unless the user explicitly asks for a new diagram."
+    },
+    compressed_context: compressedContext || null,
+    reference_current_render: request.referenceFigure
+      ? {
+          source: request.referenceFigure.source,
+          fit: request.referenceFigure.fit ?? null,
+          figure: request.referenceFigure.figure
+        }
+      : null,
+    attachments: attachmentMetadata(request),
+    ppt_context: request.pptContext ?? null
+  };
+
   return [
     {
       role: "system",
@@ -60,64 +103,37 @@ export async function buildGenerateMessages(
     },
     {
       role: "user",
-      content: JSON.stringify(
-        {
-          selected_skill: skill.id,
-          output_language: request.language,
-          ui_language_environment: request.language === "zh" ? "Simplified Chinese" : "English",
-          language_instruction:
-            request.language === "zh"
-              ? "The active UI language is Simplified Chinese. Output every visible label, title, note, and metadata value directly in Simplified Chinese unless the user explicitly asks for another language."
-              : "The active UI language is English. Output every visible label, title, note, and metadata value directly in English unless the user explicitly asks for another language.",
-          canvas: skill.defaultCanvas,
-          user_description: request.userDescription,
-          intent_fidelity_policy: {
-            preserve: "Preserve every explicit user-provided item, sequence, relationship, label, constraint, and revision.",
-            preserve_scoped_entities:
-              "Keep scoped or qualified entities intact. For example, 'A系统中的B子系统' means both A系统 and B子系统 must remain visible, not just B子系统.",
-            preserve_intermediaries:
-              "Keep explicit access mechanisms and intermediaries such as middleware, gateway, API, queue, protocol, or database names.",
-            no_fabrication: "Do not invent unstated goals, metrics, actors, dates, stages, product names, or causal relationships.",
-            no_silent_defaults:
-              "If purpose is unclear, do not silently choose a business goal. Use only explicit text and lower fit, because the client should ask the user to choose a purpose before generation."
-          },
-          conversation: {
-            session_id: request.sessionId ?? request.conversationId ?? null,
-            id: request.conversationId ?? null,
-            turn: request.conversationTurn ?? 1,
-            max_turns: 5,
-            instruction:
-              "If reference_current_render is present, treat it as the currently rendered right-side SVG data. Use it as source material for revisions instead of starting over, unless the user explicitly asks for a new diagram."
-          },
-          compressed_context: compressedContext || null,
-          reference_current_render: request.referenceFigure
-            ? {
-                source: request.referenceFigure.source,
-                fit: request.referenceFigure.fit ?? null,
-                figure: request.referenceFigure.figure
-              }
-            : null,
-          attachments:
-            request.attachments?.map((attachment) => ({
-              original_name: attachment.originalName,
-              hash: attachment.hash,
-              extension: attachment.extension,
-              mime_type: attachment.mimeType,
-              size: attachment.size,
-              stored_path: attachment.path,
-              extracted_text: attachment.extractedText || null
-            })) ?? [],
-          ppt_context: request.pptContext ?? null
-        },
-        null,
-        2
-      )
+      content: await withImageContent(JSON.stringify(userPayload, null, 2), request)
     }
   ];
 }
 
 export async function buildContextCompressionMessages(request: GenerateFigureRequest): Promise<ChatMessage[]> {
   const systemPrompt = await loadPrompt("system/compress-context.md");
+  const userPayload = {
+    output_language: request.language,
+    user_description: request.userDescription,
+    image_reference_instruction:
+      "If image attachments are present, inspect their visual content directly and summarize concrete objects, text, relationships, and likely production steps needed for later diagram generation.",
+    intent_fidelity_policy: {
+      preserve: "Keep all explicit user facts and ordered items, including the first and last items in chains.",
+      preserve_scoped_entities: "Keep parent-child qualifiers such as 'A系统中的B子系统'; do not compress them to the child alone.",
+      preserve_intermediaries: "Keep named intermediaries and access mechanisms such as '通过X中间件访问'.",
+      no_fabrication: "Record gaps in missing_context instead of filling them with assumptions."
+    },
+    conversation_turn: request.conversationTurn ?? 1,
+    attachments: attachmentMetadata(request),
+    ppt_context: request.pptContext ?? null,
+    reference_current_render: request.referenceFigure
+      ? {
+          source: request.referenceFigure.source,
+          title: request.referenceFigure.figure.metadata.title,
+          description: request.referenceFigure.figure.metadata.description,
+          fit: request.referenceFigure.fit ?? null,
+          figure: request.referenceFigure.figure
+        }
+      : null
+  };
 
   return [
     {
@@ -126,43 +142,80 @@ export async function buildContextCompressionMessages(request: GenerateFigureReq
     },
     {
       role: "user",
-      content: JSON.stringify(
-        {
-          output_language: request.language,
-          user_description: request.userDescription,
-          intent_fidelity_policy: {
-            preserve: "Keep all explicit user facts and ordered items, including the first and last items in chains.",
-            preserve_scoped_entities: "Keep parent-child qualifiers such as 'A系统中的B子系统'; do not compress them to the child alone.",
-            preserve_intermediaries: "Keep named intermediaries and access mechanisms such as '通过X中间件访问'.",
-            no_fabrication: "Record gaps in missing_context instead of filling them with assumptions."
-          },
-          conversation_turn: request.conversationTurn ?? 1,
-          attachments:
-            request.attachments?.map((attachment) => ({
-              original_name: attachment.originalName,
-              hash: attachment.hash,
-              extension: attachment.extension,
-              mime_type: attachment.mimeType,
-              size: attachment.size,
-              stored_path: attachment.path,
-              extracted_text: attachment.extractedText || null
-            })) ?? [],
-          ppt_context: request.pptContext ?? null,
-          reference_current_render: request.referenceFigure
-            ? {
-                source: request.referenceFigure.source,
-                title: request.referenceFigure.figure.metadata.title,
-                description: request.referenceFigure.figure.metadata.description,
-                fit: request.referenceFigure.fit ?? null,
-                figure: request.referenceFigure.figure
-              }
-            : null
-        },
-        null,
-        2
-      )
+      content: await withImageContent(JSON.stringify(userPayload, null, 2), request)
     }
   ];
+}
+
+function attachmentMetadata(request: GenerateFigureRequest) {
+  return (
+    request.attachments?.map((attachment) => ({
+      original_name: attachment.originalName,
+      hash: attachment.hash,
+      extension: attachment.extension,
+      mime_type: attachment.mimeType,
+      size: attachment.size,
+      stored_path: attachment.path,
+      extracted_text: attachment.extractedText || null,
+      visual_reference: isImageAttachment(attachment)
+    })) ?? []
+  );
+}
+
+async function withImageContent(text: string, request: GenerateFigureRequest): Promise<string | ChatContentPart[]> {
+  const imageParts = await buildImageContentParts(request);
+  if (!imageParts.length) {
+    return text;
+  }
+
+  return [
+    {
+      type: "text",
+      text
+    },
+    ...imageParts
+  ];
+}
+
+async function buildImageContentParts(request: GenerateFigureRequest): Promise<ChatContentPart[]> {
+  const images = request.attachments?.filter(isImageAttachment) ?? [];
+  const parts: ChatContentPart[] = [];
+
+  for (const attachment of images) {
+    const safePath = resolveUploadPath(attachment.path);
+    if (!safePath) {
+      continue;
+    }
+
+    const bytes = await readFile(safePath);
+    parts.push({
+      type: "image_url",
+      image_url: {
+        url: `data:${attachment.mimeType};base64,${bytes.toString("base64")}`
+      }
+    });
+  }
+
+  return parts;
+}
+
+function isImageAttachment(attachment: { extension?: string; mimeType?: string }): boolean {
+  const extension = attachment.extension?.toLowerCase();
+  return (
+    (extension === "png" || extension === "jpg" || extension === "jpeg") &&
+    (attachment.mimeType === "image/png" || attachment.mimeType === "image/jpeg")
+  );
+}
+
+function resolveUploadPath(filePath: string): string | undefined {
+  const resolved = path.resolve(filePath);
+  const relative = path.relative(UPLOAD_ROOT, resolved);
+
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    return undefined;
+  }
+
+  return resolved;
 }
 
 export async function buildRepairMessages(rawOutput: string, validationErrors: string[]): Promise<ChatMessage[]> {

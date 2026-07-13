@@ -155,6 +155,8 @@ export async function POST(request: Request) {
           const artifacts = await persistGeneratedArtifacts(finalResponse.figure, finalResponse.fit, requestId, sessionId, layoutReview, {
             userDescription: generationRequest.userDescription,
             conversationTurn: generationRequest.conversationTurn,
+            attachmentCount: generationRequest.attachments?.length ?? 0,
+            imageAttachmentCount: countImageAttachments(generationRequest.attachments),
             tokenUsage
           });
           await recordCompletedConversation({
@@ -716,6 +718,18 @@ function normalizeConversationTurn(value: unknown): number {
 
 function normalizeAttachments(value: unknown): UploadedAttachment[] {
   return sanitizeUploadedAttachments(value);
+}
+
+function countImageAttachments(attachments?: UploadedAttachment[]): number {
+  return (
+    attachments?.filter((attachment) => {
+      const extension = attachment.extension.toLowerCase();
+      return (
+        (extension === "png" || extension === "jpg" || extension === "jpeg") &&
+        (attachment.mimeType === "image/png" || attachment.mimeType === "image/jpeg")
+      );
+    }).length ?? 0
+  );
 }
 
 function normalizeReferenceFigure(value: unknown): GenerateFigureRequest["referenceFigure"] {

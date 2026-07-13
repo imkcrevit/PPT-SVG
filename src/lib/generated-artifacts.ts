@@ -17,6 +17,8 @@ export interface GeneratedArtifactPaths {
 export interface GeneratedArtifactMetadata {
   userDescription?: string;
   conversationTurn?: number;
+  attachmentCount?: number;
+  imageAttachmentCount?: number;
   tokenUsage?: unknown;
 }
 
@@ -60,6 +62,8 @@ export async function persistGeneratedArtifacts(
         sessionId,
         userDescription: metadata.userDescription,
         conversationTurn: metadata.conversationTurn,
+        attachmentCount: metadata.attachmentCount,
+        imageAttachmentCount: metadata.imageAttachmentCount,
         tokenUsage: metadata.tokenUsage,
         svgPath,
         jsonPath

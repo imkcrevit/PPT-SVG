@@ -15,13 +15,17 @@ import {
   ImageDown,
   Loader2,
   Maximize2,
+  Minimize2,
   MessageSquarePlus,
   PanelRightClose,
   RefreshCcw,
+  RotateCcw,
   Send,
   SlidersHorizontal,
   Undo2,
-  X
+  X,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,7 +36,13 @@ import { PreviewViewport } from "@/components/preview-viewport";
 import ThemeOverridePanel from "@/components/ThemeOverridePanel";
 import { appUrl } from "@/lib/app-url";
 import { buildExportFilename, type ExportExtension } from "@/lib/export-filename";
-import { ACCEPTED_CONTEXT_EXTENSIONS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_NAME_CHARS } from "@/lib/file-limits";
+import {
+  ACCEPTED_CONTEXT_EXTENSIONS,
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENT_NAME_CHARS,
+  MAX_GENERATION_ATTACHMENT_BYTES,
+  MAX_GENERATION_ATTACHMENTS
+} from "@/lib/file-limits";
 import { cloneFigure, findElement, findElements, updateElement } from "@/lib/figure-utils";
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { createIconCoverageTestFigure, ICON_TEST_OPTIONS, type IconTestId } from "@/lib/icon-test";
@@ -124,6 +134,10 @@ const MAX_CONVERSATION_TURNS = 5;
 const SESSION_STORAGE_KEY = "ppt-svg-session-id";
 const RECENT_SESSIONS_STORAGE_KEY = "ppt-svg-recent-sessions";
 const MAX_RECENT_SESSIONS = 6;
+const PREVIEW_ZOOM_DEFAULT = 1.6;
+const PREVIEW_ZOOM_MIN = 1;
+const PREVIEW_ZOOM_MAX = 3;
+const PREVIEW_ZOOM_STEP = 0.25;
 
 interface ChatEntry {
   id: string;
@@ -186,7 +200,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [chatEntries, setChatEntries] = useState<ChatEntry[]>([]);
   const [renderHistory, setRenderHistory] = useState<RenderHistoryEntry[]>([]);
   const [referenceCurrentRender, setReferenceCurrentRender] = useState(true);
-  const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [themeOverride, setThemeOverride] = useState<ThemeOverride | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -209,6 +223,8 @@ export function Workspace({ locale }: WorkspaceProps) {
   const [isDownloadingPng, setIsDownloadingPng] = useState(false);
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false);
   const [isDownloadingBundle, setIsDownloadingBundle] = useState(false);
+  const [isPreviewZoomOpen, setIsPreviewZoomOpen] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState(PREVIEW_ZOOM_DEFAULT);
   const [clarificationRequest, setClarificationRequest] = useState<ClarificationRequest | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -225,6 +241,7 @@ export function Workspace({ locale }: WorkspaceProps) {
   const shouldReferenceCurrentRender = referenceCurrentRender && canReferenceCurrentRender;
   const isEditDeckOpen = Boolean(figure && selectedIds.length);
   const selectedIdsSignature = selectedIds.join("|");
+  const previewZoomPercent = Math.round(previewZoom * 100);
 
   const selectedElement = useMemo(
     () => (figure && selectedId ? findElement(figure.elements, selectedId) : undefined),
@@ -292,6 +309,27 @@ export function Workspace({ locale }: WorkspaceProps) {
       behavior: "smooth"
     });
   }, [isEditDeckOpen, selectedIdsSignature]);
+
+  useEffect(() => {
+    if (!isPreviewZoomOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsPreviewZoomOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isPreviewZoomOpen]);
 
   function setActiveSessionId(sessionId: string) {
     sessionIdRef.current = sessionId;
@@ -440,7 +478,7 @@ export function Workspace({ locale }: WorkspaceProps) {
       return;
     }
 
-    if (shouldAskForIntentClarification(userMessage, skillId, Boolean(attachment), shouldReferenceCurrentRender)) {
+    if (shouldAskForIntentClarification(userMessage, skillId, attachments.length > 0, shouldReferenceCurrentRender)) {
       setError("");
       setClarificationRequest({
         originalDescription: userMessage,
@@ -507,7 +545,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             messageId: userMessageId,
             sentAt: new Date().toISOString()
           },
-          attachments: attachment ? [attachment] : []
+          attachments
         })
       });
 
@@ -694,6 +732,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setRestoredConversationTurn(0);
     setCurrentRequestId("");
     setFigure(null);
+    setIsPreviewZoomOpen(false);
     setCurrentRenderTurn(0);
     setFit(null);
     setSelectedId("");
@@ -702,7 +741,7 @@ export function Workspace({ locale }: WorkspaceProps) {
     setJsonError("");
     setHistory([]);
     setError("");
-    setAttachment(null);
+    setAttachments([]);
     setThemeOverride(null);
     setActiveTab("preview");
     setOptimizedPromptReady(false);
@@ -729,56 +768,78 @@ export function Workspace({ locale }: WorkspaceProps) {
     setOptimizedPromptReady(false);
   }
 
-  async function handleFile(file?: File) {
+  async function handleFiles(files?: FileList | File[]) {
     setUploadError("");
 
-    if (!file) {
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) {
       return;
     }
 
-    if (!ACCEPTED_CONTEXT_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension))) {
-      setUploadError(t.invalidPpt);
-      setAttachment(null);
+    if (attachments.length + selectedFiles.length > MAX_GENERATION_ATTACHMENTS) {
+      setUploadError(t.tooManyFiles.replace("{count}", String(MAX_GENERATION_ATTACHMENTS)));
       return;
     }
 
-    if (file.name.length > MAX_ATTACHMENT_NAME_CHARS) {
-      setUploadError(t.fileNameTooLong);
-      setAttachment(null);
-      return;
+    for (const file of selectedFiles) {
+      if (!ACCEPTED_CONTEXT_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension))) {
+        setUploadError(t.invalidPpt);
+        return;
+      }
+
+      if (file.name.length > MAX_ATTACHMENT_NAME_CHARS) {
+        setUploadError(t.fileNameTooLong);
+        return;
+      }
+
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        setUploadError(t.fileTooLarge.replace("{size}", formatFileSize(MAX_ATTACHMENT_BYTES)));
+        return;
+      }
     }
 
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      setUploadError(t.fileTooLarge.replace("{size}", formatFileSize(MAX_ATTACHMENT_BYTES)));
-      setAttachment(null);
+    const totalBytes = attachments.reduce((sum, item) => sum + item.size, 0) + selectedFiles.reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > MAX_GENERATION_ATTACHMENT_BYTES) {
+      setUploadError(t.filesTooLarge.replace("{size}", formatFileSize(MAX_GENERATION_ATTACHMENT_BYTES)));
       return;
     }
 
     setIsUploading(true);
-    setAttachment(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("sessionId", sessionIdRef.current);
-      formData.append("conversationId", sessionIdRef.current);
-
-      const response = await fetch(appUrl("/api/attachments"), {
-        method: "POST",
-        body: formData
-      });
-      const payload = (await response.json()) as AttachmentApiResponse;
-
-      if (!response.ok || !payload.attachment) {
-        throw new Error(payload.error || t.invalidPpt);
-      }
-
-      setAttachment(payload.attachment);
+      const uploaded = await Promise.all(selectedFiles.map((file) => uploadAttachment(file)));
+      setAttachments((existing) => [...existing, ...uploaded].slice(0, MAX_GENERATION_ATTACHMENTS));
     } catch (uploadFailure) {
       setUploadError(uploadFailure instanceof Error ? uploadFailure.message : t.invalidPpt);
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
+  }
+
+  async function uploadAttachment(file: File): Promise<UploadedAttachment> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("sessionId", sessionIdRef.current);
+    formData.append("conversationId", sessionIdRef.current);
+
+    const response = await fetch(appUrl("/api/attachments"), {
+      method: "POST",
+      body: formData
+    });
+    const payload = (await response.json()) as AttachmentApiResponse;
+
+    if (!response.ok || !payload.attachment) {
+      throw new Error(payload.error || t.invalidPpt);
+    }
+
+    return payload.attachment;
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((existing) => existing.filter((item) => item.id !== id));
   }
 
   function pushHistory(current: Figure) {
@@ -891,6 +952,24 @@ export function Workspace({ locale }: WorkspaceProps) {
       type: "image/svg+xml;charset=utf-8"
     });
     triggerBlobDownload(blob, nextExportFilename("svg"));
+  }
+
+  function openPreviewZoom() {
+    if (!figure) {
+      return;
+    }
+
+    setActiveTab("preview");
+    setPreviewZoom(PREVIEW_ZOOM_DEFAULT);
+    setIsPreviewZoomOpen(true);
+  }
+
+  function adjustPreviewZoom(delta: number) {
+    setPreviewZoom((current) => clampPreviewZoom(current + delta));
+  }
+
+  function resetPreviewZoom() {
+    setPreviewZoom(PREVIEW_ZOOM_DEFAULT);
   }
 
   async function downloadPng() {
@@ -1160,7 +1239,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                   disabled={isUploading}
                   onDrop={(event) => {
                     event.preventDefault();
-                    void handleFile(event.dataTransfer.files[0]);
+                    void handleFiles(event.dataTransfer.files);
                   }}
                   onDragOver={(event) => event.preventDefault()}
                   className="chat-toolbar-button"
@@ -1168,8 +1247,8 @@ export function Workspace({ locale }: WorkspaceProps) {
                   <span>
                     {isUploading
                       ? t.uploading
-                      : attachment
-                        ? `${t.pptReady}: ${attachment.originalName}`
+                      : attachments.length
+                        ? `${t.pptReady}: ${attachments.length}`
                         : t.pptLabel}
                   </span>
                 </button>
@@ -1177,8 +1256,9 @@ export function Workspace({ locale }: WorkspaceProps) {
                   ref={fileInputRef}
                   type="file"
                   accept={ACCEPTED_CONTEXT_EXTENSIONS.join(",")}
+                  multiple
                   className="hidden"
-                  onChange={(event) => void handleFile(event.target.files?.[0])}
+                  onChange={(event) => void handleFiles(event.target.files ?? undefined)}
                 />
 
                 <label className="chat-toolbar-check">
@@ -1197,6 +1277,18 @@ export function Workspace({ locale }: WorkspaceProps) {
                 </div>
               </div>
               {uploadError ? <p className="chat-inline-error">{uploadError}</p> : null}
+              {attachments.length ? (
+                <div className="chat-attachment-list" aria-label={t.pptReady}>
+                  {attachments.map((item) => (
+                    <span className="chat-attachment-chip" key={item.id} title={item.originalName}>
+                      <span>{item.originalName}</span>
+                      <button type="button" onClick={() => removeAttachment(item.id)} title={t.removeFile}>
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
               <section className="session-restore-panel" aria-label={t.sessionPanel}>
                 <div className="session-restore-current">
@@ -1423,6 +1515,15 @@ export function Workspace({ locale }: WorkspaceProps) {
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
+                  onClick={openPreviewZoom}
+                  disabled={!figure || activeTab !== "preview"}
+                  title={t.previewZoomOpenTitle}
+                  className="flex h-9 w-9 items-center justify-center border border-line bg-panel text-mid transition hover:border-accent/40 hover:text-accent2 disabled:opacity-40"
+                >
+                  <Maximize2 size={16} />
+                </button>
+                <button
+                  type="button"
                   onClick={handleUndo}
                   disabled={!history.length}
                   title={t.undo}
@@ -1482,7 +1583,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                   </div>
                 ) : figure ? (
                   activeTab === "preview" ? (
-                    <PreviewViewport>
+                    <PreviewViewport onDoubleClick={openPreviewZoom}>
                       <FigureSvg
                         figure={figure}
                         selectedIds={selectedIds}
@@ -1636,8 +1737,58 @@ export function Workspace({ locale }: WorkspaceProps) {
         </div>
       </div>
       </main>
+
+      {figure && isPreviewZoomOpen ? (
+        <div className="preview-zoom-overlay" role="dialog" aria-modal="true" aria-label={t.previewZoomTitle}>
+          <div className="preview-zoom-header">
+            <div className="preview-zoom-title">
+              <span>{t.previewZoomTitle}</span>
+              <strong>{previewZoomPercent}%</strong>
+            </div>
+            <div className="preview-zoom-actions">
+              <button
+                type="button"
+                onClick={() => adjustPreviewZoom(-PREVIEW_ZOOM_STEP)}
+                disabled={previewZoom <= PREVIEW_ZOOM_MIN}
+                title={t.previewZoomOut}
+              >
+                <ZoomOut size={16} />
+              </button>
+              <button type="button" onClick={resetPreviewZoom} title={t.previewZoomReset}>
+                <RotateCcw size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => adjustPreviewZoom(PREVIEW_ZOOM_STEP)}
+                disabled={previewZoom >= PREVIEW_ZOOM_MAX}
+                title={t.previewZoomIn}
+              >
+                <ZoomIn size={16} />
+              </button>
+              <button type="button" onClick={() => setIsPreviewZoomOpen(false)} title={t.previewZoomClose}>
+                <Minimize2 size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="preview-zoom-scroll">
+            <div
+              className="preview-zoom-canvas"
+              style={{
+                width: `${figure.canvas.width * previewZoom}px`,
+                height: `${figure.canvas.height * previewZoom}px`
+              }}
+            >
+              <FigureSvg figure={figure} svgId="figure-svg-zoom" />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
+}
+
+function clampPreviewZoom(value: number): number {
+  return Math.min(PREVIEW_ZOOM_MAX, Math.max(PREVIEW_ZOOM_MIN, Number(value.toFixed(2))));
 }
 
 function isNetworkLoadError(message: string): boolean {

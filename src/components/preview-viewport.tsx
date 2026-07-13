@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { ReactNode, WheelEvent } from "react";
+import type { MouseEventHandler, ReactNode, WheelEvent } from "react";
 import { Minus, Plus, Maximize2 } from "lucide-react";
 
 const MIN_SCALE = 1;
@@ -18,7 +18,13 @@ function clampScale(value: number): number {
  * is native scrolling and FigureSvg's getScreenCTM-based hit-testing keeps
  * working at any zoom. Wheel zooms toward the cursor; scrollbars pan.
  */
-export function PreviewViewport({ children }: { children: ReactNode }) {
+export function PreviewViewport({
+  children,
+  onDoubleClick
+}: {
+  children: ReactNode;
+  onDoubleClick?: MouseEventHandler<HTMLDivElement>;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -78,7 +84,10 @@ export function PreviewViewport({ children }: { children: ReactNode }) {
     "flex h-7 w-7 items-center justify-center border border-line bg-panel/90 text-mid transition hover:text-accent disabled:opacity-40";
 
   return (
-    <div className="relative aspect-video w-full max-w-[1080px] overflow-hidden border border-line bg-panel">
+    <div
+      className="relative aspect-video w-full max-w-[1080px] overflow-hidden border border-line bg-panel"
+      onDoubleClick={onDoubleClick}
+    >
       <div ref={scrollRef} className="h-full w-full overflow-auto" onWheel={handleWheel}>
         <div className="aspect-video" style={{ width: `${scale * 100}%`, minWidth: "100%" }}>
           {children}
