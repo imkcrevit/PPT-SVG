@@ -1,25 +1,107 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// DECK TEMPLATE — "tech blue" design system (JSON-constrained layout)
+// DECK TEMPLATES — declarative, JSON-constrained slide design system
 // ─────────────────────────────────────────────────────────────────────────────
-// Text slides (cover / section / bullets) are built here as ordinary Figures —
-// the same model diagram slides use — so a single renderer (FigureSvg) and a
-// single exporter (figureToPptx) produce byte-for-byte-consistent preview and
-// PPTX output, and the layout is literally constrained by JSON (positioned
-// rect/text elements on a 1280×720 canvas).
+// A template is DATA: a set of design tokens plus, per slide kind, a "master"
+// (an ordered list of positioned blocks) on a fixed 1280×720 canvas. A small
+// interpreter turns (template + slide + context) into a Figure built from plain
+// rect/text elements, which both the SVG preview and the PPTX exporter render
+// identically. This means the layout is literally constrained by JSON and a new
+// look is authored by writing a new `DeckTemplate` object — no imperative code.
 //
-// Aesthetic: deep-navy cover/section dividers with a cyan accent and mono
-// kickers; light content pages; a page-number footer on every slide. The
-// accent/ink/surface colors come from the deck palette (so an uploaded template
-// or a "科技风" style hint still flows through); the navy dividers are the
-// fixed identity of this template.
+// To design your own template: copy TECH_TEMPLATE, change the tokens and block
+// coordinates/styles, give it a unique `id`, and add it to DECK_TEMPLATES.
+// `validateDeckTemplate` (see the deck template test) checks every block stays
+// on-canvas and every color reference resolves.
 //
-// Only `rect` and `text` elements are used — both render identically in the SVG
-// and PPTX paths, so there is no renderer-specific drift.
+// Colors in a block are either a literal hex ("#0E1E36") or a token key. Token
+// keys resolve from: the template's own `tokens.colors`, PLUS four palette-
+// derived keys so a template inherits the deck's palette (uploaded template /
+// style hint):
+//   accent  → palette.accent      ink    → palette.text
+//   surface → palette.background   muted  → palette.subtext
+//
+// A text block's content comes from either a literal `text` (a string, or
+// {zh,en} for language-aware labels) or a `field` bound to the slide/context:
+//   title · subtitle · bullets(only in a bullets block) · pageNumber ·
+//   deckTitle · sectionNo (the 1-based slide index, zero-padded).
+// A text block whose resolved content is empty is skipped (e.g. an absent
+// subtitle), so masters never need conditional logic.
 
 import type { Figure, FigureElement } from "@/lib/types";
 
 import type { DeckPalette, DeckSlide } from "./types";
 
+// ── Canvas ───────────────────────────────────────────────────────────────────
+const CANVAS_W = 1280;
+const CANVAS_H = 720;
+
+// ── Template schema (author these) ─────────────────────────────────────────────
+export type Align = "start" | "middle" | "end";
+export type LangText = string | { zh: string; en: string };
+export type TextField = "title" | "subtitle" | "pageNumber" | "deckTitle" | "sectionNo";
+
+export interface RectBlock {
+  type: "rect";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  fill: string; // hex or token key
+  rx?: number;
+}
+
+export interface TextBlock {
+  type: "text";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Bind to a slide/context field. Omit when using a literal `text`. */
+  field?: TextField;
+  /** Literal content (overrides `field`). Use {zh,en} for language-aware labels. */
+  text?: LangText;
+  size: number;
+  weight: number;
+  color: string; // hex or token key
+  align?: Align;
+}
+
+export interface BulletsBlock {
+  type: "bullets";
+  x: number;
+  yTop: number;
+  yBottom: number;
+  maxRows: number;
+  maxRowH: number;
+  marker: { dx: number; w: number; h: number; color: string; rx?: number };
+  text: { dx: number; w: number; size: number; weight: number; color: string };
+}
+
+export type TemplateBlock = RectBlock | TextBlock | BulletsBlock;
+
+export interface SlideMaster {
+  /** Full-canvas background color (hex or token key). */
+  background?: string;
+  blocks: TemplateBlock[];
+}
+
+export interface DeckTemplate {
+  id: string;
+  name: { zh: string; en: string };
+  tokens: {
+    colors: Record<string, string>;
+    fontFamily?: string;
+  };
+  masters: {
+    cover: SlideMaster;
+    section: SlideMaster;
+    bullets: SlideMaster;
+    /** Overlay blocks added on top of a compiled diagram (e.g. a page-number footer). */
+    diagram?: SlideMaster;
+  };
+}
+
+// ── Render context ─────────────────────────────────────────────────────────────
 export interface DeckChromeContext {
   index: number; // 0-based position in the deck
   total: number;
@@ -27,169 +109,233 @@ export interface DeckChromeContext {
   language?: "zh" | "en";
 }
 
-const W = 1280;
-const H = 720;
-const M = 92; // page margin
+// ── Built-in template: 科技蓝 / Tech Blue ───────────────────────────────────────
+const M = 92; // page margin used by this template's coordinates
 
-interface Tokens {
-  navy: string;
-  panel: string;
-  onDark: string;
-  onDarkMuted: string;
-  accent: string;
-  light: string;
-  ink: string;
-  inkMuted: string;
-  ruleDark: string;
-  ruleLight: string;
-}
-
-function tokens(p: DeckPalette): Tokens {
-  return {
-    navy: "#0E1E36",
-    panel: "#17294A",
-    onDark: "#EAF1FB",
-    onDarkMuted: "#93A9C9",
-    accent: p.accent || "#33B1FF",
-    light: p.background || "#FFFFFF",
-    ink: p.text || "#0E1E36",
-    inkMuted: p.subtext || "#5B6B80",
-    ruleDark: "#283D5E",
-    ruleLight: "#E3E9F2"
-  };
-}
-
-// Small element builders (id-stamped per slide so keys stay unique).
-function makeBuilder(index: number) {
-  let n = 0;
-  const id = (kind: string) => `deck-${index}-${kind}-${n++}`;
-  return {
-    rect(x: number, y: number, width: number, height: number, fill: string, rx = 0): FigureElement {
-      return { id: id("rect"), type: "rect", x, y, width, height, fill, ...(rx ? { rx } : {}) };
-    },
-    text(
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      text: string,
-      fontSize: number,
-      fontWeight: number,
-      fill: string,
-      align: "start" | "middle" | "end" = "start"
-    ): FigureElement {
-      return { id: id("text"), type: "text", x, y, width, height, text, fontSize, fontWeight, fill, textAnchor: align };
+const TECH_TEMPLATE: DeckTemplate = {
+  id: "tech",
+  name: { zh: "科技蓝", en: "Tech Blue" },
+  tokens: {
+    colors: {
+      navy: "#0E1E36",
+      panel: "#17294A",
+      onDark: "#EAF1FB",
+      onDarkMuted: "#93A9C9",
+      ruleDark: "#283D5E",
+      ruleLight: "#E3E9F2"
     }
+  },
+  masters: {
+    cover: {
+      background: "navy",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 8, fill: "accent" },
+        { type: "rect", x: M, y: 154, w: 26, h: 7, fill: "accent" },
+        { type: "text", x: M + 40, y: 142, w: 520, h: 30, text: { zh: "汇报材料", en: "PRESENTATION" }, size: 15, weight: 600, color: "accent", align: "start" },
+        { type: "text", x: M, y: 296, w: 1000, h: 170, field: "title", size: 52, weight: 800, color: "onDark", align: "start" },
+        { type: "rect", x: M + 2, y: 502, w: 190, h: 7, fill: "accent" },
+        { type: "text", x: M, y: 528, w: 780, h: 96, field: "subtitle", size: 24, weight: 400, color: "onDarkMuted", align: "start" },
+        { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleDark" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "onDarkMuted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "onDarkMuted", align: "end" }
+      ]
+    },
+    section: {
+      background: "navy",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 8, fill: "accent" },
+        { type: "text", x: 824, y: 300, w: 380, h: 360, field: "sectionNo", size: 300, weight: 800, color: "panel", align: "end" },
+        { type: "rect", x: M, y: 276, w: 26, h: 7, fill: "accent" },
+        { type: "text", x: M + 40, y: 264, w: 400, h: 28, text: { zh: "章节", en: "SECTION" }, size: 15, weight: 600, color: "accent", align: "start" },
+        { type: "text", x: M, y: 300, w: 1000, h: 150, field: "title", size: 46, weight: 800, color: "onDark", align: "start" },
+        { type: "rect", x: M + 2, y: 470, w: 160, h: 7, fill: "accent" },
+        { type: "text", x: M, y: 498, w: 880, h: 80, field: "subtitle", size: 22, weight: 400, color: "onDarkMuted", align: "start" },
+        { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleDark" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "onDarkMuted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "onDarkMuted", align: "end" }
+      ]
+    },
+    bullets: {
+      background: "surface",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 6, fill: "accent" },
+        { type: "text", x: M, y: 74, w: 1040, h: 70, field: "title", size: 32, weight: 800, color: "ink", align: "start" },
+        { type: "rect", x: M + 2, y: 150, w: 104, h: 6, fill: "accent" },
+        {
+          type: "bullets",
+          x: M,
+          yTop: 200,
+          yBottom: 636,
+          maxRows: 8,
+          maxRowH: 76,
+          marker: { dx: 0, w: 12, h: 12, color: "accent", rx: 3 },
+          text: { dx: 34, w: CANVAS_W - (M + 34) - M, size: 20, weight: 500, color: "ink" }
+        },
+        { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleLight" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
+      ]
+    },
+    diagram: {
+      blocks: [
+        { type: "text", x: M, y: CANVAS_H - 40, w: 640, h: 22, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: CANVAS_H - 40, w: 160, h: 22, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
+      ]
+    }
+  }
+};
+
+export const DECK_TEMPLATES: DeckTemplate[] = [TECH_TEMPLATE];
+
+export function getDeckTemplate(id?: string): DeckTemplate {
+  return DECK_TEMPLATES.find((t) => t.id === id) ?? DECK_TEMPLATES[0];
+}
+
+// ── Interpreter ────────────────────────────────────────────────────────────────
+function colorResolver(tpl: DeckTemplate, palette: DeckPalette): (key: string) => string {
+  const map: Record<string, string> = {
+    ...tpl.tokens.colors,
+    accent: palette.accent || "#33B1FF",
+    ink: palette.text || "#0E1E36",
+    surface: palette.background || "#FFFFFF",
+    muted: palette.subtext || "#5B6B80"
   };
+  return (key: string) => (key.startsWith("#") ? key : map[key] ?? "#000000");
 }
 
-function footer(b: ReturnType<typeof makeBuilder>, t: Tokens, ctx: DeckChromeContext, onDark: boolean): FigureElement[] {
-  const rule = onDark ? t.ruleDark : t.ruleLight;
-  const muted = onDark ? t.onDarkMuted : t.inkMuted;
-  return [
-    b.rect(M, 662, W - 2 * M, 1.5, rule),
-    b.text(M, 676, 640, 24, ctx.deckTitle || "", 13, 500, muted, "start"),
-    b.text(W - M - 160, 676, 160, 24, `${ctx.index + 1} / ${ctx.total}`, 14, 600, muted, "end")
-  ];
-}
-
-function coverFigure(slide: Extract<DeckSlide, { kind: "cover" }>, t: Tokens, ctx: DeckChromeContext, font?: string): Figure {
-  const b = makeBuilder(ctx.index);
-  const kicker = ctx.language === "en" ? "PRESENTATION" : "汇报材料";
-  const els: FigureElement[] = [
-    b.rect(0, 0, W, H, t.navy),
-    b.rect(0, 0, W, 8, t.accent), // top ribbon
-    b.rect(M, 154, 26, 7, t.accent), // kicker tick
-    b.text(M + 40, 142, 520, 30, kicker, 15, 600, t.accent, "start"),
-    b.text(M, 296, 1000, 170, slide.title, 52, 800, t.onDark, "start"),
-    b.rect(M + 2, 502, 190, 7, t.accent) // accent underline
-  ];
-  if (slide.subtitle) {
-    els.push(b.text(M, 528, 780, 96, slide.subtitle, 24, 400, t.onDarkMuted, "start"));
+function resolveText(block: TextBlock, slide: DeckSlide, ctx: DeckChromeContext): string {
+  const lang = ctx.language ?? "zh";
+  if (block.text !== undefined) {
+    return typeof block.text === "string" ? block.text : block.text[lang];
   }
-  els.push(...footer(b, t, ctx, true));
-  return figure(slide.title, els, font);
-}
-
-function sectionFigure(slide: Extract<DeckSlide, { kind: "section" }>, t: Tokens, ctx: DeckChromeContext, font?: string): Figure {
-  const b = makeBuilder(ctx.index);
-  const num = String(ctx.index + 1).padStart(2, "0");
-  const els: FigureElement[] = [
-    b.rect(0, 0, W, H, t.navy),
-    b.rect(0, 0, W, 8, t.accent),
-    // Oversized ghost number for tech drama (panel color ≈ background so it reads faint).
-    b.text(824, 300, 380, 360, num, 300, 800, t.panel, "end"),
-    b.rect(M, 276, 26, 7, t.accent),
-    b.text(M + 40, 264, 400, 28, ctx.language === "en" ? "SECTION" : "章节", 15, 600, t.accent, "start"),
-    b.text(M, 300, 1000, 150, slide.title, 46, 800, t.onDark, "start"),
-    b.rect(M + 2, 470, 160, 7, t.accent)
-  ];
-  if (slide.subtitle) {
-    els.push(b.text(M, 498, 880, 80, slide.subtitle, 22, 400, t.onDarkMuted, "start"));
+  switch (block.field) {
+    case "title":
+      return slide.title ?? "";
+    case "subtitle":
+      return "subtitle" in slide ? slide.subtitle ?? "" : "";
+    case "pageNumber":
+      return `${ctx.index + 1} / ${ctx.total}`;
+    case "deckTitle":
+      return ctx.deckTitle ?? "";
+    case "sectionNo":
+      return String(ctx.index + 1).padStart(2, "0");
+    default:
+      return "";
   }
-  els.push(...footer(b, t, ctx, true));
-  return figure(slide.title, els, font);
 }
 
-function bulletsFigure(slide: Extract<DeckSlide, { kind: "bullets" }>, t: Tokens, ctx: DeckChromeContext, font?: string): Figure {
-  const b = makeBuilder(ctx.index);
-  const els: FigureElement[] = [
-    b.rect(0, 0, W, H, t.light),
-    b.rect(0, 0, W, 6, t.accent),
-    b.text(M, 74, 1040, 70, slide.title, 32, 800, t.ink, "start"),
-    b.rect(M + 2, 150, 104, 6, t.accent)
-  ];
+function buildMaster(
+  master: SlideMaster,
+  slide: DeckSlide,
+  tpl: DeckTemplate,
+  palette: DeckPalette,
+  ctx: DeckChromeContext
+): FigureElement[] {
+  const color = colorResolver(tpl, palette);
+  const els: FigureElement[] = [];
+  let n = 0;
+  const id = (kind: string) => `deck-${ctx.index}-${kind}-${n++}`;
 
-  const bullets = slide.bullets.slice(0, 8);
-  const top = 200;
-  const bottom = 636;
-  const rowH = Math.min(76, (bottom - top) / Math.max(bullets.length, 1));
-  bullets.forEach((text, i) => {
-    const rowTop = top + i * rowH;
-    const cy = rowTop + rowH / 2;
-    els.push(b.rect(M, cy - 6, 12, 12, t.accent, 3)); // square marker
-    els.push(b.text(M + 34, rowTop, W - (M + 34) - M, rowH, text, 20, 500, t.ink, "start"));
-  });
+  if (master.background) {
+    els.push({ id: id("bg"), type: "rect", x: 0, y: 0, width: CANVAS_W, height: CANVAS_H, fill: color(master.background) });
+  }
 
-  els.push(...footer(b, t, ctx, false));
-  return figure(slide.title, els, font);
+  for (const block of master.blocks) {
+    if (block.type === "rect") {
+      els.push({ id: id("rect"), type: "rect", x: block.x, y: block.y, width: block.w, height: block.h, fill: color(block.fill), ...(block.rx ? { rx: block.rx } : {}) });
+    } else if (block.type === "text") {
+      const content = resolveText(block, slide, ctx);
+      if (!content) continue;
+      els.push({ id: id("text"), type: "text", x: block.x, y: block.y, width: block.w, height: block.h, text: content, fontSize: block.size, fontWeight: block.weight, fill: color(block.color), textAnchor: block.align ?? "start" });
+    } else if (block.type === "bullets") {
+      const bullets = "bullets" in slide ? slide.bullets.slice(0, block.maxRows) : [];
+      const rowH = Math.min(block.maxRowH, (block.yBottom - block.yTop) / Math.max(bullets.length, 1));
+      bullets.forEach((text, i) => {
+        const rowTop = block.yTop + i * rowH;
+        const markerY = rowTop + (rowH - block.marker.h) / 2;
+        els.push({ id: id("marker"), type: "rect", x: block.x + block.marker.dx, y: markerY, width: block.marker.w, height: block.marker.h, fill: color(block.marker.color), ...(block.marker.rx ? { rx: block.marker.rx } : {}) });
+        els.push({ id: id("bullet"), type: "text", x: block.x + block.text.dx, y: rowTop, width: block.text.w, height: rowH, text, fontSize: block.text.size, fontWeight: block.text.weight, fill: color(block.text.color), textAnchor: "start" });
+      });
+    }
+  }
+  return els;
 }
 
-function figure(title: string, elements: FigureElement[], font?: string): Figure {
+function makeFigure(title: string, elements: FigureElement[], font?: string): Figure {
   return {
-    canvas: { width: W, height: H, background: "#FFFFFF", ...(font ? { fontFamily: font } : {}) },
+    canvas: { width: CANVAS_W, height: CANVAS_H, background: "#FFFFFF", ...(font ? { fontFamily: font } : {}) },
     metadata: { title, description: "", skillId: "freeform", language: "zh" },
     elements
   };
 }
 
-/**
- * Build the Figure for a text slide (cover / section / bullets) under the
- * tech-blue template. Never called for diagram slides.
- */
-export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext): Figure {
-  const t = tokens(palette);
-  const font = palette.fontFamily;
-  if (slide.kind === "cover") return coverFigure(slide, t, ctx, font);
-  if (slide.kind === "section") return sectionFigure(slide, t, ctx, font);
-  if (slide.kind === "bullets") return bulletsFigure(slide, t, ctx, font);
-  // Should not happen — return a minimal navy slide as a safe fallback.
-  return figure("", [makeBuilder(ctx.index).rect(0, 0, W, H, t.navy)], font);
+// ── Public API (stable — pptx.ts & the /lab UI depend on these) ─────────────────
+
+/** Build the Figure for a text slide (cover / section / bullets) under a template. */
+export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
+  const tpl = getDeckTemplate(templateId);
+  const font = tpl.tokens.fontFamily ?? palette.fontFamily;
+  const master = slide.kind === "cover" ? tpl.masters.cover : slide.kind === "section" ? tpl.masters.section : tpl.masters.bullets;
+  return makeFigure(slide.title, buildMaster(master, slide, tpl, palette, ctx), font);
 }
 
-/**
- * Append a consistent page-number footer to a compiled diagram Figure so
- * diagram slides carry the same chrome as text slides, without disturbing the
- * diagram's own layout (footer sits in the bottom margin).
- */
-export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckChromeContext): Figure {
-  const t = tokens(palette);
-  const fw = diagram.canvas.width;
-  const fh = diagram.canvas.height;
-  const b = makeBuilder(ctx.index);
-  const chrome: FigureElement[] = [
-    b.text(M, fh - 40, 640, 22, ctx.deckTitle || "", 13, 500, t.inkMuted, "start"),
-    b.text(fw - M - 160, fh - 40, 160, 22, `${ctx.index + 1} / ${ctx.total}`, 14, 600, t.inkMuted, "end")
-  ];
+/** Append the template's diagram chrome (e.g. a page-number footer) to a compiled diagram Figure. */
+export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
+  const tpl = getDeckTemplate(templateId);
+  if (!tpl.masters.diagram) return diagram;
+  // The diagram carries its own title/language; only overlay the chrome blocks.
+  const placeholder: DeckSlide = { kind: "section", title: "" };
+  const chrome = buildMaster({ blocks: tpl.masters.diagram.blocks }, placeholder, tpl, palette, ctx);
   return { ...diagram, elements: [...diagram.elements, ...chrome] };
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────────
+/**
+ * Check a template's JSON constraints: every block stays on the 1280×720 canvas
+ * and every color reference resolves. Returns a list of human-readable problems
+ * (empty = valid). Run this whenever you author a new template.
+ */
+export function validateDeckTemplate(tpl: DeckTemplate): string[] {
+  const issues: string[] = [];
+  const samplePalette: DeckPalette = { background: "#FFFFFF", accent: "#33B1FF", text: "#0E1E36", subtext: "#5B6B80" };
+  const color = colorResolver(tpl, samplePalette);
+  const HEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+  const knownKeys = new Set(["accent", "ink", "surface", "muted", ...Object.keys(tpl.tokens.colors)]);
+
+  const checkColor = (where: string, key: string) => {
+    if (key.startsWith("#")) {
+      if (!HEX.test(key)) issues.push(`${where}: invalid hex "${key}"`);
+    } else if (!knownKeys.has(key)) {
+      issues.push(`${where}: unknown color token "${key}"`);
+    }
+  };
+  const checkBox = (where: string, x: number, y: number, w: number, h: number) => {
+    if (x < 0 || y < 0 || x + w > CANVAS_W + 0.5 || y + h > CANVAS_H + 0.5) {
+      issues.push(`${where}: off-canvas box x=${x} y=${y} w=${w} h=${h}`);
+    }
+  };
+
+  for (const [kind, master] of Object.entries(tpl.masters) as Array<[string, SlideMaster | undefined]>) {
+    if (!master) continue;
+    if (master.background) checkColor(`${tpl.id}/${kind}/background`, master.background);
+    master.blocks.forEach((block, i) => {
+      const where = `${tpl.id}/${kind}/block[${i}]`;
+      if (block.type === "rect") {
+        checkColor(where, block.fill);
+        checkBox(where, block.x, block.y, block.w, block.h);
+      } else if (block.type === "text") {
+        checkColor(where, block.color);
+        checkBox(where, block.x, block.y, block.w, block.h);
+        if (block.field === undefined && block.text === undefined) issues.push(`${where}: text block needs a "field" or "text"`);
+        if (block.size <= 0) issues.push(`${where}: non-positive font size`);
+      } else if (block.type === "bullets") {
+        checkColor(`${where}/marker`, block.marker.color);
+        checkColor(`${where}/text`, block.text.color);
+        checkBox(where, block.x, block.yTop, block.text.dx + block.text.w, block.yBottom - block.yTop);
+        if (block.yBottom <= block.yTop) issues.push(`${where}: yBottom must exceed yTop`);
+        if (block.maxRows <= 0) issues.push(`${where}: maxRows must be positive`);
+      }
+    });
+  }
+  return issues;
 }
