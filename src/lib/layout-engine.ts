@@ -37,6 +37,12 @@ const LAYER_GAP = 60;
 // A horizontal flow is normally a chain with few roots. Beyond this many
 // parallel roots, wrap them into balanced rows instead of one cramped row.
 const FLOW_ROW_MAX = 5;
+// A long connected chain snakes (boustrophedon) into rows of this width so it
+// fills the canvas vertically. Chains at or below FLOW_SNAKE_MAX keep one row.
+const FLOW_SNAKE_MAX = 6;
+const FLOW_SNAKE_COLS = 4;
+// Upscale cap for wrapped flows so they fill the canvas without ballooning text.
+const FLOW_FILL_MAX = 1.5;
 const MIN_W = 110;
 const MAX_W = 320;
 const CANVAS_MARGIN = 48;
@@ -249,12 +255,29 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
     // common when a deck slide defaults an unrecognized diagram to "flow" — get
     // wrapped into balanced rows so they stay wide enough and fill the canvas
     // vertically instead of cramming into one mid-height strip.
-    const rootIds = new Set(roots.map((root) => root.node.id));
-    const rootsAreChained = diagram.edges.some((edge) => rootIds.has(edge.from) && rootIds.has(edge.to));
+    const rootIndex = new Map(roots.map((root, index) => [root.node.id, index]));
+    const rootEdges = diagram.edges.filter((edge) => rootIndex.has(edge.from) && rootIndex.has(edge.to));
+    const rootsAreChained = rootEdges.length > 0;
+    // A "forward" chain has every root→root edge advancing in order, so the roots
+    // are already in flow order and a snake is unambiguous. A back/feedback edge
+    // (target before source) would have to route around the wrapped grid — which
+    // an obstacle-free router can't do without crossing nodes — so those keep a
+    // single row where the feedback routes cleanly below.
+    const allForward = rootEdges.every((edge) => (rootIndex.get(edge.to) ?? 0) > (rootIndex.get(edge.from) ?? 0));
     if (roots.length > FLOW_ROW_MAX && !rootsAreChained) {
       const cols = chooseCols(roots.length);
       for (let index = 0; index < roots.length; index += cols) {
         bands.push({ roots: roots.slice(index, index + cols) });
+      }
+    } else if (rootsAreChained && allForward && roots.length > FLOW_SNAKE_MAX) {
+      // Snake (boustrophedon): rows of ~FLOW_SNAKE_COLS, every other row reversed
+      // so the end of one row sits directly above the start of the next and the
+      // transition connector is a short vertical.
+      const rowCount = Math.ceil(roots.length / FLOW_SNAKE_COLS);
+      const perRow = Math.ceil(roots.length / rowCount);
+      for (let r = 0; r < rowCount; r++) {
+        const slice = roots.slice(r * perRow, (r + 1) * perRow);
+        bands.push({ roots: r % 2 === 1 ? slice.reverse() : slice });
       }
     } else {
       bands = [{ roots }];
@@ -411,7 +434,11 @@ export function layoutDiagram(
   const accentFor = (layoutNode: LayoutNode) => ACCENTS[(colorGroupByRoot.get(layoutNode.rootId) ?? 0) % ACCENTS.length];
   const usableW = width - CANVAS_MARGIN * 2;
   const usableH = height - CANVAS_MARGIN * 2 - TITLE_H;
-  const scale = Math.min(1, usableW / totalW, usableH / totalH);
+  // A wrapped flow (snake / parallel rows) is narrower than a single row, so it
+  // has width slack — let it scale up (capped) to fill the canvas height instead
+  // of floating small in a centered band. Every other diagram keeps the ≤1 cap.
+  const flowWrapped = diagram.type === "flow" && bands.length > 1;
+  const scale = Math.min(flowWrapped ? FLOW_FILL_MAX : 1, usableW / totalW, usableH / totalH);
   const offsetX = (width - totalW * scale) / 2;
   const offsetY = CANVAS_MARGIN + TITLE_H + (usableH - totalH * scale) / 2;
   const x = (value: number) => Math.round(offsetX + value * scale);

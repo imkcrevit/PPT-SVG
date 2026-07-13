@@ -17,7 +17,8 @@
     "test:theme:intent": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/theme-intent.ts",
     "test:theme:image": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/theme-image-classifier.ts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:flow-wrap": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/flow-wrap.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
