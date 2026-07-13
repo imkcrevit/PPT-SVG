@@ -34,6 +34,9 @@ const PAD = 18;
 const HEADER_H = 34;
 const GAP = 22;
 const LAYER_GAP = 60;
+// A horizontal flow is normally a chain with few roots. Beyond this many
+// parallel roots, wrap them into balanced rows instead of one cramped row.
+const FLOW_ROW_MAX = 5;
 const MIN_W = 110;
 const MAX_W = 320;
 const CANVAS_MARGIN = 48;
@@ -241,7 +244,21 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
       bands.push({ roots: leftover });
     }
   } else if (diagram.type === "flow" && diagram.direction !== "vertical") {
-    bands = [{ roots }];
+    // A connected chain (edges linking the roots, e.g. start→…→end) keeps its
+    // single left-to-right band. But many *parallel* roots — unconnected nodes,
+    // common when a deck slide defaults an unrecognized diagram to "flow" — get
+    // wrapped into balanced rows so they stay wide enough and fill the canvas
+    // vertically instead of cramming into one mid-height strip.
+    const rootIds = new Set(roots.map((root) => root.node.id));
+    const rootsAreChained = diagram.edges.some((edge) => rootIds.has(edge.from) && rootIds.has(edge.to));
+    if (roots.length > FLOW_ROW_MAX && !rootsAreChained) {
+      const cols = chooseCols(roots.length);
+      for (let index = 0; index < roots.length; index += cols) {
+        bands.push({ roots: roots.slice(index, index + cols) });
+      }
+    } else {
+      bands = [{ roots }];
+    }
   } else if (diagram.direction === "vertical") {
     bands = roots.map((root) => ({ roots: [root] }));
   } else {

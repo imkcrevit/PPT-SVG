@@ -144,12 +144,15 @@ const TECH_TEMPLATE: DeckTemplate = {
       background: "navy",
       blocks: [
         { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 8, fill: "accent" },
-        { type: "text", x: 824, y: 300, w: 380, h: 360, field: "sectionNo", size: 300, weight: 800, color: "panel", align: "end" },
-        { type: "rect", x: M, y: 276, w: 26, h: 7, fill: "accent" },
-        { type: "text", x: M + 40, y: 264, w: 400, h: 28, text: { zh: "章节", en: "SECTION" }, size: 15, weight: 600, color: "accent", align: "start" },
-        { type: "text", x: M, y: 300, w: 1000, h: 150, field: "title", size: 46, weight: 800, color: "onDark", align: "start" },
-        { type: "rect", x: M + 2, y: 470, w: 160, h: 7, fill: "accent" },
-        { type: "text", x: M, y: 498, w: 880, h: 80, field: "subtitle", size: 22, weight: 400, color: "onDarkMuted", align: "start" },
+        // Ghost number is a vertically-centered backdrop, not a bottom-corner weight.
+        { type: "text", x: 812, y: 180, w: 392, h: 360, field: "sectionNo", size: 300, weight: 800, color: "panel", align: "end" },
+        // Kicker + title + rule + subtitle form a group centered around the slide's
+        // vertical middle, so the top and bottom whitespace are balanced.
+        { type: "rect", x: M, y: 228, w: 26, h: 7, fill: "accent" },
+        { type: "text", x: M + 40, y: 216, w: 400, h: 28, text: { zh: "章节", en: "SECTION" }, size: 15, weight: 600, color: "accent", align: "start" },
+        { type: "text", x: M, y: 256, w: 1000, h: 140, field: "title", size: 46, weight: 800, color: "onDark", align: "start" },
+        { type: "rect", x: M + 2, y: 410, w: 160, h: 7, fill: "accent" },
+        { type: "text", x: M, y: 436, w: 880, h: 70, field: "subtitle", size: 22, weight: 400, color: "onDarkMuted", align: "start" },
         { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleDark" },
         { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "onDarkMuted", align: "start" },
         { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "onDarkMuted", align: "end" }
