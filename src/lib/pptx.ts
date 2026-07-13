@@ -88,12 +88,19 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
       options: { breakLine: true }
     }));
 
+    // Box height must match the SVG renderer's, or PowerPoint's valign:middle
+    // centres the text inside a differently-sized box and it drifts off its
+    // shape in the export while looking fine in the preview. svg.ts uses
+    // `height ?? lines * fontSize * 1.18`, so mirror that fallback exactly
+    // instead of a flat 70px default.
+    const boxHeight = element.height ?? lines.length * fontSize * 1.18;
+
     slide.addText(runs, {
       objectName: element.id,
       x: pxToIn(element.x, figure.canvas.width),
       y: pyToIn(element.y, figure.canvas.height),
       w: pxToIn(width, figure.canvas.width),
-      h: pyToIn(element.height ?? 70, figure.canvas.height),
+      h: pyToIn(boxHeight, figure.canvas.height),
       fontFace: figure.canvas.fontFamily ?? PPTX_DEFAULT_FONT_FACE,
       fontSize: pxFontToPt(fontSize, figure.canvas.height),
       bold: (element.fontWeight ?? 500) >= 600,
