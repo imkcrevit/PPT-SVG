@@ -1,4 +1,4 @@
-import { LabDeck } from "@/components/lab-deck";
+import { LabDeck } from "@/features/deck/ui/lab-deck";
 
 export const metadata = {
   title: "PPT-SVG Lab · Full deck generation"

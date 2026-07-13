@@ -7,13 +7,17 @@
 // diagram before falling back, while validateAndCompileDeck stays a pure,
 // synchronous path for tests and non-LLM callers.
 
-import type { Deck, DeckPalette, DeckSlide } from "@/lib/deck-types";
-import { layoutDiagram } from "@/lib/layout-engine";
-import { validateAndNormalizeSemanticDiagram } from "@/lib/semantic-validation";
-import { isSkillId } from "@/lib/skills";
+import {
+  isSkillId,
+  layoutDiagram,
+  validateAndNormalizeSemanticDiagram,
+  type DiagramTheme,
+  type Locale,
+  type SkillId
+} from "@/features/svg";
 import { sanitizeDisplayText } from "@/lib/text-layout";
-import type { DiagramTheme } from "@/lib/theme";
-import type { Locale, SkillId } from "@/lib/types";
+
+import type { Deck, DeckPalette, DeckSlide } from "./types";
 
 export const MAX_DECK_SLIDES = 14;
 const MAX_BULLETS = 8;

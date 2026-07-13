@@ -1,4 +1,4 @@
-import { loadPrompt, type ChatMessage } from "@/lib/prompts";
+import { loadPrompt, type ChatMessage } from "@/features/svg";
 import { SKILL_IDS } from "@/lib/types";
 import type { Locale } from "@/lib/types";
 

@@ -1,22 +1,21 @@
 import { NextResponse } from "next/server";
 
-import { buildDeckMessages } from "@/lib/deck-prompts";
 import {
+  buildDeckMessages,
   buildPalette,
   classifySlide,
-  compileDiagram,
+  deckToPptx,
   MAX_DECK_SLIDES,
   readDeck,
-  textSlideFrom
-} from "@/lib/deck-pipeline";
-import type { Deck, DeckSlide } from "@/lib/deck-types";
-import { deckToPptx } from "@/lib/deck-pptx";
-import { buildRepairMessages } from "@/lib/prompts";
+  repairAndCompileDiagram,
+  textSlideFrom,
+  type Deck,
+  type DeckSlide
+} from "@/features/deck";
+import { callOpenRouter, getConfiguredModelLabel, OpenRouterError, type ChatMessage } from "@/features/svg";
 import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { isLocale } from "@/lib/i18n";
 import { parseJsonObject } from "@/lib/json";
-import { callOpenRouter, getConfiguredModelLabel, OpenRouterError } from "@/lib/openrouter";
-import type { ChatMessage } from "@/lib/prompts";
 import {
   checkGenerationAbuse,
   enforceGenerationContentLength,
@@ -136,27 +135,17 @@ export async function POST(request: Request) {
         continue;
       }
 
-      let result = compileDiagram(classified.diagram, classified.title, classified.skill, theme, language);
-      if (!result.ok) {
-        // Reuse the single-figure repair pass to salvage an invalid diagram
-        // before degrading it to a plain section.
-        try {
-          const repairMessages = await buildRepairMessages(JSON.stringify(classified.diagram), result.errors);
-          const repairedRaw = await callOpenRouter(repairMessages, {
-            temperature: 0,
-            maxCompletionTokens: 8_000,
-            responseFormat: "json_object",
-            timeoutMs: 30_000
-          });
-          const repaired = parseJsonObject(repairedRaw);
-          const retry = compileDiagram(repaired as Record<string, unknown>, classified.title, classified.skill, theme, language);
-          if (retry.ok) {
-            result = retry;
-            warnings.push(`repaired diagram "${classified.title || "(untitled)"}"`);
-          }
-        } catch {
-          /* fall through to degrade */
-        }
+      // Compile via the deck→svg bridge, which runs one repair pass on an
+      // invalid diagram before we degrade it to a plain section.
+      const { result, repaired } = await repairAndCompileDiagram({
+        diagram: classified.diagram,
+        title: classified.title,
+        skill: classified.skill,
+        theme,
+        language
+      });
+      if (repaired) {
+        warnings.push(`repaired diagram "${classified.title || "(untitled)"}"`);
       }
 
       if (result.ok && result.slide) {
@@ -186,7 +175,10 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof OpenRouterError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      // Log upstream failures too — otherwise a region/proxy/model error is
+      // invisible in the server journal and only shows in the browser.
+      console.error(`[lab:deck:${requestId}] openrouter ${error.status}:`, error.message);
+      return NextResponse.json({ error: error.message, requestId }, { status: error.status });
     }
     console.error(`[lab:deck:${requestId}] failed`, error);
     return NextResponse.json({ error: "Deck generation failed.", requestId }, { status: 500 });

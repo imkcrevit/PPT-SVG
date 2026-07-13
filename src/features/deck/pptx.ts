@@ -1,8 +1,8 @@
 import type pptxgen from "pptxgenjs";
 
-import type { Deck, DeckPalette, DeckSlide } from "@/lib/deck-types";
-import { addFigureSlide, createDeck, pptxColor, writeDeck } from "@/lib/pptx";
-import { pickReadableText } from "@/lib/theme";
+import { addFigureSlide, createDeck, pickReadableText, pptxColor, writeDeck } from "@/features/svg";
+
+import type { Deck, DeckPalette, DeckSlide } from "./types";
 
 const W = 13.333;
 

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import { appUrl } from "@/lib/app-url";
-import type { Deck, DeckSlide } from "@/lib/deck-types";
+import type { Deck, DeckSlide } from "@/features/deck";
 import type { UploadedAttachment } from "@/lib/types";
 
 interface DeckResponse {

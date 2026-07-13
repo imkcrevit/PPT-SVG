@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { buildPalette, classifySlide, textSlideFrom } from "@/lib/deck-pipeline";
-import type { Deck, DeckSlide } from "@/lib/deck-types";
-import { deckToPptx } from "@/lib/deck-pptx";
-import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
+import { buildPalette, classifySlide, deckToPptx, textSlideFrom, type Deck, type DeckSlide } from "@/features/deck";
+import { validateAndNormalizeFigureResponse } from "@/features/svg";
 import { isLocale } from "@/lib/i18n";
 import { readLimitedJson, securityJson } from "@/lib/request-security";
 import { resolveTheme } from "@/lib/theme";
