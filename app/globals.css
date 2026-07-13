@@ -1382,3 +1382,35 @@ svg text {
     max-width: 94%;
   }
 }
+
+/* Indeterminate upload/parse progress bar for the lab deck UI. */
+.lab-progress {
+  position: relative;
+  height: 3px;
+  width: 100%;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.lab-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -35%;
+  width: 35%;
+  background: var(--accent);
+  animation: lab-progress-slide 1.05s ease-in-out infinite;
+}
+
+@keyframes lab-progress-slide {
+  0% {
+    left: -35%;
+  }
+  60% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}

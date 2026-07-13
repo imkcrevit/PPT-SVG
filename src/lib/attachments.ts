@@ -69,6 +69,10 @@ async function extractInlineText(extension: string, bytes: Buffer): Promise<stri
     return cleanText(bytes.toString("utf8")).slice(0, MAX_EXTRACTED_TEXT_CHARS);
   }
 
+  if (extension === "pdf") {
+    return extractPdfText(bytes);
+  }
+
   if (extension === "docx") {
     return extractZipXmlText(bytes, (fileName) => fileName === "word/document.xml");
   }
@@ -78,6 +82,23 @@ async function extractInlineText(extension: string, bytes: Buffer): Promise<stri
   }
 
   return undefined;
+}
+
+// PDF text extraction via unpdf (a Node/serverless-friendly pdf.js build).
+// Imported lazily so pdf.js only loads when a PDF is actually uploaded, and
+// wrapped so a scanned/encrypted/broken PDF degrades to "no text" instead of
+// throwing.
+async function extractPdfText(bytes: Buffer): Promise<string | undefined> {
+  try {
+    const { extractText, getDocumentProxy } = await import("unpdf");
+    const pdf = await getDocumentProxy(new Uint8Array(bytes));
+    const { text } = await extractText(pdf, { mergePages: true });
+    const merged = Array.isArray(text) ? text.join("\n") : text;
+    const cleaned = cleanText(merged);
+    return cleaned ? cleaned.slice(0, MAX_EXTRACTED_TEXT_CHARS) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function extractZipXmlText(bytes: Buffer, includeFile: (fileName: string) => boolean): Promise<string | undefined> {

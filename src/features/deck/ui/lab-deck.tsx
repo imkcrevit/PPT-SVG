@@ -46,6 +46,7 @@ export function LabDeck() {
   const [template, setTemplate] = useState<UploadedAttachment | null>(null);
 
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [model, setModel] = useState("");
   const [deck, setDeck] = useState<Deck | null>(null);
@@ -86,14 +87,32 @@ export function LabDeck() {
     async (file: File | undefined) => {
       if (!file) return;
       setError("");
+      setUploading(true);
       try {
         const attachment = await uploadAttachment(file);
-        if (attachment.extractedText) {
-          setBaseContext((prev) => (prev ? `${prev}\n\n${attachment.extractedText}` : attachment.extractedText ?? ""));
+        const text = (attachment.extractedText ?? "").trim();
+        if (text) {
+          setBaseContext((prev) => (prev ? `${prev}\n\n${text}` : text));
+          pushEntry({
+            id: uid(),
+            role: "assistant",
+            content: `${t.importedDoc}：${attachment.originalName}（${t.extractedChars.replace("{n}", text.length.toLocaleString())}）`,
+            status: "done"
+          });
+        } else {
+          // No extractable text (e.g. a scanned/image-only PDF) — say so instead
+          // of silently building the deck from the instruction alone.
+          pushEntry({
+            id: uid(),
+            role: "assistant",
+            content: `${t.importedDoc}：${attachment.originalName} — ${t.noTextWarning}`,
+            status: "error"
+          });
         }
-        pushEntry({ id: uid(), role: "assistant", content: `${t.importedDoc}：${attachment.originalName}`, status: "done" });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Upload failed.");
+      } finally {
+        setUploading(false);
       }
     },
     [uploadAttachment, pushEntry, t]
@@ -103,12 +122,15 @@ export function LabDeck() {
     async (file: File | undefined) => {
       if (!file) return;
       setError("");
+      setUploading(true);
       try {
         const attachment = await uploadAttachment(file);
         setTemplate(attachment);
         pushEntry({ id: uid(), role: "assistant", content: `${t.appliedTemplate}：${attachment.originalName}`, status: "done" });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Upload failed.");
+      } finally {
+        setUploading(false);
       }
     },
     [uploadAttachment, pushEntry, t]
@@ -120,10 +142,18 @@ export function LabDeck() {
     const instruction = draft.trim();
     const revising = Boolean(deck);
 
-    // Compose the effective context: base document + accumulated instructions.
+    // Compose the effective context. When a document was uploaded it is the
+    // SOURCE the deck must present; typed messages are directives (style/scope),
+    // labeled separately so the model doesn't mistake the instruction for the
+    // subject. With no document, the typed brief IS the content.
     const nextNotes = instruction ? [...notes, instruction] : notes;
-    const contextParts = [baseContext.trim(), nextNotes.length ? `【${t.notesHeading}】\n${nextNotes.join("\n")}` : ""];
-    const context = contextParts.filter(Boolean).join("\n\n").trim();
+    const doc = baseContext.trim();
+    const noteText = nextNotes.join("\n").trim();
+    const context = (
+      doc
+        ? [`【${t.sourceHeading}】\n${doc}`, noteText ? `【${t.directiveHeading}】\n${noteText}` : ""].filter(Boolean).join("\n\n")
+        : noteText
+    ).trim();
 
     if (!context) {
       setError(t.emptyPrompt);
@@ -149,7 +179,10 @@ export function LabDeck() {
           context,
           language,
           styleHint,
-          attachments: template ? [template] : [],
+          // The template contributes STYLE only — drop its extracted text so the
+          // route (which appends every attachment's text to the deck content)
+          // doesn't fold the template's own slide copy into the generated deck.
+          attachments: template ? [{ ...template, extractedText: undefined }] : [],
           sessionId: sessionId.current
         })
       });
@@ -325,13 +358,13 @@ export function LabDeck() {
                   {model ? <CheckCircle2 className="shrink-0 text-mint" size={14} /> : null}
                 </div>
 
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="chat-toolbar-button">
-                  <FileUp size={13} />
-                  <span>{baseContext ? t.docReady : t.uploadDoc}</span>
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="chat-toolbar-button">
+                  {uploading ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} />}
+                  <span>{uploading ? t.parsing : baseContext ? t.docReady : t.uploadDoc}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept=".pdf,.docx,.pptx,.md,.txt" className="hidden" onChange={(e) => void onUploadDoc(e.target.files?.[0])} />
 
-                <button type="button" onClick={() => templateInputRef.current?.click()} className="chat-toolbar-button">
+                <button type="button" onClick={() => templateInputRef.current?.click()} disabled={uploading} className="chat-toolbar-button">
                   <Palette size={13} />
                   <span>{template ? `✓ ${template.originalName}` : t.uploadTemplate}</span>
                 </button>
@@ -342,6 +375,13 @@ export function LabDeck() {
                   <input type="text" value={styleHint} onChange={(e) => setStyleHint(e.target.value)} placeholder={t.stylePlaceholder} />
                 </label>
               </div>
+
+              {uploading ? (
+                <div className="flex flex-col gap-1 px-1 pb-1">
+                  <div className="lab-progress" />
+                  <span className="text-[11px] text-mid">{t.parsing}</span>
+                </div>
+              ) : null}
 
               <div className="workspace-chat-history flex flex-col">
                 <div ref={scrollRef} className="workspace-chat-scroll chat-thread">
@@ -381,7 +421,7 @@ export function LabDeck() {
               </label>
 
               <div className="chat-actions">
-                <button type="button" onClick={() => void send()} disabled={busy} className="chat-primary-action">
+                <button type="button" onClick={() => void send()} disabled={busy || uploading} className="chat-primary-action">
                   {busy ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
                   <span>{busy ? (deck ? t.revising : t.generating) : deck ? t.reviseSubmit : t.submit}</span>
                 </button>
@@ -548,7 +588,11 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     revising: "更新中…",
     generateDefault: "生成整套 PPT",
     regenerateAll: "根据要求重新生成",
-    notesHeading: "制作要求",
+    sourceHeading: "源文档（请基于以下内容制作 PPT）",
+    directiveHeading: "用户要求（风格与调整，不要改变上面的事实内容）",
+    extractedChars: "已读取约 {n} 字",
+    noTextWarning: "未能从该文件提取到文字（可能是扫描件/图片型 PDF），请改为粘贴文字或换一个文件",
+    parsing: "解析中…",
     generatedTo: "已生成",
     updatedTo: "已更新为",
     slides: "页",
@@ -594,7 +638,11 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     revising: "Updating…",
     generateDefault: "Generate deck",
     regenerateAll: "Regenerate with changes",
-    notesHeading: "Requirements",
+    sourceHeading: "Source document (build the deck from this content)",
+    directiveHeading: "User directives (style/scope; do not alter the facts above)",
+    extractedChars: "read ~{n} chars",
+    noTextWarning: "no text could be extracted (likely a scanned/image-only PDF) — paste the text or try another file",
+    parsing: "Parsing…",
     generatedTo: "Generated",
     updatedTo: "Updated to",
     slides: "slides",
