@@ -10,3 +10,7 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 tmps/
+
+# Stray exported decks dropped in the repo root
+/-.pdf
+*.pptx
