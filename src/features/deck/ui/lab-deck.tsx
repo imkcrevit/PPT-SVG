@@ -4,6 +4,7 @@ import { CheckCircle2, FileUp, Loader2, MessageSquarePlus, Palette, Send } from 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
+import { textSlideToFigure, withDeckChrome } from "@/features/deck/template";
 import type { Deck, DeckSlide } from "@/features/deck/types";
 import { appUrl } from "@/lib/app-url";
 import type { UploadedAttachment } from "@/lib/types";
@@ -520,6 +521,11 @@ function SlideCard({
 }) {
   const { palette } = deck;
   const ctrl = "flex h-6 w-6 items-center justify-center border border-line bg-panel text-mid transition hover:text-accent disabled:opacity-30";
+  const chromeCtx = { index, total, deckTitle: deck.title, language: deck.language };
+  const slideFigure =
+    slide.kind === "diagram"
+      ? withDeckChrome(slide.figure, palette, chromeCtx)
+      : textSlideToFigure(slide, palette, chromeCtx);
   return (
     <div className="overflow-hidden border border-line bg-panel">
       <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
@@ -538,27 +544,7 @@ function SlideCard({
         </div>
       </div>
       <div className="aspect-video w-full overflow-hidden">
-        {slide.kind === "diagram" ? (
-          <FigureSvg figure={slide.figure} svgId={`lab-slide-${index}`} />
-        ) : (
-          <div className="flex h-full w-full flex-col justify-center gap-2 p-5" style={{ background: slide.kind === "section" ? palette.accent : palette.background }}>
-            <div className="text-lg font-bold" style={{ color: slide.kind === "section" ? "#FFFFFF" : palette.text }}>
-              {slide.title}
-            </div>
-            {slide.kind === "cover" && slide.subtitle ? (
-              <div className="text-sm" style={{ color: palette.subtext }}>
-                {slide.subtitle}
-              </div>
-            ) : null}
-            {slide.kind === "bullets" ? (
-              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm" style={{ color: palette.text }}>
-                {slide.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        )}
+        <FigureSvg figure={slideFigure} svgId={`lab-slide-${index}`} />
       </div>
     </div>
   );
