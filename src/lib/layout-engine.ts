@@ -258,18 +258,12 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
     const rootIndex = new Map(roots.map((root, index) => [root.node.id, index]));
     const rootEdges = diagram.edges.filter((edge) => rootIndex.has(edge.from) && rootIndex.has(edge.to));
     const rootsAreChained = rootEdges.length > 0;
-    // A "forward" chain has every root→root edge advancing in order, so the roots
-    // are already in flow order and a snake is unambiguous. A back/feedback edge
-    // (target before source) would have to route around the wrapped grid — which
-    // an obstacle-free router can't do without crossing nodes — so those keep a
-    // single row where the feedback routes cleanly below.
-    const allForward = rootEdges.every((edge) => (rootIndex.get(edge.to) ?? 0) > (rootIndex.get(edge.from) ?? 0));
     if (roots.length > FLOW_ROW_MAX && !rootsAreChained) {
       const cols = chooseCols(roots.length);
       for (let index = 0; index < roots.length; index += cols) {
         bands.push({ roots: roots.slice(index, index + cols) });
       }
-    } else if (rootsAreChained && allForward && roots.length > FLOW_SNAKE_MAX) {
+    } else if (rootsAreChained && roots.length > FLOW_SNAKE_MAX) {
       // Snake (boustrophedon): rows of ~FLOW_SNAKE_COLS, every other row reversed
       // so the end of one row sits directly above the start of the next and the
       // transition connector is a short vertical.
@@ -324,7 +318,136 @@ function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
+// Does an axis-aligned segment cross a rect's strict interior?
+function segHitsRectInterior(x1: number, y1: number, x2: number, y2: number, r: Box): boolean {
+  const rx1 = r.x;
+  const ry1 = r.y;
+  const rx2 = r.x + r.width;
+  const ry2 = r.y + r.height;
+  if (Math.abs(y1 - y2) < 0.01) {
+    if (y1 <= ry1 || y1 >= ry2) return false;
+    return Math.min(x1, x2) < rx2 && Math.max(x1, x2) > rx1;
+  }
+  if (x1 <= rx1 || x1 >= rx2) return false;
+  return Math.min(y1, y2) < ry2 && Math.max(y1, y2) > ry1;
+}
+
+function pathHitsObstacle(points: Pt[], obstacles: Box[]): boolean {
+  for (let i = 0; i + 1 < points.length; i++) {
+    for (const o of obstacles) {
+      if (segHitsRectInterior(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, o)) return true;
+    }
+  }
+  return false;
+}
+
+function inflate(b: Box, m: number): Box {
+  return { x: b.x - m, y: b.y - m, width: b.width + 2 * m, height: b.height + 2 * m };
+}
+
+// Anchor on the side of `box` facing `toward`.
+function sideAnchor(box: Box, toward: Pt): Pt {
+  const c = center(box);
+  if (Math.abs(toward.x - c.x) >= Math.abs(toward.y - c.y)) {
+    return { x: toward.x >= c.x ? box.x + box.width : box.x, y: c.y };
+  }
+  return { x: c.x, y: toward.y >= c.y ? box.y + box.height : box.y };
+}
+
+// Orthogonal A* on the Hanan grid (obstacle corners + anchors) that routes
+// around node boxes with clearance. Used only when the simple route is blocked.
+function routeAround(source: Box, target: Box, obstacles: Box[]): Pt[] | null {
+  const CLEAR = 12;
+  // source/target block the path (so it can't cut through them) but are not
+  // inflated, so an anchor on their border stays valid.
+  const blockers = [source, target, ...obstacles.map((o) => inflate(o, CLEAR))];
+  const a = sideAnchor(source, center(target));
+  const b = sideAnchor(target, center(source));
+
+  const uniq = (vals: number[]) => [...new Set(vals.map((v) => Math.round(v)))].sort((p, q) => p - q);
+  const xs = uniq([a.x, b.x, ...blockers.flatMap((o) => [o.x, o.x + o.width])]);
+  const ys = uniq([a.y, b.y, ...blockers.flatMap((o) => [o.y, o.y + o.height])]);
+  const ix = new Map(xs.map((v, i) => [v, i]));
+  const iy = new Map(ys.map((v, i) => [v, i]));
+  const si = ix.get(Math.round(a.x));
+  const sj = iy.get(Math.round(a.y));
+  const gi = ix.get(Math.round(b.x));
+  const gj = iy.get(Math.round(b.y));
+  if (si === undefined || sj === undefined || gi === undefined || gj === undefined) return null;
+
+  const clear = (x1: number, y1: number, x2: number, y2: number) => !blockers.some((o) => segHitsRectInterior(x1, y1, x2, y2, o));
+  const key = (i: number, j: number) => i * ys.length + j;
+  const start = key(si, sj);
+  const goal = key(gi, gj);
+  const gScore = new Map<number, number>([[start, 0]]);
+  const cameFrom = new Map<number, number>();
+  const open: Array<{ n: number; f: number }> = [{ n: start, f: 0 }];
+  const h = (i: number, j: number) => Math.abs(xs[i] - xs[gi]) + Math.abs(ys[j] - ys[gj]);
+  const TURN = 40;
+
+  while (open.length) {
+    open.sort((p, q) => p.f - q.f);
+    const { n } = open.shift()!;
+    if (n === goal) break;
+    const i = Math.floor(n / ys.length);
+    const j = n % ys.length;
+    const prev = cameFrom.get(n);
+    const pdir = prev === undefined ? -1 : Math.floor(prev / ys.length) === i ? 0 : 1; // 0=horiz,1=vert incoming
+    for (const [di, dj] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ]) {
+      const ni = i + di;
+      const nj = j + dj;
+      if (ni < 0 || nj < 0 || ni >= xs.length || nj >= ys.length) continue;
+      if (!clear(xs[i], ys[j], xs[ni], ys[nj])) continue;
+      const dir = di !== 0 ? 0 : 1;
+      const step = Math.abs(xs[ni] - xs[i]) + Math.abs(ys[nj] - ys[j]) + (pdir !== -1 && pdir !== dir ? TURN : 0);
+      const nk = key(ni, nj);
+      const tentative = (gScore.get(n) ?? Infinity) + step;
+      if (tentative < (gScore.get(nk) ?? Infinity)) {
+        cameFrom.set(nk, n);
+        gScore.set(nk, tentative);
+        open.push({ n: nk, f: tentative + h(ni, nj) });
+      }
+    }
+  }
+  if (!cameFrom.has(goal) && goal !== start) return null;
+
+  const raw: Pt[] = [];
+  let cur = goal;
+  raw.push({ x: xs[Math.floor(cur / ys.length)], y: ys[cur % ys.length] });
+  while (cur !== start) {
+    const p = cameFrom.get(cur);
+    if (p === undefined) return null;
+    cur = p;
+    raw.push({ x: xs[Math.floor(cur / ys.length)], y: ys[cur % ys.length] });
+  }
+  raw.reverse();
+  // Drop collinear midpoints.
+  const pts: Pt[] = [];
+  for (let k = 0; k < raw.length; k++) {
+    if (k > 0 && k < raw.length - 1) {
+      const a1 = raw[k - 1];
+      const b1 = raw[k];
+      const c1 = raw[k + 1];
+      if ((a1.x === b1.x && b1.x === c1.x) || (a1.y === b1.y && b1.y === c1.y)) continue;
+    }
+    pts.push(raw[k]);
+  }
+  return pts.length >= 2 ? pts : null;
+}
+
 function routeEdge(source: Box, target: Box, obstacles: Box[]): Pt[] {
+  const simple = simpleRoute(source, target, obstacles);
+  if (!pathHitsObstacle(simple, obstacles)) return simple;
+  const around = routeAround(source, target, obstacles);
+  return around && !pathHitsObstacle(around, obstacles) ? around : simple;
+}
+
+function simpleRoute(source: Box, target: Box, obstacles: Box[]): Pt[] {
   const sourceCenter = center(source);
   const targetCenter = center(target);
   const vertical = Math.abs(targetCenter.y - sourceCenter.y) > Math.abs(targetCenter.x - sourceCenter.x) + 1;
