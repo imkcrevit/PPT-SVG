@@ -326,17 +326,15 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
   const roots = topLevel(diagram);
   if (roots.length === 0) return frame(diagram, elements, canvasBg);
 
-  const nodeW = 156;
-  const nodeH = 54;
-  const hGap = 26;
-  const vGap = 64;
+  const nodeW = 150;
+  const hGap = 18;
+  const titleFont = 14;
   const positions: TreePos[] = [];
   const edges: Array<{ from: string; to: string }> = [];
 
-  // recursive tidy placement; returns subtree width
+  // --- horizontal tidy placement (uniform width; vertical handled later) ---
   const place = (node: SemanticNode, depth: number, leftX: number): number => {
     const kids = childrenOf(diagram, node.id);
-    const y = depth * (nodeH + vGap);
     let myX: number;
     let width: number;
     if (kids.length === 0) {
@@ -353,7 +351,7 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
       myX = leftX + (childrenWidth - nodeW) / 2;
       width = Math.max(childrenWidth, nodeW);
     }
-    positions.push({ node, x: myX, y, w: nodeW, h: nodeH, depth });
+    positions.push({ node, x: myX, y: 0, w: nodeW, h: 0, depth });
     return width;
   };
 
@@ -363,34 +361,61 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
     cursorX += w + hGap * 2;
   }
 
-  // bounding box -> scale & center into canvas
-  const minX = Math.min(...positions.map((p) => p.x));
-  const maxX = Math.max(...positions.map((p) => p.x + p.w));
-  const minY = Math.min(...positions.map((p) => p.y));
-  const maxY = Math.max(...positions.map((p) => p.y + p.h));
-  const treeW = maxX - minX;
-  const treeH = maxY - minY;
-  const areaTop = MARGIN + TITLE_H + 20;
+  const areaTop = MARGIN + TITLE_H + 16;
   const areaH = H - areaTop - MARGIN;
   const areaW = W - MARGIN * 2;
-  const scale = Math.min(1, areaW / treeW, areaH / treeH);
-  const offX = (W - treeW * scale) / 2 - minX * scale;
-  const offY = areaTop + (areaH - treeH * scale) / 2 - minY * scale;
-  const tx = (v: number) => offX + v * scale;
-  const ty = (v: number) => offY + v * scale;
+  const maxDepth = Math.max(...positions.map((p) => p.depth));
+
+  // Horizontal: scale x-positions AND box width together so boxes never overlap
+  // even when the tree is wide. A narrower box just wraps into more lines, which
+  // the vertical pass below has room to absorb (that's what fills the canvas).
+  const minX = Math.min(...positions.map((p) => p.x));
+  const maxX = Math.max(...positions.map((p) => p.x + p.w));
+  const treeW = maxX - minX;
+  const sx = Math.min(1, areaW / treeW);
+  const boxW = nodeW * sx;
+  const offX = (W - treeW * sx) / 2 - minX * sx;
+  const tx = (v: number) => offX + v * sx;
+
+  // Box height sized to the WRAPPED content at the final box width, matching how
+  // card() lays out title + detail — so text is always centered inside the rect
+  // instead of spilling over it. Same level shares the tallest node's height.
+  const cardContentH = (node: SemanticNode): number => {
+    const tl = estLines(node.label, boxW, titleFont);
+    const dl = node.detail ? estLines(node.detail, boxW, DETAIL_FONT) : 0;
+    return tl * (titleFont * 1.28) + (dl ? 4 + dl * DETAIL_LH : 0);
+  };
+  const rowH: number[] = [];
+  for (let d = 0; d <= maxDepth; d++) {
+    const inLevel = positions.filter((p) => p.depth === d);
+    rowH[d] = Math.max(48, ...inLevel.map((p) => cardContentH(p.node) + 18));
+  }
+
+  // Vertical: spread the levels across the full available height by padding the
+  // gaps between them, so a short tree fills the canvas instead of floating.
+  const totalRowH = rowH.reduce((a, b) => a + b, 0);
+  const slack = Math.max(0, areaH - totalRowH);
+  const gap = maxDepth > 0 ? Math.min(150, slack / maxDepth) : 0;
+  const usedH = totalRowH + gap * maxDepth;
+  const sy = usedH > areaH ? areaH / usedH : 1;
+  const levelTop: number[] = [];
+  let cy = areaTop + Math.max(0, (areaH - usedH * sy) / 2);
+  for (let d = 0; d <= maxDepth; d++) {
+    levelTop[d] = cy;
+    cy += (rowH[d] + gap) * sy;
+  }
 
   const posById = new Map(positions.map((p) => [p.node.id, p]));
-  const depthAccent = new Map<string, number>();
-  positions.forEach((p) => depthAccent.set(p.node.id, p.depth));
+  const boxOf = (p: TreePos) => ({ x: tx(p.x), y: levelTop[p.depth], w: boxW, h: rowH[p.depth] * sy });
 
   // connectors (parent bottom -> child top, orthogonal)
   edges.forEach((e, i) => {
-    const a = posById.get(e.from)!;
-    const b = posById.get(e.to)!;
-    const ax = tx(a.x + a.w / 2);
-    const ay = ty(a.y + a.h);
-    const bx = tx(b.x + b.w / 2);
-    const by = ty(b.y);
+    const A = boxOf(posById.get(e.from)!);
+    const B = boxOf(posById.get(e.to)!);
+    const ax = A.x + A.w / 2;
+    const ay = A.y + A.h;
+    const bx = B.x + B.w / 2;
+    const by = B.y;
     const midY = (ay + by) / 2;
     elements.push({
       id: `htree-e${i}`,
@@ -409,7 +434,8 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
 
   positions.forEach((p, i) => {
     const acc = accent(p.depth);
-    elements.push(card(`htree-${i}`, p.node.label, p.node.detail, tx(p.x), ty(p.y), p.w * scale, p.h * scale, acc, { fill: p.depth === 0 ? acc.tint : "#FFFFFF", dashed: p.node.dashed === true, titleFont: clamp(Math.round(14 * scale + 1), 11, 15) }));
+    const B = boxOf(p);
+    elements.push(card(`htree-${i}`, p.node.label, p.node.detail, B.x, B.y, B.w, B.h, acc, { fill: p.depth === 0 ? acc.tint : "#FFFFFF", dashed: p.node.dashed === true, titleFont }));
   });
 
   return frame(diagram, elements, canvasBg);
