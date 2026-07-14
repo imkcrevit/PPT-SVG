@@ -134,6 +134,31 @@ function addElement(slide: pptxgen.Slide, element: FigureElement, figure: Figure
     return;
   }
 
+  if (element.type === "image") {
+    const x = pxToIn(element.x, figure.canvas.width);
+    const y = pyToIn(element.y, figure.canvas.height);
+    const w = pxToIn(element.width, figure.canvas.width);
+    const h = pyToIn(element.height, figure.canvas.height);
+    // "contain" letterboxes inside the box (keeps the whole picture); "cover"
+    // fills the box and crops; "stretch" distorts. Match the SVG preview.
+    const sizing =
+      element.fit === "cover"
+        ? ({ type: "cover", w, h } as const)
+        : element.fit === "stretch"
+          ? undefined
+          : ({ type: "contain", w, h } as const);
+    slide.addImage({
+      objectName: element.id,
+      data: element.src,
+      x,
+      y,
+      w,
+      h,
+      ...(sizing ? { sizing } : {})
+    });
+    return;
+  }
+
   if (element.type === "polygon") {
     const pts = element.points;
     if (pts.length < 2) {

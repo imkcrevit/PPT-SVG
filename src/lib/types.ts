@@ -114,6 +114,19 @@ export interface EllipseElement extends Omit<BaseElement, "type"> {
   dash?: boolean;
 }
 
+export interface ImageElement extends Omit<BaseElement, "type"> {
+  type: "image";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** data: URI (base64 PNG/JPEG). Rendered as SVG <image> and PPTX addImage. */
+  src: string;
+  /** Fit within the box. "contain" (default) letterboxes; "cover" fills+crops. */
+  fit?: "contain" | "cover" | "stretch";
+  rx?: number;
+}
+
 export type FigureElement =
   | GroupElement
   | RectElement
@@ -122,7 +135,8 @@ export type FigureElement =
   | ArrowElement
   | ConnectorElement
   | PolygonElement
-  | EllipseElement;
+  | EllipseElement
+  | ImageElement;
 
 export interface Figure {
   canvas: CanvasSpec;
@@ -164,6 +178,19 @@ export interface GenerateFigureRequest {
   };
 }
 
+/** An image the user supplied — a standalone upload or one lifted out of an
+ *  uploaded PPTX/DOCX — ready to embed into generated slides. */
+export interface AttachmentImage {
+  id: string;
+  /** data:image/(png|jpeg);base64,… — already downscaled to a slide-safe size. */
+  dataUri: string;
+  width: number;
+  height: number;
+  mimeType: string;
+  /** Where it came from, for prompt context (e.g. "2026.pptx · slide media"). */
+  source?: string;
+}
+
 export interface UploadedAttachment {
   id: string;
   originalName: string;
@@ -174,6 +201,8 @@ export interface UploadedAttachment {
   path: string;
   extractedText?: string;
   theme?: DiagramTheme;
+  /** Images extracted from this upload (standalone image, or PPTX/DOCX media). */
+  images?: AttachmentImage[];
 }
 
 export interface InternalSkill {

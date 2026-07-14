@@ -311,6 +311,10 @@ function elementBox(element: FigureElement): Box {
     return { x: element.cx - element.rx, y: element.cy - element.ry, width: element.rx * 2, height: element.ry * 2 };
   }
 
+  if (element.type === "image") {
+    return { x: element.x, y: element.y, width: element.width, height: element.height };
+  }
+
   return unionBoxes(element.children.map(elementBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
 }
 

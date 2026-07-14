@@ -9,6 +9,7 @@ import type {
   FitAssessment,
   GenerateFigureResponse,
   GroupElement,
+  ImageElement,
   LineElement,
   Locale,
   RectElement,
@@ -36,6 +37,9 @@ const MAX_LAYOUT_NORMALIZATION_PASSES = 5;
 // input, but a small JSON can still describe thousands of tiny elements.
 const MAX_TOTAL_FIGURE_ELEMENTS = 1500;
 const MAX_GROUP_DEPTH = 12;
+// ~2.6MB of base64 per embedded image. Extraction downscales well under this;
+// the cap only stops a hostile/oversized client payload.
+const MAX_IMAGE_SRC_CHARS = 3_600_000;
 const LARGE_BACKGROUND_AREA_RATIO = 0.18;
 const BACKGROUND_ASSOCIATION_TOLERANCE = 12;
 const MIN_BACKGROUND_OVERLAP_RATIO = 0.14;
@@ -565,6 +569,10 @@ function elementBox(element: FigureElement): Box {
     return { x: element.cx - element.rx, y: element.cy - element.ry, width: element.rx * 2, height: element.ry * 2 };
   }
 
+  if (element.type === "image") {
+    return { x: element.x, y: element.y, width: element.width, height: element.height };
+  }
+
   return unionBoxes(element.children.map(elementBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
 }
 
@@ -996,6 +1004,35 @@ function normalizeElement(
       endArrow: record.endArrow === true
     };
     return connector;
+  }
+
+  if (type === "image") {
+    const src = typeof record.src === "string" ? record.src.trim() : "";
+    // Only inline base64 raster data URIs — never a remote URL (SSRF) or an
+    // unbounded blob. Size is capped so a client-posted deck can't smuggle a
+    // huge payload through the export route.
+    if (!/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(src)) {
+      errors.push(`${formatPath([...path, "src"])} must be a base64 PNG/JPEG/WebP data URI.`);
+      return undefined;
+    }
+    if (src.length > MAX_IMAGE_SRC_CHARS) {
+      errors.push(`${formatPath([...path, "src"])} exceeds the ${Math.round(MAX_IMAGE_SRC_CHARS / 1000)}k-char image size limit.`);
+      return undefined;
+    }
+    const image: ImageElement = {
+      id,
+      type,
+      name,
+      opacity,
+      x: readNumber(record.x, [...path, "x"], errors, 0, 0, canvasWidth),
+      y: readNumber(record.y, [...path, "y"], errors, 0, 0, canvasHeight),
+      width: readNumber(record.width, [...path, "width"], errors, 200, 1, canvasWidth),
+      height: readNumber(record.height, [...path, "height"], errors, 150, 1, canvasHeight),
+      src,
+      fit: record.fit === "cover" || record.fit === "stretch" ? record.fit : "contain",
+      ...(typeof record.rx === "number" ? { rx: clampNumber(record.rx, 0, 80, 0) } : {})
+    };
+    return image;
   }
 
   errors.push(`${formatPath(path)} has unsupported element type "${type}".`);

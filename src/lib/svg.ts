@@ -51,6 +51,11 @@ function renderElement(element: FigureElement, fontFamily: string): string {
     return `<ellipse data-node-id="${element.id}" cx="${element.cx}" cy="${element.cy}" rx="${element.rx}" ry="${element.ry}" fill="${element.fill ?? "none"}"${element.stroke ? ` stroke="${element.stroke}"` : ""} stroke-width="${element.strokeWidth ?? 1.5}"${element.dash ? ' stroke-dasharray="7 5"' : ""}${opacity} />`;
   }
 
+  if (element.type === "image") {
+    const par = element.fit === "cover" ? "xMidYMid slice" : element.fit === "stretch" ? "none" : "xMidYMid meet";
+    return `<image data-node-id="${element.id}" x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" preserveAspectRatio="${par}" href="${escapeXml(element.src)}"${opacity} />`;
+  }
+
   return renderArrow(element, opacity);
 }
 

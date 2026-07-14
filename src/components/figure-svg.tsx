@@ -229,6 +229,11 @@ function renderElement(
     );
   }
 
+  if (element.type === "image") {
+    const par = element.fit === "cover" ? "xMidYMid slice" : element.fit === "stretch" ? "none" : "xMidYMid meet";
+    return <image {...shared} x={element.x} y={element.y} width={element.width} height={element.height} preserveAspectRatio={par} href={element.src} />;
+  }
+
   return renderArrow(element, isSelected, shared, svgId);
 }
 
@@ -457,6 +462,10 @@ function getElementBounds(element: FigureElement): ReturnType<typeof normalizeBo
 
   if (element.type === "ellipse") {
     return normalizeBox(element.cx - element.rx, element.cy - element.ry, element.cx + element.rx, element.cy + element.ry);
+  }
+
+  if (element.type === "image") {
+    return normalizeBox(element.x, element.y, element.x + element.width, element.y + element.height);
   }
 
   return normalizeBox(element.x1, element.y1, element.x2, element.y2);
