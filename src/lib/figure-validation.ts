@@ -46,7 +46,8 @@ const TITLE_CONTENT_GAP_RATIO = 0.045;
 export function validateAndNormalizeFigureResponse(
   value: unknown,
   expectedSkillId: SkillId,
-  expectedLanguage: Locale
+  expectedLanguage: Locale,
+  options?: { skipLayoutNormalization?: boolean }
 ): ValidationResult {
   const errors: string[] = [];
   const root = readRecord(value, [], errors);
@@ -103,7 +104,15 @@ export function validateAndNormalizeFigureResponse(
     return { ok: false, errors };
   }
 
-  normalizeFigureLayout(elements, canvas.width, canvas.height);
+  // The layout normalizer re-positions/re-centers elements to rescue sloppy
+  // model-authored freeform figures. Diagram slides in a deck are already laid
+  // out precisely by layoutDiagram(); running the normalizer over them shifts
+  // rects out from under their labels and breaks the geometry (the SVG preview,
+  // which skips this pass, looks correct while the PPTX export does not). Let
+  // trusted, pre-laid-out figures opt out and keep only per-element sanitization.
+  if (!options?.skipLayoutNormalization) {
+    normalizeFigureLayout(elements, canvas.width, canvas.height);
+  }
 
   if (elements.length === 0) {
     errors.push("figure.elements must contain at least one valid element.");

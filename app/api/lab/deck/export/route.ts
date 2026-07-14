@@ -36,9 +36,14 @@ export async function POST(request: Request) {
         continue;
       }
       if (record.kind === "diagram") {
-        // Re-validate the client-posted figure exactly like the single-figure
-        // export routes do, then keep the sanitized geometry.
-        const validation = validateAndNormalizeFigureResponse({ figure: record.figure }, "flow", language);
+        // Re-validate the client-posted figure for security (per-element
+        // sanitization), but skip the layout normalizer: these figures are
+        // already laid out precisely by layoutDiagram(), and re-normalizing them
+        // shifts rects out from under their labels — the exact export-vs-preview
+        // mismatch users saw (titles floating above their boxes).
+        const validation = validateAndNormalizeFigureResponse({ figure: record.figure }, "flow", language, {
+          skipLayoutNormalization: true
+        });
         if (validation.ok && validation.response) {
           const title = typeof record.title === "string" ? record.title.slice(0, 160) : validation.response.figure.metadata.title;
           slides.push({ kind: "diagram", title, figure: validation.response.figure });
