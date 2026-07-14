@@ -252,42 +252,26 @@ function addConnector(
     return;
   }
 
-  const connectorName = connectorShapeName(points);
-  const x = Math.min(first.x, last.x);
-  const y = Math.min(first.y, last.y);
-  const w = Math.abs(last.x - first.x);
-  const h = Math.abs(last.y - first.y);
-
-  if (w < 0.1 || h < 0.1) {
+  // Multi-point orthogonal route: draw each segment as its own straight line so
+  // the export follows our EXACT waypoints. A PowerPoint bentConnector only knows
+  // its bounding box and re-routes its own elbow between the corners, which does
+  // not match the SVG preview's routed polyline (the "web looks right, export is
+  // wrong" connector bug). The arrowhead rides the final segment only.
+  for (let i = 0; i + 1 < points.length; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
     addStraightLine(slide, figure, {
-      x1: first.x,
-      y1: first.y,
-      x2: last.x,
-      y2: last.y,
+      x1: a.x,
+      y1: a.y,
+      x2: b.x,
+      y2: b.y,
       stroke: element.stroke,
       strokeWidth: element.strokeWidth,
       dash: element.dash,
-      endArrow: element.endArrow === true,
-      objectName: element.id
+      endArrow: element.endArrow === true && i === points.length - 2,
+      objectName: `${element.id}-seg${i}`
     });
-    return;
   }
-
-  slide.addShape(connectorName as pptxgen.ShapeType, {
-    objectName: element.id,
-    x: pxToIn(x, figure.canvas.width),
-    y: pyToIn(y, figure.canvas.height),
-    w: pxToIn(w, figure.canvas.width),
-    h: pyToIn(h, figure.canvas.height),
-    flipH: last.x < first.x,
-    flipV: last.y < first.y,
-    line: {
-      color: stripHash(element.stroke),
-      width: pxStrokeToPt(element.strokeWidth ?? 2, figure.canvas.height),
-      endArrowType: element.endArrow === true ? ("triangle" as const) : undefined,
-      dashType: element.dash ? ("dash" as const) : ("solid" as const)
-    }
-  });
 }
 
 function pptxTextAlign(element: Extract<FigureElement, { type: "text" }>): "left" | "center" | "right" {
@@ -313,12 +297,6 @@ function compactConnectorPoints(points: { x: number; y: number }[]): { x: number
   });
 }
 
-function connectorShapeName(points: { x: number; y: number }[]): string {
-  const segmentCount = Math.max(2, points.length - 1);
-  const connectorCount = Math.min(5, segmentCount);
-  return `bentConnector${connectorCount}`;
-}
-
 function addStraightLine(
   slide: pptxgen.Slide,
   figure: Figure,
@@ -334,12 +312,24 @@ function addStraightLine(
     objectName?: string;
   }
 ): void {
+  const dx = line.x2 - line.x1;
+  const dy = line.y2 - line.y1;
+  // Drop a degenerate zero-length segment (a stray duplicate waypoint).
+  if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
+    return;
+  }
+  // OOXML extents must be non-negative; a line's direction is expressed with
+  // flipH/flipV. Emitting a raw negative cx/cy (a leftward/upward segment)
+  // corrupts the file. The arrowhead rides the shape's end, which flip places
+  // back at (x2, y2).
   slide.addShape("line" as pptxgen.ShapeType, {
     objectName: line.objectName,
-    x: pxToIn(line.x1, figure.canvas.width),
-    y: pyToIn(line.y1, figure.canvas.height),
-    w: pxToIn(line.x2 - line.x1, figure.canvas.width),
-    h: pyToIn(line.y2 - line.y1, figure.canvas.height),
+    x: pxToIn(Math.min(line.x1, line.x2), figure.canvas.width),
+    y: pyToIn(Math.min(line.y1, line.y2), figure.canvas.height),
+    w: pxToIn(Math.abs(dx), figure.canvas.width),
+    h: pyToIn(Math.abs(dy), figure.canvas.height),
+    flipH: line.x2 < line.x1,
+    flipV: line.y2 < line.y1,
     line: {
       color: stripHash(line.stroke),
       width: pxStrokeToPt(line.strokeWidth ?? 2, figure.canvas.height),
