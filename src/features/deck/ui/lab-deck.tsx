@@ -543,8 +543,8 @@ function SlideCard({
   const chromeCtx = { index, total, deckTitle: deck.title, language: deck.language };
   const slideFigure =
     slide.kind === "diagram"
-      ? withDeckChrome(slide.figure, palette, chromeCtx)
-      : textSlideToFigure(slide, palette, chromeCtx);
+      ? withDeckChrome(slide.figure, palette, chromeCtx, deck.template)
+      : textSlideToFigure(slide, palette, chromeCtx, deck.template);
   return (
     <div className="overflow-hidden border border-line bg-panel">
       <div className="flex items-center justify-between border-b border-line px-3 py-1.5">

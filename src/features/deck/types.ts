@@ -4,6 +4,7 @@
 // pipeline, so the same SVG/PPTX rendering is reused per slide.
 
 import type { Figure, Locale } from "@/lib/types";
+import type { DeckTemplate } from "./template";
 
 export type DeckSlide =
   | { kind: "cover"; title: string; subtitle?: string }
@@ -29,4 +30,6 @@ export interface Deck {
   language: Locale;
   palette: DeckPalette;
   slides: DeckSlide[];
+  /** Layout derived from an uploaded .pptx template; falls back to the built-in. */
+  template?: DeckTemplate;
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { buildPalette, classifySlide, deckToPptx, textSlideFrom, type Deck, type DeckSlide } from "@/features/deck";
+import { buildPalette, classifySlide, deckToPptx, textSlideFrom, validateDeckTemplate, type Deck, type DeckSlide, type DeckTemplate } from "@/features/deck";
 import { validateAndNormalizeFigureResponse } from "@/features/svg";
 import { isLocale } from "@/lib/i18n";
 import { readLimitedJson, securityJson } from "@/lib/request-security";
@@ -96,7 +96,21 @@ export async function POST(request: Request) {
           : undefined
     });
 
-    const deck: Deck = { title, language, palette: buildPalette(theme), slides };
+    // Honor a posted layout template (derived from an upload at generation) so
+    // the export matches the preview. Validate it — it's client-supplied.
+    let template: DeckTemplate | undefined;
+    if (deckRecord.template && typeof deckRecord.template === "object") {
+      try {
+        const candidate = deckRecord.template as DeckTemplate;
+        if (validateDeckTemplate(candidate).length === 0) {
+          template = candidate;
+        }
+      } catch {
+        // ignore a malformed template; fall back to the built-in
+      }
+    }
+
+    const deck: Deck = { title, language, palette: buildPalette(theme), slides, template };
     const pptx = await deckToPptx(deck);
     const responseBody = pptx.buffer.slice(pptx.byteOffset, pptx.byteOffset + pptx.byteLength) as ArrayBuffer;
 

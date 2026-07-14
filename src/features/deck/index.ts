@@ -33,3 +33,7 @@ export { repairAndCompileDiagram, generateDiagramSlide } from "./diagram-bridge"
 
 // -- Rendering ----------------------------------------------------------------
 export { deckToPptx } from "./pptx";
+
+// -- Template (built-in + derived from an uploaded .pptx) ----------------------
+export { validateDeckTemplate, type DeckTemplate } from "./template";
+export { extractDeckTemplateFromPptx } from "./template-extract";

@@ -18,8 +18,8 @@ export async function deckToPptx(deck: Deck): Promise<Buffer> {
     };
     const figure =
       slide.kind === "diagram"
-        ? withDeckChrome(slide.figure, deck.palette, ctx)
-        : textSlideToFigure(slide, deck.palette, ctx);
+        ? withDeckChrome(slide.figure, deck.palette, ctx, deck.template)
+        : textSlideToFigure(slide, deck.palette, ctx, deck.template);
     addFigureSlide(pptx, figure);
   });
   return writeDeck(pptx);

@@ -278,6 +278,12 @@ export function getDeckTemplate(id?: string): DeckTemplate {
   return DECK_TEMPLATES.find((t) => t.id === id) ?? DECK_TEMPLATES[0];
 }
 
+/** Accept either a full template object (e.g. derived from an upload) or an id. */
+export type TemplateRef = DeckTemplate | string | undefined;
+function resolveTemplate(template: TemplateRef): DeckTemplate {
+  return template && typeof template !== "string" ? template : getDeckTemplate(template);
+}
+
 // ── Interpreter ────────────────────────────────────────────────────────────────
 function colorResolver(tpl: DeckTemplate, palette: DeckPalette): (key: string) => string {
   const map: Record<string, string> = {
@@ -371,8 +377,8 @@ function makeFigure(title: string, elements: FigureElement[], font?: string): Fi
 // ── Public API (stable — pptx.ts & the /lab UI depend on these) ─────────────────
 
 /** Build the Figure for a text slide (cover / section / bullets) under a template. */
-export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
-  const tpl = getDeckTemplate(templateId);
+export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext, template?: TemplateRef): Figure {
+  const tpl = resolveTemplate(template);
   const font = tpl.tokens.fontFamily ?? palette.fontFamily;
   const master =
     slide.kind === "cover"
@@ -390,8 +396,8 @@ export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: D
 }
 
 /** Append the template's diagram chrome (e.g. a page-number footer) to a compiled diagram Figure. */
-export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
-  const tpl = getDeckTemplate(templateId);
+export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckChromeContext, template?: TemplateRef): Figure {
+  const tpl = resolveTemplate(template);
   if (!tpl.masters.diagram) return diagram;
   // The diagram lays out its own title at a layout-specific spot; strip it and
   // let the template redraw the title at the SAME (M, 74) as every content page,

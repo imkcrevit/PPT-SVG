@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 
+import { readFile } from "node:fs/promises";
+
 import {
   buildDeckMessages,
   buildPalette,
   classifySlide,
   deckToPptx,
+  extractDeckTemplateFromPptx,
   MAX_DECK_SLIDES,
   readDeck,
   repairAndCompileDiagram,
   textSlideFrom,
+  validateDeckTemplate,
   type Deck,
-  type DeckSlide
+  type DeckSlide,
+  type DeckTemplate
 } from "@/features/deck";
 import { callOpenRouter, getConfiguredModelLabel, OpenRouterError, type ChatMessage } from "@/features/svg";
 import { loadAttachmentImages } from "@/lib/attachments";
@@ -190,7 +195,24 @@ export async function POST(request: Request) {
       slides.unshift({ kind: "cover", title: shell.title });
     }
 
-    const deck: Deck = { title: shell.title, language: shell.language, palette: buildPalette(theme), slides };
+    // Derive a layout template (title/body coordinates + fonts) from an uploaded
+    // .pptx so the deck matches the user's template placement, not just its colors.
+    let deckTemplate: DeckTemplate | undefined;
+    const pptxAttachment = attachments.find((a) => a.extension === "pptx");
+    if (pptxAttachment) {
+      try {
+        const derived = await extractDeckTemplateFromPptx(Buffer.from(await readFile(pptxAttachment.path)), "uploaded");
+        if (derived && validateDeckTemplate(derived).length === 0) {
+          deckTemplate = derived;
+        } else if (derived) {
+          warnings.push("uploaded template geometry was invalid; used the built-in layout");
+        }
+      } catch {
+        // fall back to the built-in template
+      }
+    }
+
+    const deck: Deck = { title: shell.title, language: shell.language, palette: buildPalette(theme), slides, template: deckTemplate };
     const pptx = await deckToPptx(deck);
 
     return NextResponse.json({
