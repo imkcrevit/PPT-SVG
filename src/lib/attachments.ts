@@ -11,7 +11,7 @@ import {
   extensionFromFileName,
   isAllowedAttachmentExtension
 } from "@/lib/file-limits";
-import type { UploadedAttachment } from "@/lib/types";
+import type { AttachmentImage, UploadedAttachment } from "@/lib/types";
 import { extractTheme } from "@/lib/theme-extract";
 import { AttachmentValidationError, assertSafeZip } from "@/lib/zip-safety";
 import { scheduleArtifactReap } from "@/lib/artifact-cleanup";
@@ -60,8 +60,82 @@ export async function persistAttachment(file: File): Promise<UploadedAttachment>
     size: file.size,
     path: storedPath,
     extractedText: await extractInlineText(extension, bytes),
-    theme: await extractTheme(extension, bytes)
+    theme: await extractTheme(extension, bytes),
+    images: await extractImages(extension, bytes, originalName)
   };
+}
+
+// ── Image extraction ─────────────────────────────────────────────────────────
+// Pull embeddable images out of an upload: a standalone png/jpg IS the image;
+// a pptx/docx yields its ppt/media|word/media pictures. Everything is downscaled
+// to a slide-safe size so the base64 that ends up in a figure stays bounded.
+const MAX_IMAGE_DIM = 1200; // px, longest edge after downscale
+const MAX_IMAGES_PER_FILE = 24;
+const MIN_IMAGE_DIM = 80; // skip bullets/icons/logos smaller than this
+const RASTER_MEDIA_RE = /\.(png|jpe?g)$/i;
+
+async function downscaleToDataUri(buf: Buffer, source: string): Promise<AttachmentImage | undefined> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const meta = await sharp(buf).metadata();
+    if ((meta.width ?? 0) < MIN_IMAGE_DIM && (meta.height ?? 0) < MIN_IMAGE_DIM) {
+      return undefined; // decorative/icon — not worth embedding
+    }
+    // Keep PNG only when the alpha channel is actually used; an opaque PNG
+    // re-encodes to a far smaller JPEG (base64 travels through the deck payload).
+    let needsAlpha = false;
+    if (meta.hasAlpha === true) {
+      try {
+        needsAlpha = !(await sharp(buf).stats()).isOpaque;
+      } catch {
+        needsAlpha = true;
+      }
+    }
+    const pipeline = sharp(buf, { failOn: "none" })
+      .rotate()
+      .resize({ width: MAX_IMAGE_DIM, height: MAX_IMAGE_DIM, fit: "inside", withoutEnlargement: true });
+    const { data, info } = needsAlpha
+      ? await pipeline.png({ compressionLevel: 9 }).toBuffer({ resolveWithObject: true })
+      : await pipeline.jpeg({ quality: 80 }).toBuffer({ resolveWithObject: true });
+    const mimeType = info.format === "png" ? "image/png" : "image/jpeg";
+    return {
+      id: randomUUID(),
+      dataUri: `data:${mimeType};base64,${data.toString("base64")}`,
+      width: info.width,
+      height: info.height,
+      mimeType,
+      source
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+async function extractImages(extension: string, bytes: Buffer, originalName: string): Promise<AttachmentImage[] | undefined> {
+  try {
+    if (extension === "png" || extension === "jpg" || extension === "jpeg") {
+      const img = await downscaleToDataUri(bytes, originalName);
+      return img ? [img] : undefined;
+    }
+    if (extension === "pptx" || extension === "docx") {
+      const zip = await JSZip.loadAsync(bytes);
+      assertSafeZip(zip);
+      const prefix = extension === "pptx" ? /^ppt\/media\// : /^word\/media\//;
+      const entries = Object.values(zip.files)
+        .filter((file) => !file.dir && prefix.test(file.name) && RASTER_MEDIA_RE.test(file.name))
+        .slice(0, MAX_IMAGES_PER_FILE);
+      const images: AttachmentImage[] = [];
+      for (const entry of entries) {
+        const buf = Buffer.from(await entry.async("uint8array"));
+        const img = await downscaleToDataUri(buf, `${originalName} · ${entry.name.split("/").pop()}`);
+        if (img) images.push(img);
+      }
+      return images.length ? images : undefined;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
 }
 
 async function extractInlineText(extension: string, bytes: Buffer): Promise<string | undefined> {
