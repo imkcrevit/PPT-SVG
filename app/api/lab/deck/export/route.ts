@@ -10,7 +10,8 @@ import type { Locale } from "@/lib/types";
 export const runtime = "nodejs";
 
 // Larger than the generation cap: an edited deck carries compiled figures.
-const MAX_DECK_EXPORT_BYTES = 4_000_000;
+// Larger than a text-only deck: image slides carry base64 raster data URIs.
+const MAX_DECK_EXPORT_BYTES = 20_000_000;
 
 export async function POST(request: Request) {
   try {
@@ -50,8 +51,27 @@ export async function POST(request: Request) {
         }
         continue;
       }
+      if (record.kind === "image" || record.kind === "image-bullets") {
+        // Image slides carry a resolved data URI (not an imageRef). Accept only a
+        // bounded base64 raster data URI — never a remote URL.
+        const src = typeof record.src === "string" ? record.src.trim() : "";
+        if (!/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(src) || src.length > 3_600_000) {
+          continue;
+        }
+        const title = typeof record.title === "string" ? record.title.slice(0, 160) : "";
+        if (record.kind === "image") {
+          slides.push({ kind: "image", title, src, caption: typeof record.caption === "string" ? record.caption.slice(0, 200) : undefined });
+        } else {
+          const bullets = (Array.isArray(record.bullets) ? record.bullets : [])
+            .map((b) => (typeof b === "string" ? b.slice(0, 200) : ""))
+            .filter(Boolean)
+            .slice(0, 6);
+          slides.push({ kind: "image-bullets", title, src, bullets });
+        }
+        continue;
+      }
       const classified = classifySlide(record);
-      if (classified && classified.kind !== "diagram") {
+      if (classified && classified.kind !== "diagram" && classified.kind !== "image" && classified.kind !== "image-bullets") {
         const slide = textSlideFrom(classified);
         if (slide) {
           slides.push(slide);

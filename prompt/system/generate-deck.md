@@ -16,7 +16,13 @@ Slide 为下列之一：
 - `{ "kind": "toc", "title": "目录", "items": ["一、...", "二、...", ...] }` — 目录页，仅一张，放第二页。`items` 逐条列出正文各 section 章节标题（顺序一致）。
 - `{ "kind": "section", "title": "..." , "subtitle": "..."? }` — 章节分隔页。
 - `{ "kind": "bullets", "title": "...", "bullets": ["要点1", "要点2", ...] }` — 要点页。
+- `{ "kind": "image", "title": "...", "imageRef": "img1", "caption": "..."? }` — 整图页，居中展示一张上传图片。
+- `{ "kind": "image-bullets", "title": "...", "imageRef": "img1", "bullets": ["要点1", ...] }` — 左图右要点页。
 - `{ "kind": "diagram", "title": "...", "diagram": SemanticDiagram }` — 图表页，`diagram` 遵循下方图形 JSON 契约。
+
+## 图片规则
+- 仅当 `available_images` 非空时才可用 image / image-bullets 页；`imageRef` 必须取自 `available_images` 里的 `ref`，**不得虚构或复用不存在的 ref**。
+- 每张图片最多用一次；只有当图片与某页内容确有关联时才插入，不要为凑数而堆图。
 
 ## 规则
 - 6–12 页。**第一页必须是 cover 封面，第二页必须是 toc 目录页**，其余用 section 分隔主要部分。

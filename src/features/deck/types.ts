@@ -10,6 +10,10 @@ export type DeckSlide =
   | { kind: "section"; title: string; subtitle?: string }
   | { kind: "toc"; title: string; items: string[] }
   | { kind: "bullets"; title: string; bullets: string[] }
+  // `src` is a base64 image data URI (a user upload, or media lifted out of an
+  // uploaded PPTX/DOCX), resolved server-side from the model's imageRef.
+  | { kind: "image"; title: string; src: string; caption?: string }
+  | { kind: "image-bullets"; title: string; src: string; bullets: string[] }
   | { kind: "diagram"; title: string; figure: Figure };
 
 export interface DeckPalette {

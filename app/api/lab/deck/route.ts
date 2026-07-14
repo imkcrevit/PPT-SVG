@@ -13,6 +13,7 @@ import {
   type DeckSlide
 } from "@/features/deck";
 import { callOpenRouter, getConfiguredModelLabel, OpenRouterError, type ChatMessage } from "@/features/svg";
+import { loadAttachmentImages } from "@/lib/attachments";
 import { MAX_GENERATION_JSON_BODY_BYTES } from "@/lib/file-limits";
 import { isLocale } from "@/lib/i18n";
 import { parseJsonObject } from "@/lib/json";
@@ -96,7 +97,20 @@ export async function POST(request: Request) {
       }
     }
 
-    const messages = await buildDeckMessages({ context, language, styleHint });
+    // Images the user supplied (standalone, or lifted from an uploaded PPTX/DOCX)
+    // are re-extracted server-side from the trusted stored files, given short
+    // refs (img1, img2 …) the model can place, and resolved back to data URIs.
+    const MAX_DECK_IMAGES = 12;
+    const deckImages = (await Promise.all(attachments.map(loadAttachmentImages))).flat().slice(0, MAX_DECK_IMAGES);
+    const imageRefs = deckImages.map((image, index) => ({ ref: `img${index + 1}`, image }));
+    const imageMap = new Map(imageRefs.map((r) => [r.ref, r.image.dataUri]));
+
+    const messages = await buildDeckMessages({
+      context,
+      language,
+      styleHint,
+      images: imageRefs.map((r) => ({ ref: r.ref, source: r.image.source, width: r.image.width, height: r.image.height }))
+    });
     const rawOutput = await callOpenRouter(messages, {
       temperature: 0.3,
       maxCompletionTokens: DECK_MAX_TOKENS,
@@ -125,6 +139,19 @@ export async function POST(request: Request) {
       }
       const classified = classifySlide(raw);
       if (!classified) {
+        continue;
+      }
+      if (classified.kind === "image" || classified.kind === "image-bullets") {
+        const src = imageMap.get(classified.imageRef);
+        if (!src) {
+          warnings.push(`image slide "${classified.title || "(untitled)"}" referenced unknown image ${classified.imageRef}`);
+          continue;
+        }
+        slides.push(
+          classified.kind === "image"
+            ? { kind: "image", title: classified.title, src, caption: classified.caption }
+            : { kind: "image-bullets", title: classified.title, src, bullets: classified.bullets ?? [] }
+        );
         continue;
       }
       if (classified.kind !== "diagram") {

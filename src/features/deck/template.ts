@@ -38,7 +38,7 @@ const CANVAS_H = 720;
 // ── Template schema (author these) ─────────────────────────────────────────────
 export type Align = "start" | "middle" | "end";
 export type LangText = string | { zh: string; en: string };
-export type TextField = "title" | "subtitle" | "pageNumber" | "deckTitle" | "sectionNo";
+export type TextField = "title" | "subtitle" | "pageNumber" | "deckTitle" | "sectionNo" | "caption";
 
 export interface RectBlock {
   type: "rect";
@@ -79,7 +79,17 @@ export interface BulletsBlock {
   numbered?: { dx: number; w: number; size: number; weight: number; color: string };
 }
 
-export type TemplateBlock = RectBlock | TextBlock | BulletsBlock;
+/** Draws the slide's `src` image inside a fixed box. Used by image slides. */
+export interface ImageBlock {
+  type: "image";
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  fit?: "contain" | "cover" | "stretch";
+}
+
+export type TemplateBlock = RectBlock | TextBlock | BulletsBlock | ImageBlock;
 
 export interface SlideMaster {
   /** Full-canvas background color (hex or token key). */
@@ -100,6 +110,10 @@ export interface DeckTemplate {
     /** Table-of-contents page. Falls back to the bullets master when absent. */
     toc?: SlideMaster;
     bullets: SlideMaster;
+    /** Full-width image page. Falls back to bullets master when absent. */
+    image?: SlideMaster;
+    /** Image + bullets split page. */
+    imageBullets?: SlideMaster;
     /** Overlay blocks added on top of a compiled diagram (e.g. title + footer). */
     diagram?: SlideMaster;
   };
@@ -206,6 +220,43 @@ const TECH_TEMPLATE: DeckTemplate = {
         { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
       ]
     },
+    // Full-width image page: same title header, image fit-contained below it,
+    // optional caption under the image.
+    image: {
+      background: "surface",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 6, fill: "accent" },
+        { type: "text", x: M, y: 74, w: 1040, h: 70, field: "title", size: 32, weight: 800, color: "ink", align: "start" },
+        { type: "rect", x: M + 2, y: 150, w: 104, h: 6, fill: "accent" },
+        { type: "image", x: M, y: 178, w: CANVAS_W - 2 * M, h: 420, fit: "contain" },
+        { type: "text", x: M, y: 612, w: CANVAS_W - 2 * M, h: 28, field: "caption", size: 15, weight: 400, color: "muted", align: "middle" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
+      ]
+    },
+    // Image + bullets: image on the left, points on the right.
+    imageBullets: {
+      background: "surface",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 6, fill: "accent" },
+        { type: "text", x: M, y: 74, w: 1040, h: 70, field: "title", size: 32, weight: 800, color: "ink", align: "start" },
+        { type: "rect", x: M + 2, y: 150, w: 104, h: 6, fill: "accent" },
+        { type: "image", x: M, y: 190, w: 560, h: 400, fit: "contain" },
+        {
+          type: "bullets",
+          x: M + 620,
+          yTop: 210,
+          yBottom: 600,
+          maxRows: 6,
+          maxRowH: 84,
+          marker: { dx: 0, w: 12, h: 12, color: "accent", rx: 3 },
+          text: { dx: 34, w: CANVAS_W - (M + 620 + 34) - M, size: 20, weight: 500, color: "ink" }
+        },
+        { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleLight" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
+      ]
+    },
     // Diagram overlay: the SAME title header + footer as content pages, so every
     // non-cover slide's title sits at exactly (M, 74). The compiled diagram's own
     // title is stripped in withDeckChrome() and redrawn here.
@@ -255,6 +306,8 @@ function resolveText(block: TextBlock, slide: DeckSlide, ctx: DeckChromeContext)
       return ctx.deckTitle ?? "";
     case "sectionNo":
       return String(ctx.index + 1).padStart(2, "0");
+    case "caption":
+      return "caption" in slide ? slide.caption ?? "" : "";
     default:
       return "";
   }
@@ -297,6 +350,11 @@ function buildMaster(
         }
         els.push({ id: id("bullet"), type: "text", x: block.x + block.text.dx, y: rowTop, width: block.text.w, height: rowH, text, fontSize: block.text.size, fontWeight: block.text.weight, fill: color(block.text.color), textAnchor: "start" });
       });
+    } else if (block.type === "image") {
+      const src = "src" in slide ? slide.src : "";
+      if (src) {
+        els.push({ id: id("img"), type: "image", x: block.x, y: block.y, width: block.w, height: block.h, src, fit: block.fit ?? "contain" });
+      }
     }
   }
   return els;
@@ -323,7 +381,11 @@ export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: D
         ? tpl.masters.section
         : slide.kind === "toc"
           ? tpl.masters.toc ?? tpl.masters.bullets
-          : tpl.masters.bullets;
+          : slide.kind === "image"
+            ? tpl.masters.image ?? tpl.masters.bullets
+            : slide.kind === "image-bullets"
+              ? tpl.masters.imageBullets ?? tpl.masters.bullets
+              : tpl.masters.bullets;
   return makeFigure(slide.title, buildMaster(master, slide, tpl, palette, ctx), font);
 }
 

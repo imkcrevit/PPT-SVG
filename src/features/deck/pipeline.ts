@@ -43,7 +43,16 @@ export interface ClassifiedDiagramSlide {
   diagram: Record<string, unknown>;
 }
 
-export type ClassifiedSlide = ClassifiedTextSlide | ClassifiedDiagramSlide;
+export interface ClassifiedImageSlide {
+  kind: "image" | "image-bullets";
+  title: string;
+  /** Short ref (img1, img2 …) the model was given; resolved to a data URI by the route. */
+  imageRef: string;
+  caption?: string;
+  bullets?: string[];
+}
+
+export type ClassifiedSlide = ClassifiedTextSlide | ClassifiedDiagramSlide | ClassifiedImageSlide;
 
 export interface DiagramCompileResult {
   ok: boolean;
@@ -107,10 +116,26 @@ export function classifySlide(raw: unknown): ClassifiedSlide | undefined {
     const skill: SkillId = typeof diagram.type === "string" && isSkillId(diagram.type) ? diagram.type : "flow";
     return { kind: "diagram", title, skill, diagram };
   }
+  if (kind === "image" || kind === "image-bullets") {
+    const imageRef = typeof r.imageRef === "string" ? sanitizeDisplayText(r.imageRef).slice(0, 40) : "";
+    const bullets =
+      kind === "image-bullets"
+        ? (Array.isArray(r.bullets) ? r.bullets : [])
+            .map((b) => (typeof b === "string" ? sanitizeDisplayText(b).slice(0, 200) : ""))
+            .filter(Boolean)
+            .slice(0, 6)
+        : undefined;
+    return { kind, title, imageRef, caption: optionalText(r.caption, 160), bullets };
+  }
   return undefined;
 }
 
-export function textSlideFrom(c: ClassifiedTextSlide): DeckSlide | undefined {
+export function textSlideFrom(c: ClassifiedTextSlide | ClassifiedImageSlide): DeckSlide | undefined {
+  // Image slides need the route's imageRef→data-URI map; they can't be resolved
+  // from the classified form alone, so this pure path skips them.
+  if (c.kind === "image" || c.kind === "image-bullets") {
+    return undefined;
+  }
   if (c.kind === "cover") {
     return { kind: "cover", title: c.title, subtitle: c.subtitle };
   }

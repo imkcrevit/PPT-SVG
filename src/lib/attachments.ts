@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import JSZip from "jszip";
@@ -108,6 +108,22 @@ async function downscaleToDataUri(buf: Buffer, source: string): Promise<Attachme
     };
   } catch {
     return undefined;
+  }
+}
+
+/** Re-extract images from an already-stored upload (by its trusted path). Used
+ *  server-side at deck generation so image bytes never round-trip through the
+ *  client request. Returns [] on any error. */
+export async function loadAttachmentImages(attachment: {
+  path: string;
+  extension: string;
+  originalName: string;
+}): Promise<AttachmentImage[]> {
+  try {
+    const bytes = Buffer.from(await readFile(attachment.path));
+    return (await extractImages(attachment.extension, bytes, attachment.originalName)) ?? [];
+  } catch {
+    return [];
   }
 }
 
