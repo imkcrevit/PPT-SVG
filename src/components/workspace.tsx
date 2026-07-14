@@ -829,10 +829,10 @@ export function Workspace({ locale }: WorkspaceProps) {
       method: "POST",
       body: formData
     });
-    const payload = (await response.json()) as AttachmentApiResponse;
+    const payload = (await response.json().catch(() => ({}))) as AttachmentApiResponse;
 
     if (!response.ok || !payload.attachment) {
-      throw new Error(payload.error || t.invalidPpt);
+      throw new Error(payload.error || `${t.invalidPpt} (HTTP ${response.status})`);
     }
 
     return payload.attachment;
