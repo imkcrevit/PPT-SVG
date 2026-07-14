@@ -75,6 +75,8 @@ export interface BulletsBlock {
   maxRowH: number;
   marker: { dx: number; w: number; h: number; color: string; rx?: number };
   text: { dx: number; w: number; size: number; weight: number; color: string };
+  /** Render a zero-padded ordinal ("01", "02", …) in place of the square marker. */
+  numbered?: { dx: number; w: number; size: number; weight: number; color: string };
 }
 
 export type TemplateBlock = RectBlock | TextBlock | BulletsBlock;
@@ -95,8 +97,10 @@ export interface DeckTemplate {
   masters: {
     cover: SlideMaster;
     section: SlideMaster;
+    /** Table-of-contents page. Falls back to the bullets master when absent. */
+    toc?: SlideMaster;
     bullets: SlideMaster;
-    /** Overlay blocks added on top of a compiled diagram (e.g. a page-number footer). */
+    /** Overlay blocks added on top of a compiled diagram (e.g. title + footer). */
     diagram?: SlideMaster;
   };
 }
@@ -179,8 +183,37 @@ const TECH_TEMPLATE: DeckTemplate = {
         { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
       ]
     },
+    // Table of contents: same title header as content pages, numbered entries.
+    toc: {
+      background: "surface",
+      blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 6, fill: "accent" },
+        { type: "text", x: M, y: 74, w: 1040, h: 70, field: "title", size: 32, weight: 800, color: "ink", align: "start" },
+        { type: "rect", x: M + 2, y: 150, w: 104, h: 6, fill: "accent" },
+        {
+          type: "bullets",
+          x: M,
+          yTop: 200,
+          yBottom: 636,
+          maxRows: 8,
+          maxRowH: 76,
+          marker: { dx: 0, w: 0, h: 0, color: "accent" },
+          numbered: { dx: 0, w: 44, size: 22, weight: 800, color: "accent" },
+          text: { dx: 58, w: CANVAS_W - (M + 58) - M, size: 20, weight: 600, color: "ink" }
+        },
+        { type: "rect", x: M, y: 662, w: CANVAS_W - 2 * M, h: 1.5, fill: "ruleLight" },
+        { type: "text", x: M, y: 676, w: 640, h: 24, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
+        { type: "text", x: CANVAS_W - M - 160, y: 676, w: 160, h: 24, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
+      ]
+    },
+    // Diagram overlay: the SAME title header + footer as content pages, so every
+    // non-cover slide's title sits at exactly (M, 74). The compiled diagram's own
+    // title is stripped in withDeckChrome() and redrawn here.
     diagram: {
       blocks: [
+        { type: "rect", x: 0, y: 0, w: CANVAS_W, h: 6, fill: "accent" },
+        { type: "text", x: M, y: 74, w: 1040, h: 70, field: "title", size: 32, weight: 800, color: "ink", align: "start" },
+        { type: "rect", x: M + 2, y: 150, w: 104, h: 6, fill: "accent" },
         { type: "text", x: M, y: CANVAS_H - 40, w: 640, h: 22, field: "deckTitle", size: 13, weight: 500, color: "muted", align: "start" },
         { type: "text", x: CANVAS_W - M - 160, y: CANVAS_H - 40, w: 160, h: 22, field: "pageNumber", size: 14, weight: 600, color: "muted", align: "end" }
       ]
@@ -251,12 +284,17 @@ function buildMaster(
       if (!content) continue;
       els.push({ id: id("text"), type: "text", x: block.x, y: block.y, width: block.w, height: block.h, text: content, fontSize: block.size, fontWeight: block.weight, fill: color(block.color), textAnchor: block.align ?? "start" });
     } else if (block.type === "bullets") {
-      const bullets = "bullets" in slide ? slide.bullets.slice(0, block.maxRows) : [];
-      const rowH = Math.min(block.maxRowH, (block.yBottom - block.yTop) / Math.max(bullets.length, 1));
-      bullets.forEach((text, i) => {
+      const rows = "bullets" in slide ? slide.bullets : "items" in slide ? slide.items : [];
+      const list = rows.slice(0, block.maxRows);
+      const rowH = Math.min(block.maxRowH, (block.yBottom - block.yTop) / Math.max(list.length, 1));
+      list.forEach((text, i) => {
         const rowTop = block.yTop + i * rowH;
-        const markerY = rowTop + (rowH - block.marker.h) / 2;
-        els.push({ id: id("marker"), type: "rect", x: block.x + block.marker.dx, y: markerY, width: block.marker.w, height: block.marker.h, fill: color(block.marker.color), ...(block.marker.rx ? { rx: block.marker.rx } : {}) });
+        if (block.numbered) {
+          els.push({ id: id("num"), type: "text", x: block.x + block.numbered.dx, y: rowTop, width: block.numbered.w, height: rowH, text: String(i + 1).padStart(2, "0"), fontSize: block.numbered.size, fontWeight: block.numbered.weight, fill: color(block.numbered.color), textAnchor: "start" });
+        } else if (block.marker.w > 0 && block.marker.h > 0) {
+          const markerY = rowTop + (rowH - block.marker.h) / 2;
+          els.push({ id: id("marker"), type: "rect", x: block.x + block.marker.dx, y: markerY, width: block.marker.w, height: block.marker.h, fill: color(block.marker.color), ...(block.marker.rx ? { rx: block.marker.rx } : {}) });
+        }
         els.push({ id: id("bullet"), type: "text", x: block.x + block.text.dx, y: rowTop, width: block.text.w, height: rowH, text, fontSize: block.text.size, fontWeight: block.text.weight, fill: color(block.text.color), textAnchor: "start" });
       });
     }
@@ -278,7 +316,14 @@ function makeFigure(title: string, elements: FigureElement[], font?: string): Fi
 export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
   const tpl = getDeckTemplate(templateId);
   const font = tpl.tokens.fontFamily ?? palette.fontFamily;
-  const master = slide.kind === "cover" ? tpl.masters.cover : slide.kind === "section" ? tpl.masters.section : tpl.masters.bullets;
+  const master =
+    slide.kind === "cover"
+      ? tpl.masters.cover
+      : slide.kind === "section"
+        ? tpl.masters.section
+        : slide.kind === "toc"
+          ? tpl.masters.toc ?? tpl.masters.bullets
+          : tpl.masters.bullets;
   return makeFigure(slide.title, buildMaster(master, slide, tpl, palette, ctx), font);
 }
 
@@ -286,10 +331,13 @@ export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: D
 export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckChromeContext, templateId?: string): Figure {
   const tpl = getDeckTemplate(templateId);
   if (!tpl.masters.diagram) return diagram;
-  // The diagram carries its own title/language; only overlay the chrome blocks.
-  const placeholder: DeckSlide = { kind: "section", title: "" };
+  // The diagram lays out its own title at a layout-specific spot; strip it and
+  // let the template redraw the title at the SAME (M, 74) as every content page,
+  // so no two slides put their title at different coordinates.
+  const body = diagram.elements.filter((el) => el.id !== "figure-title-text");
+  const placeholder: DeckSlide = { kind: "section", title: diagram.metadata.title };
   const chrome = buildMaster({ blocks: tpl.masters.diagram.blocks }, placeholder, tpl, palette, ctx);
-  return { ...diagram, elements: [...diagram.elements, ...chrome] };
+  return { ...diagram, elements: [...body, ...chrome] };
 }
 
 // ── Validation ─────────────────────────────────────────────────────────────────

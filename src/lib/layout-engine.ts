@@ -46,7 +46,9 @@ const FLOW_FILL_MAX = 1.5;
 const MIN_W = 110;
 const MAX_W = 320;
 const CANVAS_MARGIN = 48;
-const TITLE_H = 56;
+// Top reserve below the title band. Sized so a title at y=74 (matching the deck
+// template's content-page title) never overlaps the diagram body.
+const TITLE_H = 112;
 
 const TITLE_FONT = 15;
 const DETAIL_FONT = 12;
@@ -575,14 +577,14 @@ export function layoutDiagram(
       type: "text",
       name: "title",
       x: CANVAS_MARGIN,
-      y: CANVAS_MARGIN - 8,
+      y: 74,
       width: width - CANVAS_MARGIN * 2,
-      height: TITLE_H,
+      height: 52,
       text: diagram.title,
-      fontSize: 30,
-      fontWeight: 700,
+      fontSize: 32,
+      fontWeight: 800,
       fill: TEXT,
-      textAnchor: "middle"
+      textAnchor: "start"
     }
   ];
 

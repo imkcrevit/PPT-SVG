@@ -29,10 +29,11 @@ export interface DeckCompileResult {
 }
 
 export interface ClassifiedTextSlide {
-  kind: "cover" | "section" | "bullets";
+  kind: "cover" | "section" | "toc" | "bullets";
   title: string;
   subtitle?: string;
   bullets?: string[];
+  items?: string[];
 }
 
 export interface ClassifiedDiagramSlide {
@@ -85,6 +86,15 @@ export function classifySlide(raw: unknown): ClassifiedSlide | undefined {
   if (kind === "section") {
     return { kind: "section", title: title || "Section", subtitle: optionalText(r.subtitle, 200) };
   }
+  if (kind === "toc") {
+    // Accept `items` (canonical) or `bullets` (lenient) as the entry list.
+    const source = Array.isArray(r.items) ? r.items : Array.isArray(r.bullets) ? r.bullets : [];
+    const items = source
+      .map((it) => (typeof it === "string" ? sanitizeDisplayText(it).slice(0, 160) : ""))
+      .filter(Boolean)
+      .slice(0, MAX_BULLETS);
+    return { kind: "toc", title: title || "目录", items };
+  }
   if (kind === "bullets") {
     const bullets = (Array.isArray(r.bullets) ? r.bullets : [])
       .map((b) => (typeof b === "string" ? sanitizeDisplayText(b).slice(0, 200) : ""))
@@ -106,6 +116,10 @@ export function textSlideFrom(c: ClassifiedTextSlide): DeckSlide | undefined {
   }
   if (c.kind === "section") {
     return { kind: "section", title: c.title, subtitle: c.subtitle };
+  }
+  if (c.kind === "toc") {
+    // A TOC with no entries is useless; drop it rather than render an empty page.
+    return c.items && c.items.length ? { kind: "toc", title: c.title || "目录", items: c.items } : undefined;
   }
   // bullets
   if (!c.bullets || !c.bullets.length) {

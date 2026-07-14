@@ -8,6 +8,7 @@ import type { Figure, Locale } from "@/lib/types";
 export type DeckSlide =
   | { kind: "cover"; title: string; subtitle?: string }
   | { kind: "section"; title: string; subtitle?: string }
+  | { kind: "toc"; title: string; items: string[] }
   | { kind: "bullets"; title: string; bullets: string[] }
   | { kind: "diagram"; title: string; figure: Figure };
 

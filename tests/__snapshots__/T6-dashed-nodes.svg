@@ -3,43 +3,43 @@
 <title id="figure-title">数据处理流程</title>
 <desc id="figure-desc">数据处理流程</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">数据处理流程</tspan></text>
+<text data-node-id="figure-title-text" x="48" y="100" fill="#1D2433" font-size="32" font-weight="800" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="48" y="100">数据处理流程</tspan></text>
 <g data-node-id="source-group">
-<rect data-node-id="source-rect" x="318" y="357" width="116" height="63" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" stroke-dasharray="7 5" />
-<text data-node-id="source-title" x="376" y="377.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="377.5">外部数据源</tspan></text>
-<text data-node-id="source-detail" x="376" y="400" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="400">外部不可控</tspan></text>
+<rect data-node-id="source-rect" x="318" y="385" width="116" height="63" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" stroke-dasharray="7 5" />
+<text data-node-id="source-title" x="376" y="405.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="405.5">外部数据源</tspan></text>
+<text data-node-id="source-detail" x="376" y="428" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="428">外部不可控</tspan></text>
 </g>
 <g data-node-id="collect-group">
-<rect data-node-id="collect-rect" x="456" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="collect-title" x="511" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="511" y="387.5">采集</tspan></text>
+<rect data-node-id="collect-rect" x="456" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="collect-title" x="511" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="511" y="415.5">采集</tspan></text>
 </g>
 <g data-node-id="clean-group">
-<rect data-node-id="clean-rect" x="588" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="clean-title" x="643" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="387.5">清洗</tspan></text>
+<rect data-node-id="clean-rect" x="588" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="clean-title" x="643" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="415.5">清洗</tspan></text>
 </g>
 <g data-node-id="store-group">
-<rect data-node-id="store-rect" x="720" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="store-title" x="775" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="775" y="387.5">入库</tspan></text>
+<rect data-node-id="store-rect" x="720" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="store-title" x="775" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="775" y="415.5">入库</tspan></text>
 </g>
 <g data-node-id="realtime-group">
-<rect data-node-id="realtime-rect" x="852" y="357" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" stroke-dasharray="7 5" />
-<text data-node-id="realtime-title" x="907" y="377.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="907" y="377.5">实时同步</tspan></text>
-<text data-node-id="realtime-detail" x="907" y="400" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="907" y="400">规划中</tspan></text>
+<rect data-node-id="realtime-rect" x="852" y="385" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" stroke-dasharray="7 5" />
+<text data-node-id="realtime-title" x="907" y="405.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="907" y="405.5">实时同步</tspan></text>
+<text data-node-id="realtime-detail" x="907" y="428" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="907" y="428">规划中</tspan></text>
 </g>
 <g data-node-id="edge-0-connector">
 <defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="434,388 456,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
+<polyline points="434,416 456,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
 <g data-node-id="edge-1-connector">
 <defs><marker id="marker-edge-1-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="566,388 588,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
+<polyline points="566,416 588,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
 </g>
 <g data-node-id="edge-2-connector">
 <defs><marker id="marker-edge-2-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="698,388 720,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-2-connector)" />
+<polyline points="698,416 720,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-2-connector)" />
 </g>
 <g data-node-id="edge-3-connector">
 <defs><marker id="marker-edge-3-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="830,388 852,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-3-connector)" />
+<polyline points="830,416 852,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-3-connector)" />
 </g>
 </svg>

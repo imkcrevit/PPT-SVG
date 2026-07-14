@@ -3,145 +3,145 @@
 <title id="figure-title">企业中台架构</title>
 <desc id="figure-desc">企业中台架构</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">企业中台架构</tspan></text>
+<text data-node-id="figure-title-text" x="48" y="100" fill="#1D2433" font-size="32" font-weight="800" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="48" y="100">企业中台架构</tspan></text>
 <g data-node-id="d1-group">
-<rect data-node-id="d1-rect" x="51" y="179" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
-<text data-node-id="d1-label" x="240.5" y="194.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="240.5" y="194.5">用户中台</tspan></text>
+<rect data-node-id="d1-rect" x="51" y="207" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="1.5" />
+<text data-node-id="d1-label" x="240.5" y="222.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="240.5" y="222.5">用户中台</tspan></text>
 <g data-node-id="d1-0-group">
-<rect data-node-id="d1-0-rect" x="67" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="d1-0-title" x="118" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="118" y="251">账号服务</tspan></text>
+<rect data-node-id="d1-0-rect" x="67" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="d1-0-title" x="118" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="118" y="279">账号服务</tspan></text>
 </g>
 <g data-node-id="d1-1-group">
-<rect data-node-id="d1-1-rect" x="190" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="d1-1-title" x="241" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="241" y="251">权限服务</tspan></text>
+<rect data-node-id="d1-1-rect" x="190" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="d1-1-title" x="241" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="241" y="279">权限服务</tspan></text>
 </g>
 <g data-node-id="d1-2-group">
-<rect data-node-id="d1-2-rect" x="312" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="d1-2-title" x="363" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="363" y="251">组织服务</tspan></text>
+<rect data-node-id="d1-2-rect" x="312" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="d1-2-title" x="363" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="363" y="279">组织服务</tspan></text>
 </g>
 <g data-node-id="d1-3-group">
-<rect data-node-id="d1-3-rect" x="128" y="296" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="d1-3-title" x="179" y="320" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="179" y="320">标签服务</tspan></text>
+<rect data-node-id="d1-3-rect" x="128" y="324" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="d1-3-title" x="179" y="348" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="179" y="348">标签服务</tspan></text>
 </g>
 <g data-node-id="d1-4-group">
-<rect data-node-id="d1-4-rect" x="251" y="296" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="d1-4-title" x="302" y="320" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="302" y="320">画像服务</tspan></text>
+<rect data-node-id="d1-4-rect" x="251" y="324" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="d1-4-title" x="302" y="348" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="302" y="348">画像服务</tspan></text>
 </g>
 </g>
 <g data-node-id="d2-group">
-<rect data-node-id="d2-rect" x="450" y="179" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="1.5" />
-<text data-node-id="d2-label" x="639.5" y="194.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="639.5" y="194.5">交易中台</tspan></text>
+<rect data-node-id="d2-rect" x="450" y="207" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="1.5" />
+<text data-node-id="d2-label" x="639.5" y="222.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="639.5" y="222.5">交易中台</tspan></text>
 <g data-node-id="d2-0-group">
-<rect data-node-id="d2-0-rect" x="467" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d2-0-title" x="518" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="518" y="251">下单服务</tspan></text>
+<rect data-node-id="d2-0-rect" x="467" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="d2-0-title" x="518" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="518" y="279">下单服务</tspan></text>
 </g>
 <g data-node-id="d2-1-group">
-<rect data-node-id="d2-1-rect" x="589" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d2-1-title" x="640" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="251">支付服务</tspan></text>
+<rect data-node-id="d2-1-rect" x="589" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="d2-1-title" x="640" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="279">支付服务</tspan></text>
 </g>
 <g data-node-id="d2-2-group">
-<rect data-node-id="d2-2-rect" x="711" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d2-2-title" x="762" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="762" y="251">结算服务</tspan></text>
+<rect data-node-id="d2-2-rect" x="711" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="d2-2-title" x="762" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="762" y="279">结算服务</tspan></text>
 </g>
 <g data-node-id="d2-3-group">
-<rect data-node-id="d2-3-rect" x="528" y="296" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d2-3-title" x="579" y="320" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="579" y="320">退款服务</tspan></text>
+<rect data-node-id="d2-3-rect" x="528" y="324" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="d2-3-title" x="579" y="348" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="579" y="348">退款服务</tspan></text>
 </g>
 <g data-node-id="d2-4-group">
-<rect data-node-id="d2-4-rect" x="650" y="296" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="d2-4-title" x="701" y="320" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="701" y="320">对账服务</tspan></text>
+<rect data-node-id="d2-4-rect" x="650" y="324" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="d2-4-title" x="701" y="348" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="701" y="348">对账服务</tspan></text>
 </g>
 </g>
 <g data-node-id="d3-group">
-<rect data-node-id="d3-rect" x="850" y="179" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="1.5" />
-<text data-node-id="d3-label" x="1039.5" y="194.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1039.5" y="194.5">商品中台</tspan></text>
+<rect data-node-id="d3-rect" x="850" y="207" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="1.5" />
+<text data-node-id="d3-label" x="1039.5" y="222.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1039.5" y="222.5">商品中台</tspan></text>
 <g data-node-id="d3-0-group">
-<rect data-node-id="d3-0-rect" x="867" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="d3-0-title" x="918" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="918" y="251">商品服务</tspan></text>
+<rect data-node-id="d3-0-rect" x="867" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="d3-0-title" x="918" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="918" y="279">商品服务</tspan></text>
 </g>
 <g data-node-id="d3-1-group">
-<rect data-node-id="d3-1-rect" x="989" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="d3-1-title" x="1040" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1040" y="251">类目服务</tspan></text>
+<rect data-node-id="d3-1-rect" x="989" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="d3-1-title" x="1040" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1040" y="279">类目服务</tspan></text>
 </g>
 <g data-node-id="d3-2-group">
-<rect data-node-id="d3-2-rect" x="1111" y="227" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="d3-2-title" x="1162" y="251" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1162" y="251">库存服务</tspan></text>
+<rect data-node-id="d3-2-rect" x="1111" y="255" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="d3-2-title" x="1162" y="279" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1162" y="279">库存服务</tspan></text>
 </g>
 <g data-node-id="d3-3-group">
-<rect data-node-id="d3-3-rect" x="989" y="296" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="d3-3-title" x="1040" y="320" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1040" y="320">价格服务</tspan></text>
+<rect data-node-id="d3-3-rect" x="989" y="324" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="d3-3-title" x="1040" y="348" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1040" y="348">价格服务</tspan></text>
 </g>
 </g>
 <g data-node-id="d4-group">
-<rect data-node-id="d4-rect" x="48" y="416" width="385" height="181" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="1.5" />
-<text data-node-id="d4-label" x="240.5" y="431.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="240.5" y="431.5">营销中台</tspan></text>
+<rect data-node-id="d4-rect" x="48" y="444" width="385" height="181" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="1.5" />
+<text data-node-id="d4-label" x="240.5" y="459.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="240.5" y="459.5">营销中台</tspan></text>
 <g data-node-id="d4-0-group">
-<rect data-node-id="d4-0-rect" x="65" y="464" width="107" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="d4-0-title" x="118.5" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="118.5" y="488">优惠券服务</tspan></text>
+<rect data-node-id="d4-0-rect" x="65" y="492" width="107" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="d4-0-title" x="118.5" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="118.5" y="516">优惠券服务</tspan></text>
 </g>
 <g data-node-id="d4-1-group">
-<rect data-node-id="d4-1-rect" x="192" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="d4-1-title" x="243" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="243" y="488">活动服务</tspan></text>
+<rect data-node-id="d4-1-rect" x="192" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="d4-1-title" x="243" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="243" y="516">活动服务</tspan></text>
 </g>
 <g data-node-id="d4-2-group">
-<rect data-node-id="d4-2-rect" x="314" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="d4-2-title" x="365" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="365" y="488">积分服务</tspan></text>
+<rect data-node-id="d4-2-rect" x="314" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="d4-2-title" x="365" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="365" y="516">积分服务</tspan></text>
 </g>
 <g data-node-id="d4-3-group">
-<rect data-node-id="d4-3-rect" x="190" y="532" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="d4-3-title" x="241" y="556" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="241" y="556">推荐服务</tspan></text>
+<rect data-node-id="d4-3-rect" x="190" y="560" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="d4-3-title" x="241" y="584" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="241" y="584">推荐服务</tspan></text>
 </g>
 </g>
 <g data-node-id="d5-group">
-<rect data-node-id="d5-rect" x="453" y="416" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="1.5" />
-<text data-node-id="d5-label" x="642.5" y="431.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="642.5" y="431.5">数据中台</tspan></text>
+<rect data-node-id="d5-rect" x="453" y="444" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="1.5" />
+<text data-node-id="d5-label" x="642.5" y="459.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="642.5" y="459.5">数据中台</tspan></text>
 <g data-node-id="d5-0-group">
-<rect data-node-id="d5-0-rect" x="470" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="d5-0-title" x="521" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="521" y="488">采集服务</tspan></text>
+<rect data-node-id="d5-0-rect" x="470" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="d5-0-title" x="521" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="521" y="516">采集服务</tspan></text>
 </g>
 <g data-node-id="d5-1-group">
-<rect data-node-id="d5-1-rect" x="592" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="d5-1-title" x="643" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="488">计算服务</tspan></text>
+<rect data-node-id="d5-1-rect" x="592" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="d5-1-title" x="643" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="516">计算服务</tspan></text>
 </g>
 <g data-node-id="d5-2-group">
-<rect data-node-id="d5-2-rect" x="714" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="d5-2-title" x="765" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="765" y="488">指标服务</tspan></text>
+<rect data-node-id="d5-2-rect" x="714" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="d5-2-title" x="765" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="765" y="516">指标服务</tspan></text>
 </g>
 <g data-node-id="d5-3-group">
-<rect data-node-id="d5-3-rect" x="592" y="532" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="d5-3-title" x="643" y="556" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="556">报表服务</tspan></text>
+<rect data-node-id="d5-3-rect" x="592" y="560" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="d5-3-title" x="643" y="584" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="643" y="584">报表服务</tspan></text>
 </g>
 </g>
 <g data-node-id="d6-group">
-<rect data-node-id="d6-rect" x="853" y="416" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="1.5" />
-<text data-node-id="d6-label" x="1042.5" y="431.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1042.5" y="431.5">技术中台</tspan></text>
+<rect data-node-id="d6-rect" x="853" y="444" width="379" height="181" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="1.5" />
+<text data-node-id="d6-label" x="1042.5" y="459.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1042.5" y="459.5">技术中台</tspan></text>
 <g data-node-id="d6-0-group">
-<rect data-node-id="d6-0-rect" x="869" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
-<text data-node-id="d6-0-title" x="920" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="920" y="488">网关服务</tspan></text>
+<rect data-node-id="d6-0-rect" x="869" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="d6-0-title" x="920" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="920" y="516">网关服务</tspan></text>
 </g>
 <g data-node-id="d6-1-group">
-<rect data-node-id="d6-1-rect" x="992" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
-<text data-node-id="d6-1-title" x="1043" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1043" y="488">配置中心</tspan></text>
+<rect data-node-id="d6-1-rect" x="992" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="d6-1-title" x="1043" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1043" y="516">配置中心</tspan></text>
 </g>
 <g data-node-id="d6-2-group">
-<rect data-node-id="d6-2-rect" x="1114" y="464" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
-<text data-node-id="d6-2-title" x="1165" y="488" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1165" y="488">消息服务</tspan></text>
+<rect data-node-id="d6-2-rect" x="1114" y="492" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="d6-2-title" x="1165" y="516" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1165" y="516">消息服务</tspan></text>
 </g>
 <g data-node-id="d6-3-group">
-<rect data-node-id="d6-3-rect" x="992" y="532" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
-<text data-node-id="d6-3-title" x="1043" y="556" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1043" y="556">任务调度</tspan></text>
+<rect data-node-id="d6-3-rect" x="992" y="560" width="102" height="48" rx="12" fill="#FFFFFF" stroke="#E08A1E" stroke-width="2" />
+<text data-node-id="d6-3-title" x="1043" y="584" fill="#1D2433" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1043" y="584">任务调度</tspan></text>
 </g>
 </g>
 <g data-node-id="edge-0-connector">
 <defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="830,270 850,270" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
+<polyline points="830,298 850,298" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
-<rect data-node-id="edge-0-label-bg" x="812" y="258" width="56" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-0-label" x="840" y="269" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="840" y="269">扣减库存</tspan></text>
+<rect data-node-id="edge-0-label-bg" x="812" y="286" width="56" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
+<text data-node-id="edge-0-label" x="840" y="297" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="840" y="297">扣减库存</tspan></text>
 <g data-node-id="edge-1-connector">
 <defs><marker id="marker-edge-1-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="450,270 442,270 442,506 433,506" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
+<polyline points="450,298 442,298 442,534 433,534" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
 </g>
-<rect data-node-id="edge-1-label-bg" x="418" y="258" width="56" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-1-label" x="446" y="269" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="446" y="269">核销优惠</tspan></text>
+<rect data-node-id="edge-1-label-bg" x="418" y="286" width="56" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
+<text data-node-id="edge-1-label" x="446" y="297" fill="#6B7280" font-size="11" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="446" y="297">核销优惠</tspan></text>
 </svg>

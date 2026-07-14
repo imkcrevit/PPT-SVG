@@ -20,7 +20,9 @@ import { estimateLineCount, measureSvgText } from "@/lib/text-layout";
 const W = 1280;
 const H = 720;
 const MARGIN = 48;
-const TITLE_H = 56;
+// Top reserve below the title band. Sized so a title at y=74 (matching the deck
+// template's content-page title) never overlaps the diagram body.
+const TITLE_H = 112;
 const TITLE_FONT = 15;
 const DETAIL_FONT = 12;
 const TITLE_LH = TITLE_FONT * 1.28;
@@ -72,14 +74,14 @@ function titleElement(diagram: SemanticDiagram): FigureElement {
     type: "text",
     name: "title",
     x: MARGIN,
-    y: MARGIN - 8,
+    y: 74,
     width: W - MARGIN * 2,
-    height: TITLE_H,
+    height: 52,
     text: diagram.title,
-    fontSize: 30,
-    fontWeight: 700,
+    fontSize: 32,
+    fontWeight: 800,
     fill: TEXT,
-    textAnchor: "middle"
+    textAnchor: "start"
   };
 }
 
@@ -570,7 +572,9 @@ export function layoutVenn(diagram: SemanticDiagram, theme: DiagramTheme = DEFAU
   if (sets.length === 0) return frame(diagram, elements, canvasBg);
 
   const cx = W / 2;
-  const cy = MARGIN + TITLE_H + 320;
+  // Center the circle cluster in the space below the (taller) title band while
+  // keeping the lowest circle's bottom edge on-canvas.
+  const cy = MARGIN + TITLE_H + 284;
   const r = 175;
 
   const layouts =

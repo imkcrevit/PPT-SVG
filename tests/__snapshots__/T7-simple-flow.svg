@@ -3,41 +3,41 @@
 <title id="figure-title">产品上线流程</title>
 <desc id="figure-desc">产品上线流程</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
-<text data-node-id="figure-title-text" x="640" y="68" fill="#1D2433" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="68">产品上线流程</tspan></text>
+<text data-node-id="figure-title-text" x="48" y="100" fill="#1D2433" font-size="32" font-weight="800" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="48" y="100">产品上线流程</tspan></text>
 <g data-node-id="review-group">
-<rect data-node-id="review-rect" x="321" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
-<text data-node-id="review-title" x="376" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="387.5">需求评审</tspan></text>
+<rect data-node-id="review-rect" x="321" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
+<text data-node-id="review-title" x="376" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="376" y="415.5">需求评审</tspan></text>
 </g>
 <g data-node-id="design-group">
-<rect data-node-id="design-rect" x="453" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
-<text data-node-id="design-title" x="508" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="508" y="387.5">设计</tspan></text>
+<rect data-node-id="design-rect" x="453" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<text data-node-id="design-title" x="508" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="508" y="415.5">设计</tspan></text>
 </g>
 <g data-node-id="dev-group">
-<rect data-node-id="dev-rect" x="585" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="dev-title" x="640" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="387.5">开发</tspan></text>
+<rect data-node-id="dev-rect" x="585" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="dev-title" x="640" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="640" y="415.5">开发</tspan></text>
 </g>
 <g data-node-id="test-group">
-<rect data-node-id="test-rect" x="717" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
-<text data-node-id="test-title" x="772" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="772" y="387.5">测试</tspan></text>
+<rect data-node-id="test-rect" x="717" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<text data-node-id="test-title" x="772" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="772" y="415.5">测试</tspan></text>
 </g>
 <g data-node-id="release-group">
-<rect data-node-id="release-rect" x="849" y="362" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
-<text data-node-id="release-title" x="904" y="387.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="904" y="387.5">发布</tspan></text>
+<rect data-node-id="release-rect" x="849" y="390" width="110" height="52" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<text data-node-id="release-title" x="904" y="415.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="904" y="415.5">发布</tspan></text>
 </g>
 <g data-node-id="edge-0-connector">
 <defs><marker id="marker-edge-0-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="431,388 453,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
+<polyline points="431,416 453,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-0-connector)" />
 </g>
 <g data-node-id="edge-1-connector">
 <defs><marker id="marker-edge-1-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="563,388 585,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
+<polyline points="563,416 585,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-1-connector)" />
 </g>
 <g data-node-id="edge-2-connector">
 <defs><marker id="marker-edge-2-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="695,388 717,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-2-connector)" />
+<polyline points="695,416 717,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-2-connector)" />
 </g>
 <g data-node-id="edge-3-connector">
 <defs><marker id="marker-edge-3-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="827,388 849,388" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-3-connector)" />
+<polyline points="827,416 849,416" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-3-connector)" />
 </g>
 </svg>
