@@ -15,7 +15,7 @@ Use the repository workflow only when the current checkout contains this project
 | PPTX export | `src/features/deck/pptx.ts` |
 | Full-deck HTTP generation | `POST /api/lab/deck` |
 | Slide regeneration and export | `POST /api/lab/deck/slide`, `POST /api/lab/deck/export` |
-| UI | `/[locale]/ppt`, `src/features/deck/ui/lab-deck.tsx` |
+| Public UI | `/ppt/[locale]`, `src/features/deck/ui/lab-deck.tsx` |
 
 The dependency direction is one-way: deck may import `@/features/svg`; SVG must not import deck. Keep all diagram generation and repair in `diagram-bridge.ts`.
 

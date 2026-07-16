@@ -8,6 +8,7 @@ import { ProductSiteNav } from "@/components/product-site-nav";
 import { DECK_STYLE_OPTIONS, textSlideToFigure, withDeckChrome } from "@/features/deck/template";
 import type { Deck, DeckSlide } from "@/features/deck/types";
 import { appUrl } from "@/lib/app-url";
+import { productUrl } from "@/lib/product-url";
 import type { Locale, UploadedAttachment } from "@/lib/types";
 
 interface DeckResponse {
@@ -381,14 +382,14 @@ export function LabDeck({ initialLanguage }: { initialLanguage: Locale }) {
             <p className="mt-1 line-clamp-2 max-w-2xl text-xs leading-5 text-mid sm:text-sm">{t.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <a href={appUrl(`/${language}/svg`)} className="flex h-9 items-center border border-line bg-panel px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-mid transition hover:border-accent/40 hover:text-accent2">
+            <a href={productUrl("svg", language)} className="flex h-9 items-center border border-line bg-panel px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-mid transition hover:border-accent/40 hover:text-accent2">
               {t.backToWorkspace}
             </a>
             <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
               {(["zh", "en"] as const).map((l) => (
                 <a
                   key={l}
-                  href={appUrl(`/${l}/ppt`)}
+                  href={productUrl("ppt", l)}
                   className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${language === l ? "bg-panel text-ink" : "text-mid hover:text-accent2"}`}
                 >
                   {l === "zh" ? "中文" : "EN"}

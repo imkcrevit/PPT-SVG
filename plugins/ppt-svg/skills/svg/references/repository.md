@@ -16,7 +16,7 @@ Use the repository workflow only when the current checkout contains this project
 | Editable PPTX rendering | `src/lib/pptx.ts` |
 | HTTP generation | `POST /api/generate` |
 | Multi-format bundle | `POST /api/export/bundle` |
-| UI | `/[locale]/svg`, `src/components/workspace.tsx` |
+| Public UI | `/svg/[locale]`, `src/components/workspace.tsx` |
 
 The dependency direction is SVG outward: SVG must never import from `@/features/deck`. The deck feature composes SVG through its bridge.
 

@@ -15,7 +15,7 @@ reuses the exact same layout + render path as single-diagram generation.
 | `diagram-bridge.ts` | **deck → svg contract** — LLM-backed diagram generate / repair       |
 | `template.ts`       | **declarative slide design system** — templates as JSON data          |
 | `pptx.ts`           | `deckToPptx` — multi-slide PPTX (text slides here, diagrams via svg)  |
-| `ui/lab-deck.tsx`   | the `/[locale]/ppt` conversational client UI                         |
+| `ui/lab-deck.tsx`   | the public `/ppt/[locale]` conversational client UI                  |
 | `index.ts`          | the public barrel — consumers import from `@/features/deck` only      |
 
 ## Designing a deck template (`template.ts`)

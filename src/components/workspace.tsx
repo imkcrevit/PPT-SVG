@@ -47,6 +47,7 @@ import { cloneFigure, findElement, findElements, updateElement } from "@/lib/fig
 import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { createIconCoverageTestFigure, ICON_TEST_OPTIONS, type IconTestId } from "@/lib/icon-test";
 import { dictionaries } from "@/lib/i18n";
+import { productUrl } from "@/lib/product-url";
 import { INTERNAL_SKILLS } from "@/lib/skills";
 import type { ThemeOverride } from "@/lib/theme";
 import type { Figure, FigureElement, FitAssessment, Locale, SkillId, UploadedAttachment } from "@/lib/types";
@@ -1153,7 +1154,7 @@ export function Workspace({ locale }: WorkspaceProps) {
             </a>
             <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
               <a
-                href={appUrl("/en/svg")}
+                href={productUrl("svg", "en")}
                 className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
                   locale === "en" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
                 }`}
@@ -1161,7 +1162,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                 {t.languageEnglish}
               </a>
               <a
-                href={appUrl("/zh/svg")}
+                href={productUrl("svg", "zh")}
                 className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
                   locale === "zh" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
                 }`}
@@ -1195,7 +1196,7 @@ export function Workspace({ locale }: WorkspaceProps) {
                   <strong>{remainingTurns} {t.turnsLeft}</strong>
                 </div>
 
-                <a href={appUrl(`/${locale}/ppt`)} className="chat-toolbar-field" style={{ textDecoration: "none" }}>
+                <a href={productUrl("ppt", locale)} className="chat-toolbar-field" style={{ textDecoration: "none" }}>
                   <span>{locale === "zh" ? "PPT · 生成整套演示文稿" : "PPT · Generate a complete deck"}</span>
                 </a>
 

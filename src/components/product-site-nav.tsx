@@ -1,4 +1,4 @@
-import { appUrl } from "@/lib/app-url";
+import { productUrl } from "@/lib/product-url";
 import type { Locale } from "@/lib/types";
 
 interface ProductSiteNavProps {
@@ -26,12 +26,12 @@ export function ProductSiteNav({ locale, active }: ProductSiteNavProps) {
           <a href="https://labs.graptolite.ai/currency/">Currency</a>
         </li>
         <li>
-          <a href={appUrl(`/${locale}/svg`)} className={active === "svg" ? "active" : undefined} aria-current={active === "svg" ? "page" : undefined}>
+          <a href={productUrl("svg", locale)} className={active === "svg" ? "active" : undefined} aria-current={active === "svg" ? "page" : undefined}>
             SVG
           </a>
         </li>
         <li>
-          <a href={appUrl(`/${locale}/ppt`)} className={active === "ppt" ? "active" : undefined} aria-current={active === "ppt" ? "page" : undefined}>
+          <a href={productUrl("ppt", locale)} className={active === "ppt" ? "active" : undefined} aria-current={active === "ppt" ? "page" : undefined}>
             PPT
           </a>
         </li>

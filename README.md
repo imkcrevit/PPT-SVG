@@ -6,10 +6,10 @@ PPT-SVG 包含两个独立产品：**SVG** 生成单张图并导出 SVG、JSON �
 
 ## Demo
 
-- SVG: `https://labs.graptolite.ai/ppt/en/svg`
-- PPT: `https://labs.graptolite.ai/ppt/en/ppt`
-- 中文 SVG: `https://labs.graptolite.ai/ppt/zh/svg`
-- 中文 PPT: `https://labs.graptolite.ai/ppt/zh/ppt`
+- SVG: `https://labs.graptolite.ai/svg/en`
+- PPT: `https://labs.graptolite.ai/ppt/en`
+- 中文 SVG: `https://labs.graptolite.ai/svg/zh`
+- 中文 PPT: `https://labs.graptolite.ai/ppt/zh`
 
 ## Local Setup
 
@@ -111,13 +111,13 @@ The app is bilingual. Use the language switch in the header or visit the locale 
 
 应用支持中英双语。可以使用顶部语言切换，也可以直接访问对应路由：
 
-- English SVG: `https://labs.graptolite.ai/ppt/en/svg`
-- English PPT: `https://labs.graptolite.ai/ppt/en/ppt`
-- 中文 SVG: `https://labs.graptolite.ai/ppt/zh/svg`
-- 中文 PPT: `https://labs.graptolite.ai/ppt/zh/ppt`
+- English SVG: `https://labs.graptolite.ai/svg/en`
+- English PPT: `https://labs.graptolite.ai/ppt/en`
+- 中文 SVG: `https://labs.graptolite.ai/svg/zh`
+- 中文 PPT: `https://labs.graptolite.ai/ppt/zh`
 - Local / 本地: `http://localhost:3000/{en|zh}/{svg|ppt}`
 
-Old locale roots redirect to SVG, and the old `/lab` entry redirects to PPT.
+Legacy `/ppt/{locale}/svg`, `/ppt/{locale}/ppt`, and `/ppt/lab` URLs redirect to the short public routes.
 
 PPT includes seven built-in style categories: tech, corporate, academic, government, nature, creative, and minimal. An uploaded PPTX template overrides the built-in style.
 
@@ -196,6 +196,6 @@ npm run test:theme
 
 ## Optional Reverse Proxy
 
-The app can be served from a subpath such as `/ppt` by setting `NEXT_PUBLIC_BASE_PATH=/ppt` at build and runtime. The public demo is served at `https://labs.graptolite.ai/ppt`.
+The app keeps `NEXT_PUBLIC_BASE_PATH=/ppt` internally for API and static assets. Nginx exposes the user-facing pages at `https://labs.graptolite.ai/svg/{locale}` and `https://labs.graptolite.ai/ppt/{locale}`.
 
 Example Nginx and systemd files live in `deploy/`. They are deployment examples, not required for local development or for running the project directly on `localhost:3000`.

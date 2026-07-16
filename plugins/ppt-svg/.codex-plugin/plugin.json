@@ -6,7 +6,7 @@
     "name": "Graptolite",
     "url": "https://graptolite.ai"
   },
-  "homepage": "https://labs.graptolite.ai/ppt/en/svg",
+  "homepage": "https://labs.graptolite.ai/svg/en",
   "repository": "https://github.com/imkcrevit/PPT-SVG",
   "license": "MIT",
   "keywords": ["svg", "pptx", "presentation", "diagram", "flowchart"],
@@ -18,7 +18,7 @@
     "developerName": "Graptolite",
     "category": "Productivity",
     "capabilities": ["Create", "Export"],
-    "websiteURL": "https://labs.graptolite.ai/ppt/en/svg",
+    "websiteURL": "https://labs.graptolite.ai/svg/en",
     "composerIcon": "./assets/logo.svg",
     "logo": "./assets/logo.svg",
     "defaultPrompt": [
