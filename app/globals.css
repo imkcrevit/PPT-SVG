@@ -1423,6 +1423,10 @@ svg text {
   }
 
   .site-nav-links {
+    gap: 20px;
+  }
+
+  .site-nav-secondary {
     display: none;
   }
 

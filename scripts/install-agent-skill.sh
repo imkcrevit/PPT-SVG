@@ -6,25 +6,27 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat <<USAGE
-Usage: scripts/install-agent-skill.sh [hermes|openclaw|local] [target-dir]
+Usage: scripts/install-agent-skill.sh [hermes|openclaw|local] [skills-root]
+
+Installs two sibling skills named svg and ppt.
 
 Examples:
   scripts/install-agent-skill.sh hermes
   scripts/install-agent-skill.sh openclaw
-  scripts/install-agent-skill.sh local /tmp/ppt-svg-skill
+  scripts/install-agent-skill.sh local /tmp/ppt-svg-skills
 USAGE
 }
 
 case "$RUNTIME" in
   hermes)
-    TARGET_DIR="${2:-${HERMES_SKILLS_DIR:-$HOME/.hermes/skills/ppt-svg}}"
+    TARGET_ROOT="${2:-${HERMES_SKILLS_DIR:-${HOME:?}/.hermes/skills}}"
     ;;
   openclaw)
-    TARGET_DIR="${2:-${OPENCLAW_SKILLS_DIR:-$HOME/.openclaw/skills/ppt-svg}}"
+    TARGET_ROOT="${2:-${OPENCLAW_SKILLS_DIR:-${HOME:?}/.openclaw/skills}}"
     ;;
   local)
-    TARGET_DIR="${2:-}"
-    if [[ -z "$TARGET_DIR" ]]; then
+    TARGET_ROOT="${2:-}"
+    if [[ -z "$TARGET_ROOT" ]]; then
       usage >&2
       exit 2
     fi
@@ -40,15 +42,27 @@ case "$RUNTIME" in
     ;;
 esac
 
-install -d "$TARGET_DIR/scripts"
-install -m 0644 "$ROOT_DIR/SKILL.md" "$TARGET_DIR/SKILL.md"
-install -m 0755 "$ROOT_DIR/scripts/ppt-svg-agent.mjs" "$TARGET_DIR/scripts/ppt-svg-agent.mjs"
+install_skill() {
+  local skill="$1"
+  local client="$2"
+  local source="$ROOT_DIR/plugins/ppt-svg/skills/$skill"
+  local target="$TARGET_ROOT/$skill"
+
+  install -d "$target/agents" "$target/references" "$target/scripts"
+  install -m 0644 "$source/SKILL.md" "$target/SKILL.md"
+  install -m 0644 "$source/agents/openai.yaml" "$target/agents/openai.yaml"
+  install -m 0644 "$source/references/repository.md" "$target/references/repository.md"
+  install -m 0755 "$source/scripts/$client" "$target/scripts/$client"
+}
+
+install_skill svg generate-svg.mjs
+install_skill ppt generate-ppt.mjs
 
 cat <<DONE
-Installed PPT-SVG skill to:
-  $TARGET_DIR
+Installed the SVG and PPT skills under:
+  $TARGET_ROOT/svg
+  $TARGET_ROOT/ppt
 
-Set PPT_SVG_BASE_URL if the service is not at http://127.0.0.1:3000/ppt.
-For user-owned API keys, run the PPT-SVG service with OPENROUTER_*,
-PPT_SVG_LLM_*, or OPENAI_* environment variables.
+The clients default to https://labs.graptolite.ai/ppt.
+Set PPT_SVG_BASE_URL to use a local or another deployed service.
 DONE

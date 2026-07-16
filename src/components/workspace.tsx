@@ -27,12 +27,12 @@ import {
   ZoomIn,
   ZoomOut
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
 import { PreviewViewport } from "@/components/preview-viewport";
+import { ProductSiteNav } from "@/components/product-site-nav";
 import ThemeOverridePanel from "@/components/ThemeOverridePanel";
 import { appUrl } from "@/lib/app-url";
 import { buildExportFilename, type ExportExtension } from "@/lib/export-filename";
@@ -1103,30 +1103,7 @@ export function Workspace({ locale }: WorkspaceProps) {
 
   return (
     <>
-      <nav className="site-nav" aria-label="Graptolite Labs navigation">
-        <a href="https://graptolite.ai" className="site-nav-logo">
-          Graptolite
-        </a>
-        <ul className="site-nav-links">
-          <li>
-            <a href="https://graptolite.ai">Home</a>
-          </li>
-          <li>
-            <a href="https://labs.graptolite.ai/">Labs</a>
-          </li>
-          <li>
-            <a href="https://labs.graptolite.ai/timezones/">Time</a>
-          </li>
-          <li>
-            <a href="https://labs.graptolite.ai/currency/">Currency</a>
-          </li>
-          <li>
-            <a href={`https://labs.graptolite.ai/ppt/${locale}`} className="active" aria-current="page">
-              PPT
-            </a>
-          </li>
-        </ul>
-      </nav>
+      <ProductSiteNav locale={locale} active="svg" />
 
       <main className="workspace-main text-ink">
       <div className="workspace-shell">
@@ -1134,7 +1111,7 @@ export function Workspace({ locale }: WorkspaceProps) {
           <div className="flex min-w-0 items-center">
             <div className="min-w-0">
               <div className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-accent">
-                Graptolite Labs / SVG Workbench
+                Graptolite Labs / SVG
               </div>
               <h1 className="mt-1 truncate text-xl font-semibold tracking-[0.03em] text-ink sm:text-2xl">{t.appName}</h1>
               <p className="mt-1 line-clamp-2 text-xs leading-5 text-mid sm:truncate sm:text-sm">
@@ -1175,22 +1152,22 @@ export function Workspace({ locale }: WorkspaceProps) {
               <span>GitHub</span>
             </a>
             <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
-              <Link
-                href="/en"
+              <a
+                href={appUrl("/en/svg")}
                 className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
                   locale === "en" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
                 }`}
               >
                 {t.languageEnglish}
-              </Link>
-              <Link
-                href="/zh"
+              </a>
+              <a
+                href={appUrl("/zh/svg")}
                 className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${
                   locale === "zh" ? "bg-panel text-ink" : "text-mid hover:text-accent2"
                 }`}
               >
                 {t.languageChinese}
-              </Link>
+              </a>
             </div>
           </div>
         </header>
@@ -1218,8 +1195,8 @@ export function Workspace({ locale }: WorkspaceProps) {
                   <strong>{remainingTurns} {t.turnsLeft}</strong>
                 </div>
 
-                <a href={appUrl("/lab")} className="chat-toolbar-field" style={{ textDecoration: "none" }}>
-                  <span>{locale === "zh" ? "🧪 整套 PPT（实验）" : "🧪 Full deck (lab)"}</span>
+                <a href={appUrl(`/${locale}/ppt`)} className="chat-toolbar-field" style={{ textDecoration: "none" }}>
+                  <span>{locale === "zh" ? "PPT · 生成整套演示文稿" : "PPT · Generate a complete deck"}</span>
                 </a>
 
                 <label className="chat-toolbar-field">

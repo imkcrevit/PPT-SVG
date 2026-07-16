@@ -33,4 +33,5 @@ request ──▶ buildGenerateMessages ──▶ callOpenRouter ──▶ valid
 Dependency direction is one-way: **deck → svg**. Nothing under `features/svg`
 may import from `features/deck`.
 
-See `.claude/skills/svg-diagram` for the standalone, callable skill wrapper.
+See `.claude/skills/svg` for the repository wrapper and
+`plugins/ppt-svg/skills/svg` for the installable canonical skill.

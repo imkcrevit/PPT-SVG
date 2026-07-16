@@ -6,8 +6,8 @@ import { appUrl } from "@/lib/app-url";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PPT-SVG",
-  description: "Generate high-quality SVG visuals for presentation slides.",
+  title: "SVG · PPT | Graptolite Labs",
+  description: "Generate presentation-ready SVG diagrams and complete PowerPoint decks.",
   icons: {
     icon: [{ url: appUrl("/icon.svg"), type: "image/svg+xml" }],
     shortcut: [{ url: appUrl("/icon.svg"), type: "image/svg+xml" }]

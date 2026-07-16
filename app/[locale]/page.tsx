@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { Workspace } from "@/components/workspace";
 import { isLocale } from "@/lib/i18n";
 
 interface LocalePageProps {
@@ -16,5 +15,5 @@ export default async function LocalePage({ params }: LocalePageProps) {
     notFound();
   }
 
-  return <Workspace locale={locale} />;
+  redirect(`/${locale}/svg`);
 }

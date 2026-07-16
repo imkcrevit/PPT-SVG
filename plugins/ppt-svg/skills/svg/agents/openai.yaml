@@ -1,0 +1,5 @@
+interface:
+  display_name: "SVG"
+  short_description: "Create grounded SVG diagrams and one-slide visuals"
+  brand_color: "#6750D8"
+  default_prompt: "Use $svg to turn the supplied source material into a grounded SVG diagram."

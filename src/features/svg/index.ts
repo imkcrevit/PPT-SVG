@@ -10,7 +10,7 @@
 // The deck skill (`@/features/deck`) composes this contract to build diagram
 // slides — see `features/deck/diagram-bridge.ts`. Keeping the boundary explicit
 // is what lets the two capabilities be lifted into standalone, mutually
-// callable skills (see `.claude/skills/svg-diagram`).
+// callable skills (see `.claude/skills/svg` and `plugins/ppt-svg/skills/svg`).
 //
 // Dependency direction is one-way: deck → svg. `@/features/svg` must never
 // import from `@/features/deck`.

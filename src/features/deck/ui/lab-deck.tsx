@@ -4,10 +4,11 @@ import { CheckCircle2, FileUp, Loader2, MessageSquarePlus, Palette, Send } from 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
+import { ProductSiteNav } from "@/components/product-site-nav";
 import { DECK_STYLE_OPTIONS, textSlideToFigure, withDeckChrome } from "@/features/deck/template";
 import type { Deck, DeckSlide } from "@/features/deck/types";
 import { appUrl } from "@/lib/app-url";
-import type { UploadedAttachment } from "@/lib/types";
+import type { Locale, UploadedAttachment } from "@/lib/types";
 
 interface DeckResponse {
   requestId?: string;
@@ -64,9 +65,9 @@ function attachmentReference(attachment: UploadedAttachment): UploadedAttachment
   };
 }
 
-export function LabDeck() {
+export function LabDeck({ initialLanguage }: { initialLanguage: Locale }) {
   const sessionId = useRef(randomSessionId());
-  const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const language = initialLanguage;
   const t = useMemo(() => strings[language], [language]);
 
   // Conversation state
@@ -369,28 +370,29 @@ export function LabDeck() {
   );
 
   return (
-    <main className="workspace-main text-ink">
+    <>
+      <ProductSiteNav locale={language} active="ppt" />
+      <main className="workspace-main text-ink">
       <div className="workspace-shell">
         <header className="flex flex-col gap-4 border border-line bg-panel/95 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="min-w-0">
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-accent">lab · beta</div>
+            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-accent">Graptolite Labs / PPT</div>
             <h1 className="mt-1 truncate text-xl font-semibold tracking-[0.03em] text-ink sm:text-2xl">{t.title}</h1>
             <p className="mt-1 line-clamp-2 max-w-2xl text-xs leading-5 text-mid sm:text-sm">{t.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <a href={appUrl(`/${language}`)} className="flex h-9 items-center border border-line bg-panel px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-mid transition hover:border-accent/40 hover:text-accent2">
+            <a href={appUrl(`/${language}/svg`)} className="flex h-9 items-center border border-line bg-panel px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-mid transition hover:border-accent/40 hover:text-accent2">
               {t.backToWorkspace}
             </a>
             <div className="grid grid-cols-2 border border-line bg-bg2 p-1 sm:flex">
               {(["zh", "en"] as const).map((l) => (
-                <button
+                <a
                   key={l}
-                  type="button"
-                  onClick={() => setLanguage(l)}
+                  href={appUrl(`/${l}/ppt`)}
                   className={`px-3 py-1.5 text-center font-mono text-[11px] font-medium uppercase tracking-[0.12em] transition ${language === l ? "bg-panel text-ink" : "text-mid hover:text-accent2"}`}
                 >
                   {l === "zh" ? "中文" : "EN"}
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -589,7 +591,8 @@ export function LabDeck() {
           </section>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
@@ -648,9 +651,9 @@ function SlideCard({
 
 const strings: Record<"zh" | "en", Record<string, string>> = {
   zh: {
-    title: "整套 PPT 生成（实验）",
+    title: "PPT",
     subtitle: "像聊天一样生成整套 PPT：先给内容或上传文档，再用对话不断调整。文字页 + 复用 SVG 引擎的图表页。",
-    backToWorkspace: "返回工作区",
+    backToWorkspace: "打开 SVG",
     chatTitle: "对话",
     newConversation: "新建对话",
     modelFromEnv: "环境变量模型",
@@ -702,9 +705,9 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     deleteSlide: "删除此页"
   },
   en: {
-    title: "Full deck generation (lab)",
+    title: "PPT",
     subtitle: "Build a full deck like a chat: give content or upload a doc, then refine by conversation. Text slides plus diagram slides that reuse the SVG engine.",
-    backToWorkspace: "Back to workspace",
+    backToWorkspace: "Open SVG",
     chatTitle: "Conversation",
     newConversation: "New conversation",
     modelFromEnv: "Model from env",

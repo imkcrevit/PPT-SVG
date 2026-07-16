@@ -3,8 +3,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // The "turn a document/context into a full multi-slide PPTX" capability. It
 // composes the svg skill (`@/features/svg`) for its diagram slides via
-// `diagram-bridge`. Consumers (the app/api/lab routes, the /lab UI) import from
-// `@/features/deck` only — the individual modules stay internal.
+// `diagram-bridge`. Consumers (the app/api/lab routes and /[locale]/ppt UI)
+// import from `@/features/deck` only — the individual modules stay internal.
 
 // -- Domain model -------------------------------------------------------------
 export type { Deck, DeckSlide, DeckPalette } from "./types";

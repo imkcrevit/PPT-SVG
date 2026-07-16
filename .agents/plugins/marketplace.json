@@ -1,0 +1,20 @@
+{
+  "name": "graptolite-labs",
+  "interface": {
+    "displayName": "Graptolite Labs Skills"
+  },
+  "plugins": [
+    {
+      "name": "ppt-svg",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ppt-svg"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

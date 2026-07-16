@@ -1,14 +1,15 @@
 # PPT-SVG
 
-PPT-SVG generates single-slide presentation visuals from natural language. It asks an LLM for structured figure JSON, renders the result as SVG, and can export the same render as either SVG or PPTX.
+PPT-SVG has two independent products backed by one source-grounded visual engine: **SVG** creates a single diagram with SVG/JSON/editable one-slide PPTX exports, while **PPT** creates a complete multi-slide presentation and reuses SVG for every diagram slide.
 
-PPT-SVG 用自然语言生成单页演示图形：模型输出结构化 figure JSON，前端渲染 SVG，并支持下载 SVG 或 PPTX。
+PPT-SVG 包含两个独立产品：**SVG** 生成单张图并导出 SVG、JSON 或可编辑单页 PPTX；**PPT** 生成整套多页演示文稿，并在所有图表页复用同一 SVG 引擎。两者都优先围绕用户上传资料、原文短引和原图展开。
 
 ## Demo
 
-Demo: `https://labs.graptolite.ai/ppt`
-
-演示地址：`https://labs.graptolite.ai/ppt`
+- SVG: `https://labs.graptolite.ai/ppt/en/svg`
+- PPT: `https://labs.graptolite.ai/ppt/en/ppt`
+- 中文 SVG: `https://labs.graptolite.ai/ppt/zh/svg`
+- 中文 PPT: `https://labs.graptolite.ai/ppt/zh/ppt`
 
 ## Local Setup
 
@@ -18,9 +19,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000/en` or `http://localhost:3000/zh`.
+Open `http://localhost:3000/en/svg` or `http://localhost:3000/en/ppt`. Use `/zh/svg` and `/zh/ppt` for Chinese.
 
-打开 `http://localhost:3000/en` 或 `http://localhost:3000/zh`。
+本地英文页面为 `http://localhost:3000/en/svg` 与 `http://localhost:3000/en/ppt`；中文页面使用 `/zh/svg` 与 `/zh/ppt`。
 
 ## Environment
 
@@ -46,9 +47,16 @@ For local Hermes/OpenClaw installs, users can bring their own OpenAI-compatible 
 
 `MONGODB_URI` is optional. When configured, conversations and hash-coded attachment paths are recorded in MongoDB.
 
-## Hermes / OpenClaw Agent Skill
+## Installable SVG and PPT Skills
 
-PPT-SVG can also run as an installable Agent skill while keeping the current Web app form. The skill calls the same local or deployed service, so the UI, `/api/generate`, prompt files, SVG export, and PPTX export remain the source of truth.
+The repository includes a Codex plugin with two interoperable skills, plus compatible Hermes/OpenClaw installers. The web app and APIs remain the implementation source of truth.
+
+```bash
+codex plugin marketplace add imkcrevit/PPT-SVG --ref main
+codex plugin add ppt-svg@graptolite-labs
+```
+
+For Hermes/OpenClaw:
 
 ```bash
 cd /dev/ppt-svg/PPT-SVG
@@ -56,18 +64,18 @@ bash scripts/install-agent-skill.sh hermes
 bash scripts/install-agent-skill.sh openclaw
 ```
 
-Use a user-owned API key by running the local service with `OPENROUTER_*`, `PPT_SVG_LLM_*`, or `OPENAI_*` environment variables. The Agent side only needs the service URL:
+The clients default to the hosted service. Point them at a local deployment for private material or a user-owned API key:
 
 ```bash
 export PPT_SVG_BASE_URL=http://127.0.0.1:3000/ppt
-node scripts/ppt-svg-agent.mjs \
+node plugins/ppt-svg/skills/svg/scripts/generate-svg.mjs \
   --language zh \
   --skill freeform \
   --prompt "生成一页产品路线图，包含 Q1 调研、Q2 MVP、Q3 公测、Q4 商用" \
   --bundle /tmp/ppt-svg-export.zip
 ```
 
-See [`docs/agent-skill.md`](docs/agent-skill.md) for the install notes.
+Use `plugins/ppt-svg/skills/ppt/scripts/generate-ppt.mjs` for a complete deck. See [`docs/agent-skill.md`](docs/agent-skill.md) for install and privacy notes.
 
 ## Why SVG-Driven
 
@@ -97,17 +105,21 @@ PPT-SVG 以 SVG 和 figure JSON 作为主要渲染路径，是为了保留更高
 - PPTX 导出会保持普通节点文字居中、泳道名称左对齐，并稳定应用 PowerPoint 字号。
 - 提示词约束强调不丢失用户意图、不伪造默认信息；目标不清晰时应先向用户澄清。
 
-## Bilingual UI
+## Two-page bilingual UI
 
 The app is bilingual. Use the language switch in the header or visit the locale routes directly:
 
 应用支持中英双语。可以使用顶部语言切换，也可以直接访问对应路由：
 
-- Demo / 演示入口: `https://labs.graptolite.ai/ppt`
-- English: `https://labs.graptolite.ai/ppt/en`
-- 中文: `https://labs.graptolite.ai/ppt/zh`
-- Local English: `http://localhost:3000/en`
-- 本地中文: `http://localhost:3000/zh`
+- English SVG: `https://labs.graptolite.ai/ppt/en/svg`
+- English PPT: `https://labs.graptolite.ai/ppt/en/ppt`
+- 中文 SVG: `https://labs.graptolite.ai/ppt/zh/svg`
+- 中文 PPT: `https://labs.graptolite.ai/ppt/zh/ppt`
+- Local / 本地: `http://localhost:3000/{en|zh}/{svg|ppt}`
+
+Old locale roots redirect to SVG, and the old `/lab` entry redirects to PPT.
+
+PPT includes seven built-in style categories: tech, corporate, academic, government, nature, creative, and minimal. An uploaded PPTX template overrides the built-in style.
 
 The selected locale is sent to the generation API as `language`, and prompt skills are instructed to output the same language.
 
@@ -136,6 +148,11 @@ Current internal skills live in [`src/lib/skills.ts`](src/lib/skills.ts) and loa
 | `gantt` | Gantt | 甘特图 | Schedule with task bars. / 项目排期、任务条。 | 生成 AI 报表平台上线甘特图，周期第 1 到第 10 周，体现并行任务和里程碑。 |
 | `swimlane` | Swimlane | 泳道图 | Cross-functional process lanes. / 跨职能泳道流程。 | 生成跨部门退款处理泳道图，泳道为用户、客服、财务、系统，并体现异常分支。 |
 | `scatter` | Scatter | 散点/定位图 | 2D positioning by score. / 按评分二维定位。 | 生成项目组合定位图，横轴实施难度，纵轴业务收益，并标注优先区。 |
+| `kanban` | Kanban | 看板 | Work stages and cards. / 工作阶段与卡片。 | 生成研发看板：待办、进行中、评审、完成。 |
+| `network` | Network | 网络图 | Connected entities and topology. / 实体关系与拓扑。 | 生成系统依赖网络图，只保留资料明确写出的连接。 |
+| `radar` | Radar | 雷达图 | Multi-axis comparison with supplied values. / 多维指标对比。 | 根据资料里的五项评分生成雷达图。 |
+| `heatmap` | Heatmap | 热力图 | Two-dimensional intensity tables. / 二维强度表。 | 根据资料中的风险等级生成热力图。 |
+| `waterfall` | Waterfall | 瀑布图 | Additive changes from a supplied baseline. / 基线与增减变化。 | 根据资料中的预算增减项生成瀑布图。 |
 
 ## Test Case Evidence
 
@@ -169,13 +186,13 @@ npm run test:layout
 npm run test:theme
 ```
 
-## V1 Scope
+## Current scope
 
-- Internal skills: `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`.
+- Internal diagram types: `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, and `waterfall`.
 - Prompt files live in `/prompt` and are loaded by the server.
-- SVG export serializes the current browser preview as a standalone vector file.
-- PPTX export writes the generated figure to the first slide as editable PowerPoint shapes.
-- External skills, GitHub skill URLs, AI-created skills, and uploaded `SKILL.md` files are intentionally out of the first UI surface.
+- SVG exports the current visual as vector SVG, figure JSON, or editable one-slide PPTX.
+- PPT exports a complete PPTX and supports uploaded documents, images, and PPTX templates.
+- The installable `svg` and `ppt` skills live under `plugins/ppt-svg/skills` and are published through the repo marketplace.
 
 ## Optional Reverse Proxy
 

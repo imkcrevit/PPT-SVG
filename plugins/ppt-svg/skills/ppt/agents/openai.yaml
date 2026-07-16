@@ -1,0 +1,5 @@
+interface:
+  display_name: "PPT"
+  short_description: "Create complete source-grounded PPTX presentations"
+  brand_color: "#1E5AA8"
+  default_prompt: "Use $ppt to create a complete PPTX presentation grounded in the supplied source material."

@@ -15,7 +15,7 @@ reuses the exact same layout + render path as single-diagram generation.
 | `diagram-bridge.ts` | **deck → svg contract** — LLM-backed diagram generate / repair       |
 | `template.ts`       | **declarative slide design system** — templates as JSON data          |
 | `pptx.ts`           | `deckToPptx` — multi-slide PPTX (text slides here, diagrams via svg)  |
-| `ui/lab-deck.tsx`   | the `/lab` conversational client UI                                  |
+| `ui/lab-deck.tsx`   | the `/[locale]/ppt` conversational client UI                         |
 | `index.ts`          | the public barrel — consumers import from `@/features/deck` only      |
 
 ## Designing a deck template (`template.ts`)
@@ -78,4 +78,5 @@ All composition of the svg skill happens in `diagram-bridge.ts`:
 - `generateDiagramSlide(...)` — generate a fresh diagram slide from context +
   title, end to end through the svg skill (regenerate-one-slide).
 
-See `.claude/skills/ppt-deck` for the standalone, callable skill wrapper.
+See `.claude/skills/ppt` for the repository wrapper and
+`plugins/ppt-svg/skills/ppt` for the installable canonical skill.

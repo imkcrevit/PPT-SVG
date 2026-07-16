@@ -891,7 +891,7 @@ function makeFigure(title: string, elements: FigureElement[], font?: string, lan
   };
 }
 
-// ── Public API (stable — pptx.ts & the /lab UI depend on these) ─────────────────
+// ── Public API (stable — pptx.ts and the /[locale]/ppt UI depend on these) ─────
 
 /** Build the Figure for a text slide (cover / section / bullets) under a template. */
 export function textSlideToFigure(slide: DeckSlide, palette: DeckPalette, ctx: DeckChromeContext, template?: TemplateRef): Figure {

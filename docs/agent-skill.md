@@ -1,62 +1,68 @@
-# Hermes / OpenClaw Skill
+# SVG and PPT Skills
 
-PPT-SVG has two runtime forms:
+PPT-SVG now ships as two interoperable skills:
 
-- Web app: the current Next.js UI and API keep running as before.
-- Agent skill: Hermes or OpenClaw calls the same API through `SKILL.md` and `scripts/ppt-svg-agent.mjs`.
+- `$svg` creates or revises one grounded SVG visual and can export JSON plus an editable one-slide PPTX.
+- `$ppt` creates a complete grounded PPTX deck and delegates every diagram slide to the SVG engine.
 
-## Install
+Both use the same web/API implementation as the two independent UI pages. They prioritize selected source files, preserve exact short quotations, reuse uploaded original images, and avoid unsupported content expansion.
+
+## Install from the repository marketplace
+
+After this repository is public or otherwise accessible to the user:
 
 ```bash
-cd /dev/ppt-svg/PPT-SVG
+codex plugin marketplace add imkcrevit/PPT-SVG --ref main
+codex plugin add ppt-svg@graptolite-labs
+```
+
+The repository marketplace lives at `.agents/plugins/marketplace.json`; the plugin manifest is `plugins/ppt-svg/.codex-plugin/plugin.json`.
+
+## Install for Hermes or OpenClaw
+
+```bash
 bash scripts/install-agent-skill.sh hermes
 bash scripts/install-agent-skill.sh openclaw
 ```
 
-The install script copies only the skill instructions and the small CLI wrapper. It does not copy API keys.
+The installer creates separate `svg` and `ppt` skill directories. It copies no API keys.
 
-It also does not copy the full Next.js app. For local generation with a user-owned API key, keep a PPT-SVG checkout available and set `PPT_SVG_PROJECT_DIR` if the Agent does not already know that path.
+## Service selection and privacy
 
-## Use A User-Owned API Key
-
-Run the PPT-SVG service locally with one of these environment sets:
+The bundled clients default to the hosted service:
 
 ```bash
-OPENROUTER_API_KEY=...
-OPENROUTER_MODEL=google/gemini-2.5-flash
+export PPT_SVG_BASE_URL=https://labs.graptolite.ai/ppt
 ```
 
-or:
-
-```bash
-PPT_SVG_LLM_API_KEY=...
-PPT_SVG_LLM_MODEL=...
-PPT_SVG_LLM_BASE_URL=https://api.openai.com/v1
-```
-
-Then start the app:
-
-```bash
-cd "$PPT_SVG_PROJECT_DIR"
-npm install
-npm run dev
-```
-
-The default agent base URL is `http://127.0.0.1:3000/ppt`. Override it with:
+Source files passed to a client are uploaded to the configured service. For confidential material, run the app locally and point the skills at it:
 
 ```bash
 export PPT_SVG_BASE_URL=http://127.0.0.1:3000/ppt
 ```
 
-## Generate From The CLI
+The service accepts `OPENROUTER_*`, `PPT_SVG_LLM_*`, or `OPENAI_*` environment variables. Keep keys in the service process; never paste them into a skill prompt.
+
+## Generate one SVG visual
 
 ```bash
-node scripts/ppt-svg-agent.mjs \
+node plugins/ppt-svg/skills/svg/scripts/generate-svg.mjs \
   --language zh \
-  --skill freeform \
-  --prompt "生成一页产品路线图，包含 Q1 调研、Q2 MVP、Q3 公测、Q4 商用" \
-  --json /tmp/ppt-svg-response.json \
-  --bundle /tmp/ppt-svg-export.zip
+  --skill flow \
+  --prompt "仅根据资料画审批流程，并保留一处原文短引" \
+  --source ./source.pdf \
+  --bundle ./approval-flow.zip
 ```
 
-The bundle contains `figure.svg`, `figure.pptx`, `figure.json`, and `metadata.json`.
+## Generate a complete PPTX
+
+```bash
+node plugins/ppt-svg/skills/ppt/scripts/generate-ppt.mjs \
+  --language zh \
+  --style corporate \
+  --prompt "将资料整理成管理层汇报，优先使用原图" \
+  --source ./report.pdf \
+  --out ./management-report.pptx
+```
+
+Use `--template ./brand-template.pptx` to apply an uploaded PowerPoint template. Run either client with `--help` for all options.
