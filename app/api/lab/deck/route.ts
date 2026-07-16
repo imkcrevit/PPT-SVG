@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       styleHint?: unknown;
       themeOverride?: unknown;
       attachments?: unknown;
+      templateHash?: unknown;
       sessionId?: unknown;
     };
 
@@ -67,16 +68,31 @@ export async function POST(request: Request) {
     const sessionId = normalizeSessionId(typeof body.sessionId === "string" ? body.sessionId : undefined);
     const styleHint = typeof body.styleHint === "string" ? body.styleHint.slice(0, 400) : "";
     const attachments = sanitizeUploadedAttachments(body.attachments);
+    const templateHash = typeof body.templateHash === "string" ? body.templateHash.toLowerCase() : "";
+    const templateAttachment = attachments.find(
+      (attachment) => attachment.extension === "pptx" && attachment.hash === templateHash
+    );
+    const sourceAttachments = templateAttachment
+      ? attachments.filter((attachment) => attachment.hash !== templateAttachment.hash)
+      : attachments;
 
     const abuseDecision = checkGenerationAbuse(request, sessionId);
     if (!abuseDecision.ok) {
       return securityJson(abuseDecision);
     }
 
-    // Context = provided text + any extracted attachment text.
+    // Preserve source boundaries so exact quotes and claims can be traced back
+    // to a named upload instead of blending every document into one blob.
     const context = [
       typeof body.context === "string" ? body.context : "",
-      ...attachments.map((a) => a.extractedText ?? "")
+      ...sourceAttachments.map((attachment) =>
+        attachment.extractedText
+          ? `【上传资料：${attachment.originalName}】\n${attachment.extractedText}`
+          : ""
+      ),
+      sourceAttachments.length
+        ? `【上传资料清单】\n${sourceAttachments.map((attachment) => attachment.originalName).join("\n")}`
+        : ""
     ]
       .filter(Boolean)
       .join("\n\n")
@@ -89,7 +105,9 @@ export async function POST(request: Request) {
 
     // Style: an uploaded template's theme wins; otherwise resolve a text style
     // hint; otherwise the default theme.
-    const { theme: templateTheme } = await resolveStyleContext(attachments);
+    const { theme: templateTheme } = await resolveStyleContext(
+      templateAttachment ? [templateAttachment] : attachments
+    );
     let theme = templateTheme ?? resolveTheme();
     if (!templateTheme && styleHint) {
       const intent = await resolveThemeIntent(styleHint, {}, (msgs) =>
@@ -106,7 +124,7 @@ export async function POST(request: Request) {
     // are re-extracted server-side from the trusted stored files, given short
     // refs (img1, img2 …) the model can place, and resolved back to data URIs.
     const MAX_DECK_IMAGES = 12;
-    const deckImages = (await Promise.all(attachments.map(loadAttachmentImages))).flat().slice(0, MAX_DECK_IMAGES);
+    const deckImages = (await Promise.all(sourceAttachments.map(loadAttachmentImages))).flat().slice(0, MAX_DECK_IMAGES);
     const imageRefs = deckImages.map((image, index) => ({ ref: `img${index + 1}`, image }));
     const imageMap = new Map(imageRefs.map((r) => [r.ref, r.image.dataUri]));
 
@@ -114,7 +132,13 @@ export async function POST(request: Request) {
       context,
       language,
       styleHint,
-      images: imageRefs.map((r) => ({ ref: r.ref, source: r.image.source, width: r.image.width, height: r.image.height }))
+      images: imageRefs.map((r) => ({
+        ref: r.ref,
+        source: r.image.source,
+        width: r.image.width,
+        height: r.image.height,
+        dataUri: r.image.dataUri
+      }))
     });
     const rawOutput = await callOpenRouter(messages, {
       temperature: 0.3,
@@ -198,7 +222,7 @@ export async function POST(request: Request) {
     // Derive a layout template (title/body coordinates + fonts) from an uploaded
     // .pptx so the deck matches the user's template placement, not just its colors.
     let deckTemplate: DeckTemplate | undefined;
-    const pptxAttachment = attachments.find((a) => a.extension === "pptx");
+    const pptxAttachment = templateAttachment ?? [...attachments].reverse().find((a) => a.extension === "pptx");
     if (pptxAttachment) {
       try {
         const derived = await extractDeckTemplateFromPptx(Buffer.from(await readFile(pptxAttachment.path)), "uploaded");

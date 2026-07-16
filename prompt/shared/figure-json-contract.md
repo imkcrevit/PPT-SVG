@@ -73,7 +73,7 @@ Right:
 
 ## Fields
 
-- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`. Match the selected skill when possible.
+- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, `waterfall`. Match the selected skill when possible.
 - `language`: `zh` for Simplified Chinese, `en` for English.
 - `direction`: optional `horizontal` or `vertical`.
 - `nodes`: up to 40 nodes. Every node has `id`, `label`, and `parent`.

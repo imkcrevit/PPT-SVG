@@ -9,6 +9,7 @@ import {
   validateDeckTemplate,
   type DeckChromeContext
 } from "@/features/deck/template";
+import { buildDeckMessages } from "@/features/deck/prompts";
 import type { DeckPalette, DeckSlide } from "@/features/deck/types";
 
 const W = 1280;
@@ -73,6 +74,59 @@ for (const tpl of DECK_TEMPLATES) {
   const chromed = withDeckChrome(diagram as never, palette, ctx(3), tpl.id);
   if (chromed.elements.length <= diagram.elements.length) fail(`${tpl.id}: withDeckChrome added no chrome`);
   else console.log(`PASS  ${tpl.id}/diagram-chrome: +${chromed.elements.length - diagram.elements.length} elements`);
+}
+
+// Prompt regression: uploaded image bytes must be supplied as multimodal parts
+// while the JSON payload exposes only stable refs/metadata. This is what lets
+// the model choose a relevant original image without leaking base64 into text.
+const promptMessages = await buildDeckMessages({
+  context: "【上传资料：方案.md】\n阶段一到阶段二。",
+  language: "zh",
+  images: [
+    {
+      ref: "img1",
+      source: "方案.pptx · image1.png",
+      width: 640,
+      height: 360,
+      dataUri: "data:image/png;base64,aW1hZ2U="
+    }
+  ]
+});
+const systemContent = promptMessages[0]?.content;
+if (
+  typeof systemContent !== "string" ||
+  !systemContent.includes("这是**资料编排任务**") ||
+  !systemContent.includes("## 原文引用规则") ||
+  !systemContent.includes("## SVG 图表穿插与类型选择")
+) {
+  fail("deck prompt is missing source-grounding, verbatim-quote, or diagram-variety constraints");
+} else {
+  console.log("PASS  deck prompt: source-grounding + quotes + varied SVG diagrams");
+}
+
+const userContent = promptMessages[1]?.content;
+if (!Array.isArray(userContent) || userContent.length !== 3) {
+  fail("deck prompt did not attach the uploaded image as a labeled multimodal part");
+} else {
+  const payloadPart = userContent[0];
+  const markerPart = userContent[1];
+  const imagePart = userContent[2];
+  const payload = payloadPart.type === "text" ? JSON.parse(payloadPart.text) as Record<string, unknown> : undefined;
+  const availableImages = payload && Array.isArray(payload.available_images) ? payload.available_images as Array<Record<string, unknown>> : [];
+  const imageMetadata = availableImages[0];
+  if (
+    !payload ||
+    imageMetadata?.ref !== "img1" ||
+    "dataUri" in (imageMetadata ?? {}) ||
+    markerPart.type !== "text" ||
+    !markerPart.text.includes("ref=img1") ||
+    imagePart.type !== "image_url" ||
+    imagePart.image_url.url !== "data:image/png;base64,aW1hZ2U="
+  ) {
+    fail("deck prompt image ref, metadata, and visual content are not mapped safely");
+  } else {
+    console.log("PASS  deck prompt: image ref maps to inspected visual content without base64 in JSON");
+  }
 }
 
 if (failures) {

@@ -52,6 +52,18 @@ function uid(): string {
   return crypto.randomUUID();
 }
 
+function attachmentReference(attachment: UploadedAttachment): UploadedAttachment {
+  return {
+    id: attachment.id,
+    originalName: attachment.originalName,
+    hash: attachment.hash,
+    extension: attachment.extension,
+    mimeType: attachment.mimeType,
+    size: attachment.size,
+    path: attachment.path
+  };
+}
+
 export function LabDeck() {
   const sessionId = useRef(randomSessionId());
   const [language, setLanguage] = useState<"zh" | "en">("zh");
@@ -61,6 +73,7 @@ export function LabDeck() {
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [draft, setDraft] = useState("");
   const [baseContext, setBaseContext] = useState(""); // uploaded/pasted document text
+  const [sourceAttachments, setSourceAttachments] = useState<UploadedAttachment[]>([]);
   const [notes, setNotes] = useState<string[]>([]); // accumulated briefs / revision instructions
   const [styleHint, setStyleHint] = useState("");
   const [template, setTemplate] = useState<UploadedAttachment | null>(null);
@@ -111,17 +124,34 @@ export function LabDeck() {
       try {
         const attachment = await uploadAttachment(file);
         const text = (attachment.extractedText ?? "").trim();
-        if (text) {
-          setBaseContext((prev) => (prev ? `${prev}\n\n${text}` : text));
+        const imageCount = attachment.images?.length ?? 0;
+        if (text || imageCount) {
+          // Keep at most two source documents so an optional template still fits
+          // the API's three-attachment generation limit. Text remains in
+          // baseContext; trusted attachment refs let the server re-read images.
+          setSourceAttachments((prev) => [
+            ...prev.filter((item) => item.hash !== attachment.hash),
+            attachment
+          ].slice(-2));
+          const sourceBlock = [
+            `【上传资料：${attachment.originalName}】`,
+            text,
+            imageCount ? `【可引用原图：${imageCount} 张】` : ""
+          ].filter(Boolean).join("\n");
+          setBaseContext((prev) => (prev ? `${prev}\n\n${sourceBlock}` : sourceBlock));
+          const importedDetails = [
+            text ? t.extractedChars.replace("{n}", text.length.toLocaleString()) : "",
+            imageCount ? t.extractedImages.replace("{n}", imageCount.toLocaleString()) : ""
+          ].filter(Boolean).join("，");
           pushEntry({
             id: uid(),
             role: "assistant",
-            content: `${t.importedDoc}：${attachment.originalName}（${t.extractedChars.replace("{n}", text.length.toLocaleString())}）`,
+            content: `${t.importedDoc}：${attachment.originalName}（${importedDetails}）`,
             status: "done"
           });
         } else {
-          // No extractable text (e.g. a scanned/image-only PDF) — say so instead
-          // of silently building the deck from the instruction alone.
+          // No extractable text or reusable image (e.g. a scanned PDF whose
+          // pages are not raster attachments) — do not silently treat it as data.
           pushEntry({
             id: uid(),
             role: "assistant",
@@ -199,10 +229,14 @@ export function LabDeck() {
           context,
           language,
           styleHint,
-          // The template contributes STYLE only — drop its extracted text so the
-          // route (which appends every attachment's text to the deck content)
-          // doesn't fold the template's own slide copy into the generated deck.
-          attachments: template ? [{ ...template, extractedText: undefined }] : [],
+          // Text is already source-labeled in `context`. Send only trusted file
+          // references so the server can re-extract original images without
+          // duplicating document text or round-tripping base64 through the client.
+          attachments: [
+            ...sourceAttachments.map(attachmentReference),
+            ...(template ? [attachmentReference(template)] : [])
+          ],
+          templateHash: template?.hash,
           sessionId: sessionId.current
         })
       });
@@ -222,13 +256,14 @@ export function LabDeck() {
     } finally {
       setBusy(false);
     }
-  }, [busy, draft, deck, notes, baseContext, language, styleHint, template, pushEntry, patchEntry, t]);
+  }, [busy, draft, deck, notes, baseContext, sourceAttachments, language, styleHint, template, pushEntry, patchEntry, t]);
 
   const newConversation = useCallback(() => {
     sessionId.current = randomSessionId();
     setEntries([]);
     setDraft("");
     setBaseContext("");
+    setSourceAttachments([]);
     setNotes([]);
     setStyleHint("");
     setTemplate(null);
@@ -380,9 +415,9 @@ export function LabDeck() {
 
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="chat-toolbar-button">
                   {uploading ? <Loader2 size={13} className="animate-spin" /> : <FileUp size={13} />}
-                  <span>{uploading ? t.parsing : baseContext ? t.docReady : t.uploadDoc}</span>
+                  <span>{uploading ? t.parsing : baseContext || sourceAttachments.length ? t.docReady : t.uploadDoc}</span>
                 </button>
-                <input ref={fileInputRef} type="file" accept=".pdf,.docx,.pptx,.md,.txt" className="hidden" onChange={(e) => void onUploadDoc(e.target.files?.[0])} />
+                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.pptx,.md,.png,.jpg,.jpeg" className="hidden" onChange={(e) => void onUploadDoc(e.target.files?.[0])} />
 
                 <button type="button" onClick={() => templateInputRef.current?.click()} disabled={uploading} className="chat-toolbar-button">
                   <Palette size={13} />
@@ -596,6 +631,7 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     sourceHeading: "源文档（请基于以下内容制作 PPT）",
     directiveHeading: "用户要求（风格与调整，不要改变上面的事实内容）",
     extractedChars: "已读取约 {n} 字",
+    extractedImages: "已提取 {n} 张可引用原图",
     noTextWarning: "未能从该文件提取到文字（可能是扫描件/图片型 PDF），请改为粘贴文字或换一个文件",
     parsing: "解析中…",
     generatedTo: "已生成",
@@ -646,6 +682,7 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     sourceHeading: "Source document (build the deck from this content)",
     directiveHeading: "User directives (style/scope; do not alter the facts above)",
     extractedChars: "read ~{n} chars",
+    extractedImages: "extracted {n} reusable source image(s)",
     noTextWarning: "no text could be extracted (likely a scanned/image-only PDF) — paste the text or try another file",
     parsing: "Parsing…",
     generatedTo: "Generated",

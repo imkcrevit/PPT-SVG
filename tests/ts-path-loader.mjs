@@ -37,5 +37,13 @@ function withExtension(filePath) {
     }
   }
 
+  for (const extension of [".ts", ".tsx", ".mjs", ".js"]) {
+    const candidate = path.join(filePath, `index${extension}`);
+
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
   return undefined;
 }
