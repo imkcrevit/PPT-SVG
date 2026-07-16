@@ -8,6 +8,8 @@ import {
   classifySlide,
   deckToPptx,
   extractDeckTemplateFromPptx,
+  getDeckTemplate,
+  isDeckTemplateId,
   MAX_DECK_SLIDES,
   readDeck,
   repairAndCompileDiagram,
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
       context?: unknown;
       language?: unknown;
       styleHint?: unknown;
+      templateId?: unknown;
       themeOverride?: unknown;
       attachments?: unknown;
       templateHash?: unknown;
@@ -67,6 +70,7 @@ export async function POST(request: Request) {
     const language: Locale = isLocale(rawLanguage) ? rawLanguage : "zh";
     const sessionId = normalizeSessionId(typeof body.sessionId === "string" ? body.sessionId : undefined);
     const styleHint = typeof body.styleHint === "string" ? body.styleHint.slice(0, 400) : "";
+    const selectedTemplate = getDeckTemplate(isDeckTemplateId(body.templateId) ? body.templateId : undefined);
     const attachments = sanitizeUploadedAttachments(body.attachments);
     const templateHash = typeof body.templateHash === "string" ? body.templateHash.toLowerCase() : "";
     const templateAttachment = attachments.find(
@@ -103,12 +107,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Provide context text or an uploaded document to build a deck from." }, { status: 400 });
     }
 
-    // Style: an uploaded template's theme wins; otherwise resolve a text style
-    // hint; otherwise the default theme.
-    const { theme: templateTheme } = await resolveStyleContext(
-      templateAttachment ? [templateAttachment] : attachments
-    );
-    let theme = templateTheme ?? resolveTheme();
+    // Style precedence: an explicitly uploaded template wins, then the selected
+    // built-in category, then an optional free-text fine-tune.
+    const { theme: templateTheme } = await resolveStyleContext(templateAttachment ? [templateAttachment] : []);
+    let theme = templateTheme ?? resolveTheme(selectedTemplate.theme);
     if (!templateTheme && styleHint) {
       const intent = await resolveThemeIntent(styleHint, {}, (msgs) =>
         callOpenRouter(msgs as ChatMessage[], { temperature: 0, maxCompletionTokens: 400 })
@@ -128,10 +130,12 @@ export async function POST(request: Request) {
     const imageRefs = deckImages.map((image, index) => ({ ref: `img${index + 1}`, image }));
     const imageMap = new Map(imageRefs.map((r) => [r.ref, r.image.dataUri]));
 
+    const categoryLabel = selectedTemplate.category?.[language] ?? selectedTemplate.name[language];
+    const selectedStyleLabel = `${categoryLabel} · ${selectedTemplate.name[language]}`;
     const messages = await buildDeckMessages({
       context,
       language,
-      styleHint,
+      styleHint: templateAttachment ? styleHint : [selectedStyleLabel, styleHint].filter(Boolean).join("；"),
       images: imageRefs.map((r) => ({
         ref: r.ref,
         source: r.image.source,
@@ -222,7 +226,7 @@ export async function POST(request: Request) {
     // Derive a layout template (title/body coordinates + fonts) from an uploaded
     // .pptx so the deck matches the user's template placement, not just its colors.
     let deckTemplate: DeckTemplate | undefined;
-    const pptxAttachment = templateAttachment ?? [...attachments].reverse().find((a) => a.extension === "pptx");
+    const pptxAttachment = templateAttachment;
     if (pptxAttachment) {
       try {
         const derived = await extractDeckTemplateFromPptx(Buffer.from(await readFile(pptxAttachment.path)), "uploaded");
@@ -236,7 +240,14 @@ export async function POST(request: Request) {
       }
     }
 
-    const deck: Deck = { title: shell.title, language: shell.language, palette: buildPalette(theme), slides, template: deckTemplate };
+    const deck: Deck = {
+      title: shell.title,
+      language: shell.language,
+      palette: buildPalette(theme),
+      slides,
+      templateId: selectedTemplate.id,
+      template: deckTemplate
+    };
     const pptx = await deckToPptx(deck);
 
     return NextResponse.json({

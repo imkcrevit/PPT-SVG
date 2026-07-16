@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { buildPalette, classifySlide, deckToPptx, textSlideFrom, validateDeckTemplate, type Deck, type DeckSlide, type DeckTemplate } from "@/features/deck";
+import {
+  buildPalette,
+  classifySlide,
+  deckToPptx,
+  getDeckTemplate,
+  isDeckTemplateId,
+  textSlideFrom,
+  validateDeckTemplate,
+  type Deck,
+  type DeckSlide,
+  type DeckTemplate
+} from "@/features/deck";
 import { validateAndNormalizeFigureResponse } from "@/features/svg";
 import { isLocale } from "@/lib/i18n";
 import { readLimitedJson, securityJson } from "@/lib/request-security";
@@ -28,6 +39,7 @@ export async function POST(request: Request) {
     const rawLanguage = typeof deckRecord.language === "string" ? deckRecord.language : "";
     const language: Locale = isLocale(rawLanguage) ? rawLanguage : "zh";
     const title = typeof deckRecord.title === "string" ? deckRecord.title.slice(0, 120) || "Deck" : "Deck";
+    const templateId = isDeckTemplateId(deckRecord.templateId) ? deckRecord.templateId : getDeckTemplate().id;
     const rawSlides = Array.isArray(deckRecord.slides) ? deckRecord.slides : [];
 
     const slides: DeckSlide[] = [];
@@ -110,7 +122,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const deck: Deck = { title, language, palette: buildPalette(theme), slides, template };
+    const deck: Deck = { title, language, palette: buildPalette(theme), slides, templateId, template };
     const pptx = await deckToPptx(deck);
     const responseBody = pptx.buffer.slice(pptx.byteOffset, pptx.byteOffset + pptx.byteLength) as ArrayBuffer;
 

@@ -3,7 +3,9 @@
 // Figure with no off-canvas elements. Run: npm run test:deck
 
 import {
+  DECK_STYLE_OPTIONS,
   DECK_TEMPLATES,
+  getDeckTemplate,
   textSlideToFigure,
   withDeckChrome,
   validateDeckTemplate,
@@ -14,7 +16,7 @@ import type { DeckPalette, DeckSlide } from "@/features/deck/types";
 
 const W = 1280;
 const H = 720;
-const palette: DeckPalette = { background: "#FFFFFF", accent: "#33B1FF", text: "#0E1E36", subtext: "#5B6B80" };
+const sampleImage = "data:image/png;base64,aW1hZ2U=";
 
 const sampleSlides: DeckSlide[] = [
   { kind: "cover", title: "申报PPT科技风优化方案", subtitle: "优化文档表现力，并保留原申报数据" },
@@ -32,7 +34,10 @@ const sampleSlides: DeckSlide[] = [
       "第七条要点用于压力测试行高与换行",
       "第八条要点（应被 maxRows 截断或压缩）"
     ]
-  }
+  },
+  { kind: "toc", title: "目录", items: ["项目背景", "核心方法", "实施路径", "预期价值"] },
+  { kind: "image", title: "资料原图", src: sampleImage, caption: "来源：用户上传资料" },
+  { kind: "image-bullets", title: "原图与关键信息", src: sampleImage, bullets: ["保留资料原图", "正文引用原文", "结论不超出资料"] }
 ];
 
 let failures = 0;
@@ -43,7 +48,7 @@ const fail = (msg: string) => {
 
 function offCanvas(figure: { elements: Array<Record<string, number | string>> }): number {
   return figure.elements.filter((e) => {
-    if (e.type === "rect") {
+    if (e.type === "rect" || e.type === "image") {
       return (e.x as number) < -0.5 || (e.y as number) < -0.5 || (e.x as number) + (e.width as number) > W + 0.5 || (e.y as number) + (e.height as number) > H + 0.5;
     }
     if (e.type === "text") {
@@ -53,7 +58,28 @@ function offCanvas(figure: { elements: Array<Record<string, number | string>> })
   }).length;
 }
 
+const ids = DECK_TEMPLATES.map((template) => template.id);
+if (DECK_TEMPLATES.length !== 7) fail(`expected 7 built-in style categories, received ${DECK_TEMPLATES.length}`);
+if (new Set(ids).size !== ids.length) fail("built-in style ids must be unique");
+if (DECK_STYLE_OPTIONS.length !== DECK_TEMPLATES.length) fail("style-picker options are out of sync with templates");
+if (getDeckTemplate("academic").id !== "academic" || getDeckTemplate("missing").id !== "tech") {
+  fail("template lookup or default fallback is incorrect");
+}
+
+const previewSignatures = new Set(
+  DECK_STYLE_OPTIONS.map((option) => [option.preview.background, ...option.preview.accents].join("|"))
+);
+if (previewSignatures.size !== DECK_TEMPLATES.length) fail("each style category needs a distinct preview palette");
+else console.log(`PASS  style registry: ${DECK_TEMPLATES.length} unique categories and preview palettes`);
+
 for (const tpl of DECK_TEMPLATES) {
+  const palette: DeckPalette = {
+    background: tpl.theme?.background ?? "#FFFFFF",
+    accent: tpl.theme?.accents[0]?.stroke ?? "#33B1FF",
+    text: tpl.theme?.text ?? "#0E1E36",
+    subtext: tpl.theme?.subtext ?? "#5B6B80",
+    fontFamily: tpl.theme?.fontFamily
+  };
   const issues = validateDeckTemplate(tpl);
   if (issues.length) {
     issues.forEach((i) => fail(i));
@@ -66,6 +92,7 @@ for (const tpl of DECK_TEMPLATES) {
     const fig = textSlideToFigure(slide, palette, ctx(i), tpl.id);
     const bad = offCanvas(fig as never);
     if (bad) fail(`${tpl.id}/${slide.kind}: ${bad} off-canvas element(s)`);
+    else if (fig.metadata.language !== "zh") fail(`${tpl.id}/${slide.kind}: figure language was not preserved`);
     else console.log(`PASS  ${tpl.id}/${slide.kind}: ${fig.elements.length} elements, on-canvas`);
   });
 

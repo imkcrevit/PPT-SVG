@@ -659,13 +659,71 @@ svg text {
   text-transform: uppercase;
 }
 
+.chat-toolbar-field input,
 .chat-toolbar-field select {
   height: 32px;
+  width: 100%;
   min-width: 0;
   border: 0;
   background: transparent;
   color: var(--dark);
   font-size: 12px;
+  outline: none;
+}
+
+.chat-toolbar-field input::placeholder {
+  color: var(--faint);
+}
+
+.lab-style-field {
+  grid-column: 1 / -1;
+}
+
+.lab-style-control {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.lab-style-swatches {
+  display: flex;
+  min-width: 70px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid rgba(82, 96, 122, 0.2);
+  padding: 0 6px;
+}
+
+.lab-style-swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(29, 36, 51, 0.1);
+}
+
+.lab-style-note {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.lab-style-note button {
+  flex: none;
+  color: var(--accent2);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .chat-toolbar-button {

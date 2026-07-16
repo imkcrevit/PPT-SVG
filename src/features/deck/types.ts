@@ -30,6 +30,8 @@ export interface Deck {
   language: Locale;
   palette: DeckPalette;
   slides: DeckSlide[];
-  /** Layout derived from an uploaded .pptx template; falls back to the built-in. */
+  /** Registered built-in style. Also retained as the fallback for uploaded templates. */
+  templateId?: string;
+  /** Layout derived from an uploaded .pptx template; takes precedence over templateId. */
   template?: DeckTemplate;
 }

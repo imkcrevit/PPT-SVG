@@ -23,10 +23,15 @@ reuses the exact same layout + render path as single-diagram generation.
 A template is **data**, not code. It has design tokens plus, per slide kind, a
 `master` — an ordered list of positioned blocks on a fixed 1280×720 canvas. An
 interpreter turns `(template + slide + context)` into a Figure of plain
-`rect`/`text` elements, so the SVG preview and the PPTX export render it
+`rect`/`text`/`image` elements, so the SVG preview and the PPTX export render it
 identically and the layout is literally constrained by JSON.
 
-To add your own look: copy `TECH_TEMPLATE`, change tokens/coordinates, give it a
+Seven built-in categories are registered today: dark tech, corporate blue,
+academic paper, civic red, natural green, creative studio, and minimal
+editorial. Each one supplies its own cover, section, TOC, bullets, image,
+image+bullets, and diagram masters plus a matching SVG diagram theme.
+
+To add another look: define a template, change tokens/coordinates, give it a
 unique `id`, and append it to `DECK_TEMPLATES`. Then run `npm run test:deck`
 (`validateDeckTemplate` checks every block stays on-canvas and every color
 reference resolves).
@@ -42,12 +47,12 @@ reference resolves).
 - **Bullets** — one `bullets` block per bullets master lays out the slide's
   bullets between `yTop`/`yBottom` (capped at `maxRows`), each with a marker rect
   and a wrapped text run.
-- **Blocks** are `rect` | `text` | `bullets`; `masters.diagram.blocks` overlay a
+- **Blocks** are `rect` | `text` | `bullets` | `image`; `masters.diagram.blocks` overlay a
   compiled diagram (e.g. the page-number footer) via `withDeckChrome`.
 
-`textSlideToFigure` / `withDeckChrome` take an optional `templateId` (defaults to
-the first registered template), so a deck can select a template later without
-touching the exporter or UI.
+`Deck.templateId` selects a built-in style end to end. `textSlideToFigure` /
+`withDeckChrome` accept either that id or a full uploaded template; an uploaded
+template takes precedence while the id remains a safe export fallback.
 
 ## Flow
 

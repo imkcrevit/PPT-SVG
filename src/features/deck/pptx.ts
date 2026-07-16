@@ -4,11 +4,12 @@ import { textSlideToFigure, withDeckChrome, type DeckChromeContext } from "./tem
 import type { Deck } from "./types";
 
 // Compile a Deck into a multi-slide PPTX. Every slide — text or diagram — is
-// turned into a Figure (text slides via the tech-blue template, diagram slides
-// with a page-number footer) and rendered through the shared figure exporter,
+// turned into a Figure (text slides via the selected template, diagram slides
+// with matching template chrome) and rendered through the shared figure exporter,
 // so the PPTX matches the on-screen preview exactly.
 export async function deckToPptx(deck: Deck): Promise<Buffer> {
   const pptx = createDeck({ title: deck.title, fontFamily: deck.palette.fontFamily });
+  const templateRef = deck.template ?? deck.templateId;
   deck.slides.forEach((slide, index) => {
     const ctx: DeckChromeContext = {
       index,
@@ -18,8 +19,8 @@ export async function deckToPptx(deck: Deck): Promise<Buffer> {
     };
     const figure =
       slide.kind === "diagram"
-        ? withDeckChrome(slide.figure, deck.palette, ctx, deck.template)
-        : textSlideToFigure(slide, deck.palette, ctx, deck.template);
+        ? withDeckChrome(slide.figure, deck.palette, ctx, templateRef)
+        : textSlideToFigure(slide, deck.palette, ctx, templateRef);
     addFigureSlide(pptx, figure);
   });
   return writeDeck(pptx);

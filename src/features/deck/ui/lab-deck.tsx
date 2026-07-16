@@ -4,7 +4,7 @@ import { CheckCircle2, FileUp, Loader2, MessageSquarePlus, Palette, Send } from 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FigureSvg } from "@/components/figure-svg";
-import { textSlideToFigure, withDeckChrome } from "@/features/deck/template";
+import { DECK_STYLE_OPTIONS, textSlideToFigure, withDeckChrome } from "@/features/deck/template";
 import type { Deck, DeckSlide } from "@/features/deck/types";
 import { appUrl } from "@/lib/app-url";
 import type { UploadedAttachment } from "@/lib/types";
@@ -76,7 +76,12 @@ export function LabDeck() {
   const [sourceAttachments, setSourceAttachments] = useState<UploadedAttachment[]>([]);
   const [notes, setNotes] = useState<string[]>([]); // accumulated briefs / revision instructions
   const [styleHint, setStyleHint] = useState("");
+  const [templateStyleId, setTemplateStyleId] = useState(DECK_STYLE_OPTIONS[0].id);
   const [template, setTemplate] = useState<UploadedAttachment | null>(null);
+  const selectedStyle = useMemo(
+    () => DECK_STYLE_OPTIONS.find((option) => option.id === templateStyleId) ?? DECK_STYLE_OPTIONS[0],
+    [templateStyleId]
+  );
 
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -229,6 +234,7 @@ export function LabDeck() {
           context,
           language,
           styleHint,
+          templateId: templateStyleId,
           // Text is already source-labeled in `context`. Send only trusted file
           // references so the server can re-extract original images without
           // duplicating document text or round-tripping base64 through the client.
@@ -256,7 +262,7 @@ export function LabDeck() {
     } finally {
       setBusy(false);
     }
-  }, [busy, draft, deck, notes, baseContext, sourceAttachments, language, styleHint, template, pushEntry, patchEntry, t]);
+  }, [busy, draft, deck, notes, baseContext, sourceAttachments, language, styleHint, templateStyleId, template, pushEntry, patchEntry, t]);
 
   const newConversation = useCallback(() => {
     sessionId.current = randomSessionId();
@@ -266,6 +272,7 @@ export function LabDeck() {
     setSourceAttachments([]);
     setNotes([]);
     setStyleHint("");
+    setTemplateStyleId(DECK_STYLE_OPTIONS[0].id);
     setTemplate(null);
     setDeck(null);
     setWarnings([]);
@@ -425,6 +432,40 @@ export function LabDeck() {
                 </button>
                 <input ref={templateInputRef} type="file" accept=".pptx" className="hidden" onChange={(e) => void onUploadTemplate(e.target.files?.[0])} />
 
+                <label className="chat-toolbar-field lab-style-field">
+                  <span>{t.templateStyleLabel}</span>
+                  <div className="lab-style-control">
+                    <select
+                      value={templateStyleId}
+                      disabled={Boolean(template)}
+                      onChange={(e) => setTemplateStyleId(e.target.value)}
+                      aria-label={t.templateStyleLabel}
+                    >
+                      {DECK_STYLE_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.category[language]} · {option.name[language]}
+                        </option>
+                      ))}
+                    </select>
+                    <div
+                      className="lab-style-swatches"
+                      style={{ backgroundColor: selectedStyle.preview.background }}
+                      aria-hidden="true"
+                    >
+                      <i className="lab-style-swatch" style={{ backgroundColor: selectedStyle.preview.foreground }} />
+                      {selectedStyle.preview.accents.slice(0, 3).map((color) => (
+                        <i key={color} className="lab-style-swatch" style={{ backgroundColor: color }} />
+                      ))}
+                    </div>
+                  </div>
+                </label>
+                <div className="lab-style-note">
+                  <span>{template ? t.uploadedTemplateOverrides : selectedStyle.description[language]}</span>
+                  {template ? (
+                    <button type="button" onClick={() => setTemplate(null)}>{t.useBuiltInStyle}</button>
+                  ) : null}
+                </div>
+
                 <label className="chat-toolbar-field">
                   <span>{t.styleLabel}</span>
                   <input type="text" value={styleHint} onChange={(e) => setStyleHint(e.target.value)} placeholder={t.stylePlaceholder} />
@@ -574,12 +615,13 @@ function SlideCard({
   t: Record<string, string>;
 }) {
   const { palette } = deck;
+  const templateRef = deck.template ?? deck.templateId;
   const ctrl = "flex h-6 w-6 items-center justify-center border border-line bg-panel text-mid transition hover:text-accent disabled:opacity-30";
   const chromeCtx = { index, total, deckTitle: deck.title, language: deck.language };
   const slideFigure =
     slide.kind === "diagram"
-      ? withDeckChrome(slide.figure, palette, chromeCtx, deck.template)
-      : textSlideToFigure(slide, palette, chromeCtx, deck.template);
+      ? withDeckChrome(slide.figure, palette, chromeCtx, templateRef)
+      : textSlideToFigure(slide, palette, chromeCtx, templateRef);
   return (
     <div className="overflow-hidden border border-line bg-panel">
       <div className="flex items-center justify-between border-b border-line px-3 py-1.5">
@@ -615,8 +657,11 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     uploadDoc: "上传文档",
     docReady: "✓ 已导入文档",
     uploadTemplate: "上传模板",
-    styleLabel: "风格",
-    stylePlaceholder: "如“蓝色科技风”",
+    templateStyleLabel: "风格品类",
+    uploadedTemplateOverrides: "已上传的 PPTX 模板将优先使用其版式与配色。",
+    useBuiltInStyle: "改用内置风格",
+    styleLabel: "风格微调",
+    stylePlaceholder: "如“更克制、增加留白”",
     chatEmpty: "描述你要做的 PPT，或先上传文档，然后发送。",
     promptLabel: "内容 / 要求",
     promptPlaceholder: "例如：把这份立项报告做成 10 页申报风格的 PPT…",
@@ -638,7 +683,7 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     updatedTo: "已更新为",
     slides: "页",
     importedDoc: "已导入文档",
-    appliedTemplate: "已应用模板配色",
+    appliedTemplate: "已应用上传模板",
     result: "结果",
     previewIdle: "预览",
     emptyState: "生成后在这里预览与编辑每一页",
@@ -666,8 +711,11 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     uploadDoc: "Upload doc",
     docReady: "✓ Doc imported",
     uploadTemplate: "Template",
-    styleLabel: "Style",
-    stylePlaceholder: "e.g. 'blue tech'",
+    templateStyleLabel: "Style category",
+    uploadedTemplateOverrides: "The uploaded PPTX template takes precedence for layout and colors.",
+    useBuiltInStyle: "Use built-in style",
+    styleLabel: "Fine-tune",
+    stylePlaceholder: "e.g. 'more restrained, more whitespace'",
     chatEmpty: "Describe the deck you want, or upload a document first, then send.",
     promptLabel: "Content / brief",
     promptPlaceholder: "e.g. Turn this proposal into a 10-slide deck…",
@@ -689,7 +737,7 @@ const strings: Record<"zh" | "en", Record<string, string>> = {
     updatedTo: "Updated to",
     slides: "slides",
     importedDoc: "Imported document",
-    appliedTemplate: "Applied template colors",
+    appliedTemplate: "Applied uploaded template",
     result: "Result",
     previewIdle: "Preview",
     emptyState: "Preview and edit each slide here after generating",
