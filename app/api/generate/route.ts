@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
+import { resolveDiagramMcpRoute } from "@/lib/diagram-mcp";
 import { reviewFigureLayout } from "@/lib/layout-review-agent";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
@@ -71,8 +72,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "userDescription is required." }, { status: 400 });
     }
 
-    const skill = getInternalSkill(body.skillId);
-    if (!skill) {
+    if (!getInternalSkill(body.skillId)) {
       console.warn(`[generate:${requestId}] rejected unknown internal skill`, { skillId: body.skillId });
       return NextResponse.json({ error: "Unknown internal skill." }, { status: 400 });
     }
@@ -117,8 +117,28 @@ export async function POST(request: Request) {
       requestId
     });
 
+    const routing = await resolveDiagramMcpRoute(generationRequest, async (messages, tools) => {
+      const result = await callTrackedOpenRouterResult(tokenRecorder!, "mcp-routing", messages, {
+        temperature: 0,
+        maxCompletionTokens: 200,
+        responseFormat: null,
+        timeoutMs: 8_000,
+        tools,
+        toolChoice: "required"
+      });
+      return result.toolCalls;
+    });
+    generationRequest.skillId = routing.skillId;
+    const skill = getInternalSkill(routing.skillId);
+    if (!skill) {
+      throw new Error(`MCP routed to unknown internal skill: ${routing.skillId}`);
+    }
+
     console.info(`[generate:${requestId}] started`, {
+      requestedSkillId: body.skillId,
       skillId: generationRequest.skillId,
+      mcpTool: routing.toolName,
+      routingSource: routing.source,
       language: generationRequest.language,
       sessionId: generationRequest.sessionId,
       conversationId: generationRequest.conversationId,
@@ -147,7 +167,7 @@ export async function POST(request: Request) {
     const requestedTheme = mergeTheme(sessionTheme, Object.keys(override).length ? override : undefined);
     const parsed = tryParseJsonObject(rawOutput);
     const validation = parsed.ok
-      ? validateAndNormalizeSemanticResponse(parsed.value, body.skillId, body.language, requestedTheme)
+      ? validateAndNormalizeSemanticResponse(parsed.value, generationRequest.skillId, body.language, requestedTheme)
       : {
           ok: false,
           errors: [`Model returned invalid JSON: ${parsed.error}`]
@@ -184,6 +204,7 @@ export async function POST(request: Request) {
         conversationTurn,
         model: getConfiguredModelLabel(),
         artifacts,
+        routing,
         context: { compressed: compressedContext }
       });
     }
@@ -205,7 +226,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const repairedValidation = validateAndNormalizeSemanticResponse(repairedParsed.value, body.skillId, body.language, requestedTheme);
+    const repairedValidation = validateAndNormalizeSemanticResponse(
+      repairedParsed.value,
+      generationRequest.skillId,
+      body.language,
+      requestedTheme
+    );
 
     if (!repairedValidation.ok || !repairedValidation.response) {
       console.warn(`[generate:${requestId}] repair failed`, {
@@ -258,6 +284,7 @@ export async function POST(request: Request) {
       conversationTurn,
       model: getConfiguredModelLabel(),
       artifacts,
+      routing,
       context: { compressed: compressedContext }
     });
   } catch (error) {
@@ -342,6 +369,16 @@ async function callTrackedOpenRouter(
   messages: ChatMessage[],
   options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
 ): Promise<string> {
+  const result = await callTrackedOpenRouterResult(tokenRecorder, operation, messages, options);
+  return result.text;
+}
+
+async function callTrackedOpenRouterResult(
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>,
+  operation: string,
+  messages: ChatMessage[],
+  options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
+): Promise<Awaited<ReturnType<typeof callOpenRouterWithUsage>>> {
   const result = await callOpenRouterWithUsage(messages, options);
   await tokenRecorder.record({
     operation,
@@ -349,7 +386,7 @@ async function callTrackedOpenRouter(
     model: result.model,
     generationId: result.generationId
   });
-  return result.text;
+  return result;
 }
 
 function normalizeConversationTurn(value: unknown): number {

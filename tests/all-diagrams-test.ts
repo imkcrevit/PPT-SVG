@@ -9,6 +9,9 @@ import {
   layoutHierarchy,
   layoutMatrix,
   layoutMindmap,
+  layoutPie,
+  layoutBar,
+  layoutLine,
   layoutPyramid,
   layoutScatter,
   layoutSwimlane,
@@ -199,6 +202,36 @@ const CASES: Case[] = [
       } as unknown as SemanticDiagram)
   },
   {
+    id: "pie",
+    build: () => layoutPie({
+      type: "pie", title: "占比", language: "zh", nodes: [
+        { id: "a", label: "A", value: 50, parent: null },
+        { id: "b", label: "B", value: 30, parent: null },
+        { id: "c", label: "C", value: 20, parent: null }
+      ]
+    } as SemanticDiagram)
+  },
+  {
+    id: "bar",
+    build: () => layoutBar({
+      type: "bar", title: "比较", language: "zh", nodes: [
+        { id: "a", label: "A", value: 12, parent: null },
+        { id: "b", label: "B", value: 30, parent: null },
+        { id: "c", label: "C", value: 20, parent: null }
+      ]
+    } as SemanticDiagram)
+  },
+  {
+    id: "line",
+    build: () => layoutLine({
+      type: "line", title: "趋势", language: "zh", nodes: [
+        { id: "a", label: "1月", value: 12, parent: null },
+        { id: "b", label: "2月", value: 30, parent: null },
+        { id: "c", label: "3月", value: 20, parent: null }
+      ]
+    } as SemanticDiagram)
+  },
+  {
     id: "scatter",
     build: () =>
       layoutScatter({
@@ -267,5 +300,5 @@ for (const c of CASES) {
   bad.slice(0, 4).forEach((b) => console.log(`        - ${b}`));
 }
 
-console.log(allPass ? "\nALL 12 TYPES PASS" : "\nSOME FAILED");
+console.log(allPass ? `\nALL ${CASES.length} TYPES PASS` : "\nSOME FAILED");
 if (!allPass) process.exitCode = 1;

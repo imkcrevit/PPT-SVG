@@ -32,6 +32,17 @@ export {
   OpenRouterError
 } from "@/lib/openrouter";
 
+// -- MCP format routing ------------------------------------------------------
+export {
+  DIAGRAM_MCP_TOOLS,
+  detectExplicitDiagramSkill,
+  diagramMcpToolName,
+  resolveDiagramMcpRoute,
+  skillIdFromDiagramMcpTool,
+  type DiagramMcpRoute,
+  type DiagramMcpRouteSource
+} from "@/lib/diagram-mcp";
+
 // -- Validation + compilation (raw model output → Figure) ---------------------
 export { validateAndNormalizeSemanticResponse } from "@/lib/semantic-figure-pipeline";
 export { validateAndNormalizeSemanticDiagram } from "@/lib/semantic-validation";

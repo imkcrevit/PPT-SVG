@@ -153,6 +153,9 @@ Current internal skills live in [`src/lib/skills.ts`](src/lib/skills.ts) and loa
 | `radar` | Radar | 雷达图 | Multi-axis comparison with supplied values. / 多维指标对比。 | 根据资料里的五项评分生成雷达图。 |
 | `heatmap` | Heatmap | 热力图 | Two-dimensional intensity tables. / 二维强度表。 | 根据资料中的风险等级生成热力图。 |
 | `waterfall` | Waterfall | 瀑布图 | Additive changes from a supplied baseline. / 基线与增减变化。 | 根据资料中的预算增减项生成瀑布图。 |
+| `pie` | Pie / Donut | 饼图 / 环形图 | Composition and percentage breakdowns. / 构成与占比。 | 根据资料中的直营 50、合作伙伴 30、线上 20 生成饼图。 |
+| `bar` | Bar / Column | 柱状图 / 条形图 | Numeric category comparison. / 类别数值对比。 | 根据四个季度的明确收入数值生成柱状图。 |
+| `line` | Line / Trend | 折线图 / 趋势图 | Ordered numeric change. / 有序数值趋势。 | 根据一月至六月的明确数值生成折线图。 |
 
 ## Test Case Evidence
 
@@ -184,15 +187,18 @@ npm run build
 npm run test:snapshots
 npm run test:layout
 npm run test:theme
+npm run test:ui-selection
+npm run test:mcp-routing
+npm run test:mcp
 ```
 
 ## Current scope
 
-- Internal diagram types: `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, and `waterfall`.
+- Internal diagram types: `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, `waterfall`, `pie`, `bar`, and `line`.
 - Prompt files live in `/prompt` and are loaded by the server.
 - SVG exports the current visual as vector SVG, figure JSON, or editable one-slide PPTX.
 - PPT exports a complete PPTX and supports uploaded documents, images, and PPTX templates.
-- The installable `svg` and `ppt` skills live under `plugins/ppt-svg/skills` and are published through the repo marketplace.
+- The installable `svg` and `ppt` skills live under `plugins/ppt-svg/skills`; the same plugin registers one MCP tool per diagram type through `plugins/ppt-svg/.mcp.json`.
 
 ## Optional Reverse Proxy
 

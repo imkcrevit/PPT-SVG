@@ -11,6 +11,7 @@ Import from `@/features/svg` only — internals stay private.
 ```
 prompt build   buildGenerateMessages · buildRepairMessages · buildVisualRevisionMessages · loadPrompt
 transport      callOpenRouter · getConfiguredModelLabel · OpenRouterError
+routing        DIAGRAM_MCP_TOOLS · resolveDiagramMcpRoute · diagramMcpToolName
 compile        validateAndNormalizeSemanticResponse · validateAndNormalizeSemanticDiagram
                validateAndNormalizeFigureResponse · layoutDiagram
 registry       INTERNAL_SKILLS · getInternalSkill · isSkillId
@@ -22,10 +23,10 @@ types          Figure · FitAssessment · Locale · SkillId · InternalSkill
 ## Pipeline
 
 ```
-request ──▶ buildGenerateMessages ──▶ callOpenRouter ──▶ validateAndNormalizeSemanticResponse
-                                                              │
-                                                              ▼
-                                                        layoutDiagram ──▶ Figure ──▶ SVG / PPTX
+request ──▶ MCP format router ──▶ matching internal skill ──▶ buildGenerateMessages
+                                                                  │
+                                                                  ▼
+                   SVG / PPTX ◀── Figure ◀── layoutDiagram ◀── validated semantic JSON
 ```
 
 ## Boundary rule

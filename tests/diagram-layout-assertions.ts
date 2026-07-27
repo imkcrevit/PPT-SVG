@@ -339,6 +339,63 @@ const CASES: Case[] = [
     }
   },
   {
+    id: "pie", skill: "pie",
+    raw: { type: "pie", title: "渠道占比", language: "zh", nodes: [
+      { id: "a", label: "直营", value: 50, parent: null },
+      { id: "b", label: "合作伙伴", value: 30, parent: null },
+      { id: "c", label: "线上", value: 20, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const slices = byPrefix(fig.elements, "pie-slice-").filter((e) => e.type === "polygon");
+      if (slices.length !== 3) bad.push(`expected 3 pie wedges, got ${slices.length}`);
+      const values = byPrefix(fig.elements, "pie-legend-value-").filter((e) => e.type === "text");
+      if (values.length !== 3) bad.push(`expected 3 legend values, got ${values.length}`);
+      return bad;
+    }
+  },
+  {
+    id: "pie-missing-values", skill: "pie",
+    raw: { type: "pie", title: "待补数据", language: "zh", nodes: [
+      { id: "a", label: "A", parent: null }, { id: "b", label: "B", parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      if (!flatten(fig.elements).some((e) => e.id === "pie-empty" && e.type === "ellipse")) bad.push("missing no-values pie state");
+      if (byPrefix(fig.elements, "pie-slice-").length) bad.push("must not invent pie proportions without values");
+      return bad;
+    }
+  },
+  {
+    id: "bar", skill: "bar",
+    raw: { type: "bar", title: "季度收入", language: "zh", nodes: [
+      { id: "q1", label: "Q1", value: 12, parent: null }, { id: "q2", label: "Q2", value: 27, parent: null },
+      { id: "q3", label: "Q3", value: 19, parent: null }, { id: "q4", label: "Q4", value: 35, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const bars = byPrefix(fig.elements, "bar-column-").filter((e) => e.type === "rect") as Array<{ height: number }>;
+      if (bars.length !== 4) bad.push(`expected 4 bars, got ${bars.length}`);
+      if (distinct(bars.map((bar) => Math.round(bar.height))) < 3) bad.push("bar values did not produce distinct heights");
+      return bad;
+    }
+  },
+  {
+    id: "line", skill: "line",
+    raw: { type: "line", title: "月度趋势", language: "zh", nodes: [
+      { id: "m1", label: "1月", value: 10, parent: null }, { id: "m2", label: "2月", value: 16, parent: null },
+      { id: "m3", label: "3月", value: 13, parent: null }, { id: "m4", label: "4月", value: 24, parent: null }
+    ], edges: [] },
+    assert: (fig) => {
+      const bad: string[] = [];
+      const dots = byPrefix(fig.elements, "line-dot-").filter((e) => e.type === "ellipse");
+      const segments = byPrefix(fig.elements, "line-segment-").filter((e) => e.type === "line");
+      if (dots.length !== 4) bad.push(`expected 4 line points, got ${dots.length}`);
+      if (segments.length !== 3) bad.push(`expected 3 line segments, got ${segments.length}`);
+      return bad;
+    }
+  },
+  {
     id: "fishbone", skill: "fishbone",
     raw: { type: "fishbone", title: "根因", language: "zh", nodes: [
       { id: "c1", label: "人员", parent: null }, { id: "c2", label: "流程", parent: null }, { id: "c3", label: "工具", parent: null },

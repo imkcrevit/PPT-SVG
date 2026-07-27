@@ -73,7 +73,7 @@ Right:
 
 ## Fields
 
-- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, `waterfall`. Match the selected skill when possible.
+- `type`: one of `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, `waterfall`, `pie`, `bar`, `line`. Match the MCP-routed skill.
 - `language`: `zh` for Simplified Chinese, `en` for English.
 - `direction`: optional `horizontal` or `vertical`.
 - `nodes`: up to 40 nodes. Every node has `id`, `label`, and `parent`.
@@ -86,6 +86,7 @@ Right:
 - `start` / `end`: required for `gantt` task nodes when the user provides a schedule. Use numeric baseline values such as week/day/month indexes.
 - `lane`: required for `swimlane` step nodes when lanes are known.
 - `score`: optional `{ "x": number, "y": number }` for `scatter`, normalized either as `0..1` or common `0..100` scores.
+- `value`: numeric value for each top-level `pie`, `bar`, or `line` node. Use only sourced/user-provided values; omit it rather than inventing data.
 - `edges`: connections between existing node ids.
 - `edge.label`: optional short relationship word.
 - `edge.dashed`: optional `true` for feedback loops, retry/rewrite paths, optional links, or async links.

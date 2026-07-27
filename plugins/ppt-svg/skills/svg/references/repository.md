@@ -15,6 +15,7 @@ Use the repository workflow only when the current checkout contains this project
 | SVG rendering | `src/components/figure-svg.tsx` |
 | Editable PPTX rendering | `src/lib/pptx.ts` |
 | HTTP generation | `POST /api/generate` |
+| MCP routing and registry | `src/lib/diagram-mcp.ts`, `plugins/ppt-svg/mcp/server.mjs` |
 | Multi-format bundle | `POST /api/export/bundle` |
 | Public UI | `/svg/[locale]`, `src/components/workspace.tsx` |
 

@@ -21,7 +21,7 @@ Create a complete presentation whose claims, structure, short quotations, and im
 3. Create the smallest coherent slide sequence supported by that evidence. Do not pad the deck with generic industry content.
 4. Use 1–3 short verbatim excerpts only when the source contains representative complete sentences. Copy them exactly, keep them short, and attribute the filename. Never put quotation marks around a paraphrase.
 5. Prefer uploaded original images when they directly support a slide. Use an SVG diagram only when the source explicitly supplies a process, hierarchy, comparison, timeline, role split, or relationship that benefits from visualization.
-6. Preserve the source's node count, names, direction, order, and relationships in diagram slides. Invoke `$svg` for their generation or repair; do not reimplement diagram layout inside this skill.
+6. Preserve the source's node count, names, direction, order, and relationships in diagram slides. Invoke `$svg` and its matching `render_<type>_svg` MCP tool for generation or repair; do not reimplement diagram layout inside this skill.
 7. If information is missing, reduce scope or ask a focused question. Never invent metrics, milestones, roles, customer quotes, citations, or conclusions.
 
 ## Generate with the bundled client

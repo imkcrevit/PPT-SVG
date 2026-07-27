@@ -1070,6 +1070,186 @@ function nodesLabelMax(nodes: SemanticNode[]): string {
   return nodes.reduce((longest, n) => (n.label.length > longest.length ? n.label : longest), "");
 }
 
+function nodeNumericValue(node: SemanticNode): number | undefined {
+  if (typeof node.value === "number" && Number.isFinite(node.value)) {
+    return node.value;
+  }
+
+  // Backward compatibility for early chart prompts that placed a single value
+  // in score.x before the dedicated chart value field existed.
+  const scoreValue = node.score?.x;
+  return typeof scoreValue === "number" && Number.isFinite(scoreValue) ? scoreValue : undefined;
+}
+
+function formatChartValue(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+}
+
+function missingValuesLabel(language: "zh" | "en"): string {
+  return language === "zh" ? "请提供数值" : "Values required";
+}
+
+// ============================================================ PIE / composition chart
+export function layoutPie(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const slices = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (slices.length === 0) return frame(diagram, elements, canvasBg);
+
+  const values = slices.map(nodeNumericValue);
+  const positive = values.map((value) => Math.max(0, value ?? 0));
+  const total = positive.reduce((sum, value) => sum + value, 0);
+  const cx = 365;
+  const cy = 420;
+  const radius = 205;
+  const legendX = 690;
+  const legendWidth = W - MARGIN - legendX;
+  const legendRowH = Math.min(54, 390 / Math.max(1, slices.length));
+  const legendTop = cy - (legendRowH * slices.length) / 2;
+
+  if (total > 0) {
+    let angle = -Math.PI / 2;
+    slices.forEach((node, index) => {
+      const value = positive[index];
+      if (value <= 0) return;
+      const nextAngle = angle + (value / total) * Math.PI * 2;
+      const segmentCount = Math.max(3, Math.ceil((nextAngle - angle) / (Math.PI / 32)));
+      const points = [{ x: cx, y: cy }];
+      for (let segment = 0; segment <= segmentCount; segment += 1) {
+        const current = angle + ((nextAngle - angle) * segment) / segmentCount;
+        points.push({ x: cx + Math.cos(current) * radius, y: cy + Math.sin(current) * radius });
+      }
+      elements.push({
+        id: `pie-slice-${index}`,
+        type: "polygon",
+        name: node.label,
+        points,
+        fill: accent(index).stroke,
+        stroke: canvasBg,
+        strokeWidth: 3
+      });
+      angle = nextAngle;
+    });
+    elements.push({ id: "pie-outline", type: "ellipse", name: "pie outline", cx, cy, rx: radius, ry: radius, fill: "none", stroke: "#D6DAE2", strokeWidth: 1 });
+  } else {
+    elements.push({ id: "pie-empty", type: "ellipse", name: "pie awaiting values", cx, cy, rx: radius, ry: radius, fill: accent(0).tint, stroke: accent(0).stroke, strokeWidth: 2, dash: true });
+    elements.push({ id: "pie-empty-label", type: "text", name: "values required", x: cx - radius + 30, y: cy - 20, width: (radius - 30) * 2, height: 40, text: missingValuesLabel(diagram.language), fontSize: 22, fontWeight: 700, fill: TEXT, textAnchor: "middle" });
+  }
+
+  slices.forEach((node, index) => {
+    const rowY = legendTop + index * legendRowH;
+    const value = values[index];
+    const suffix = value === undefined ? "—" : total > 0 ? `${formatChartValue(value)} · ${Math.round((Math.max(0, value) / total) * 1000) / 10}%` : formatChartValue(value);
+    elements.push({ id: `pie-legend-dot-${index}`, type: "ellipse", name: `${node.label} color`, cx: legendX + 9, cy: rowY + legendRowH / 2, rx: 8, ry: 8, fill: accent(index).stroke, stroke: "none", strokeWidth: 0 });
+    elements.push({ id: `pie-legend-label-${index}`, type: "text", name: `${node.label} label`, x: legendX + 30, y: rowY, width: legendWidth - 150, height: legendRowH, text: node.label, fontSize: 15, fontWeight: 650, fill: TEXT, textAnchor: "start" });
+    elements.push({ id: `pie-legend-value-${index}`, type: "text", name: `${node.label} value`, x: W - MARGIN - 120, y: rowY, width: 120, height: legendRowH, text: suffix, fontSize: 13, fontWeight: 600, fill: value === undefined ? SUBTEXT : TEXT, textAnchor: "end" });
+  });
+
+  return frame(diagram, elements, canvasBg);
+}
+
+// ============================================================ BAR / category comparison chart
+export function layoutBar(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const categories = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (categories.length === 0) return frame(diagram, elements, canvasBg);
+
+  const values = categories.map(nodeNumericValue);
+  const numeric = values.filter((value): value is number => value !== undefined);
+  const left = MARGIN + 58;
+  const right = W - MARGIN;
+  const top = MARGIN + TITLE_H + 28;
+  const bottom = H - MARGIN - 52;
+  const minValue = Math.min(0, ...(numeric.length ? numeric : [0]));
+  const maxValue = Math.max(0, ...(numeric.length ? numeric : [1]));
+  const span = maxValue - minValue || 1;
+  const yOf = (value: number) => bottom - ((value - minValue) / span) * (bottom - top);
+  const baselineY = yOf(0);
+  const slot = (right - left) / categories.length;
+  const barWidth = Math.min(104, slot * 0.62);
+
+  for (let tick = 0; tick <= 4; tick += 1) {
+    const value = minValue + (span * tick) / 4;
+    const y = yOf(value);
+    elements.push({ id: `bar-grid-${tick}`, type: "line", name: `grid ${tick}`, x1: left, y1: y, x2: right, y2: y, stroke: tick === 0 && minValue === 0 ? "#AEB5C0" : "#E3E7EE", strokeWidth: 1 });
+    elements.push({ id: `bar-tick-${tick}`, type: "text", name: `tick ${tick}`, x: MARGIN - 2, y: y - 10, width: 52, height: 20, text: formatChartValue(value), fontSize: 11, fontWeight: 500, fill: SUBTEXT, textAnchor: "end" });
+  }
+
+  categories.forEach((node, index) => {
+    const value = values[index];
+    const cx = left + slot * (index + 0.5);
+    const valueY = value === undefined ? baselineY : yOf(value);
+    const y = Math.min(valueY, baselineY);
+    const height = value === undefined ? 8 : Math.max(3, Math.abs(baselineY - valueY));
+    const acc = accent(index);
+    elements.push({ id: `bar-column-${index}`, type: "rect", name: node.label, x: cx - barWidth / 2, y: value === undefined ? baselineY - 4 : y, width: barWidth, height, rx: 4, fill: value === undefined ? acc.tint : acc.stroke, stroke: acc.stroke, strokeWidth: value === undefined ? 1.5 : 0, dash: value === undefined });
+    elements.push({ id: `bar-value-${index}`, type: "text", name: `${node.label} value`, x: cx - barWidth / 2 - 8, y: value === undefined ? baselineY - 32 : value >= 0 ? y - 28 : y + height + 4, width: barWidth + 16, height: 22, text: value === undefined ? "—" : formatChartValue(value), fontSize: 12, fontWeight: 700, fill: value === undefined ? SUBTEXT : TEXT, textAnchor: "middle" });
+    elements.push({ id: `bar-label-${index}`, type: "text", name: `${node.label} label`, x: left + slot * index, y: bottom + 10, width: slot, height: 36, text: node.label, fontSize: categories.length > 10 ? 10 : 12, fontWeight: 600, fill: TEXT, textAnchor: "middle" });
+  });
+
+  if (!numeric.length) {
+    elements.push({ id: "bar-missing-values", type: "text", name: "values required", x: left, y: top + 20, width: right - left, height: 36, text: missingValuesLabel(diagram.language), fontSize: 18, fontWeight: 700, fill: SUBTEXT, textAnchor: "middle" });
+  }
+
+  return frame(diagram, elements, canvasBg);
+}
+
+// ============================================================ LINE / ordered trend chart
+export function layoutLine(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
+  applyTheme(theme);
+  const points = topLevel(diagram);
+  const elements: FigureElement[] = [titleElement(diagram)];
+  if (points.length === 0) return frame(diagram, elements, canvasBg);
+
+  const values = points.map(nodeNumericValue);
+  const numeric = values.filter((value): value is number => value !== undefined);
+  const left = MARGIN + 64;
+  const right = W - MARGIN;
+  const top = MARGIN + TITLE_H + 28;
+  const bottom = H - MARGIN - 52;
+  const minRaw = Math.min(...(numeric.length ? numeric : [0]));
+  const maxRaw = Math.max(...(numeric.length ? numeric : [1]));
+  const padding = (maxRaw - minRaw || Math.max(1, Math.abs(maxRaw))) * 0.12;
+  const minValue = minRaw - padding;
+  const maxValue = maxRaw + padding;
+  const span = maxValue - minValue || 1;
+  const yOf = (value: number) => bottom - ((value - minValue) / span) * (bottom - top);
+  const xOf = (index: number) => points.length === 1 ? (left + right) / 2 : left + (index / (points.length - 1)) * (right - left);
+
+  elements.push({ id: "line-frame", type: "rect", name: "chart frame", x: left, y: top, width: right - left, height: bottom - top, rx: 3, fill: "#FFFFFF", stroke: "#D5DAE2", strokeWidth: 1.2 });
+  for (let tick = 0; tick <= 4; tick += 1) {
+    const value = minValue + (span * tick) / 4;
+    const y = yOf(value);
+    elements.push({ id: `line-grid-${tick}`, type: "line", name: `grid ${tick}`, x1: left, y1: y, x2: right, y2: y, stroke: "#E7EAF0", strokeWidth: 1 });
+    elements.push({ id: `line-tick-${tick}`, type: "text", name: `tick ${tick}`, x: MARGIN - 2, y: y - 10, width: 54, height: 20, text: formatChartValue(value), fontSize: 11, fontWeight: 500, fill: SUBTEXT, textAnchor: "end" });
+  }
+
+  for (let index = 0; index + 1 < points.length; index += 1) {
+    const current = values[index];
+    const next = values[index + 1];
+    if (current === undefined || next === undefined) continue;
+    elements.push({ id: `line-segment-${index}`, type: "line", name: "trend segment", x1: xOf(index), y1: yOf(current), x2: xOf(index + 1), y2: yOf(next), stroke: accent(0).stroke, strokeWidth: 3 });
+  }
+
+  points.forEach((node, index) => {
+    const value = values[index];
+    const x = xOf(index);
+    const y = value === undefined ? bottom : yOf(value);
+    elements.push({ id: `line-dot-${index}`, type: "ellipse", name: node.label, cx: x, cy: y, rx: 6, ry: 6, fill: value === undefined ? "#FFFFFF" : accent(0).stroke, stroke: accent(0).stroke, strokeWidth: 2, dash: value === undefined });
+    elements.push({ id: `line-value-${index}`, type: "text", name: `${node.label} value`, x: x - 48, y: y - 30, width: 96, height: 20, text: value === undefined ? "—" : formatChartValue(value), fontSize: 11, fontWeight: 700, fill: value === undefined ? SUBTEXT : TEXT, textAnchor: "middle" });
+    const labelWidth = Math.min(140, (right - left) / Math.max(1, points.length));
+    const labelX = clamp(x - labelWidth / 2, MARGIN, W - MARGIN - labelWidth);
+    elements.push({ id: `line-label-${index}`, type: "text", name: `${node.label} label`, x: labelX, y: bottom + 10, width: labelWidth, height: 36, text: node.label, fontSize: points.length > 10 ? 10 : 12, fontWeight: 600, fill: TEXT, textAnchor: "middle" });
+  });
+
+  if (!numeric.length) {
+    elements.push({ id: "line-missing-values", type: "text", name: "values required", x: left, y: (top + bottom) / 2 - 18, width: right - left, height: 36, text: missingValuesLabel(diagram.language), fontSize: 18, fontWeight: 700, fill: SUBTEXT, textAnchor: "middle" });
+  }
+
+  return frame(diagram, elements, canvasBg);
+}
+
 // ============================================================ RADAR / spider chart (axes = nodes, value = score.x 0..1)
 export function layoutRadar(diagram: SemanticDiagram, theme: DiagramTheme = DEFAULT_THEME, canvasBg = theme.background): Figure {
   applyTheme(theme);

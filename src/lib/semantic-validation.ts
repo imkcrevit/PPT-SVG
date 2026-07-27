@@ -155,6 +155,7 @@ function normalizeNodes(
     const sx = scoreRec ? toNum(scoreRec.x) : undefined;
     const sy = scoreRec ? toNum(scoreRec.y) : undefined;
     const score = sx !== undefined && sy !== undefined ? { x: sx, y: sy } : undefined;
+    const numericValue = toNum(record.value);
 
     nodes.push({
       id,
@@ -166,7 +167,8 @@ function normalizeNodes(
       lane,
       start,
       end,
-      score
+      score,
+      value: numericValue
     });
 
     if (typeof record.parent === "string" && record.parent.trim()) {

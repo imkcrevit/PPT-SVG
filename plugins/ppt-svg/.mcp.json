@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ppt-svg-diagrams": {
+      "command": "node",
+      "args": ["./mcp/server.mjs", "--stdio"],
+      "cwd": ".",
+      "env_vars": ["PPT_SVG_BASE_URL"],
+      "tool_timeout_sec": 180
+    }
+  }
+}

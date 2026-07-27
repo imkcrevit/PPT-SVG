@@ -2,6 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { persistGeneratedArtifacts } from "@/lib/generated-artifacts";
+import { resolveDiagramMcpRoute } from "@/lib/diagram-mcp";
+import { buildGenerationFallback } from "@/lib/generation-fallback";
 import { reviewFigureLayout } from "@/lib/layout-review-agent";
 import { parseJsonObject } from "@/lib/json";
 import { recordConversation } from "@/lib/mongodb";
@@ -34,6 +36,7 @@ const MAX_CONVERSATION_TURNS = 5;
 const GENERATION_TIME_BUDGET_MS = 120_000;
 const RESPONSE_SAFETY_BUFFER_MS = 2_500;
 const CONTEXT_COMPRESSION_TIMEOUT_MS = 8_000;
+const MCP_ROUTING_TIMEOUT_MS = 8_000;
 const GENERATION_TIMEOUT_MS = 82_000;
 const REPAIR_TIMEOUT_MS = 16_000;
 const GENERATION_MAX_COMPLETION_TOKENS = 8_000;
@@ -110,7 +113,6 @@ export async function POST(request: Request) {
           referenceFigure: normalizeReferenceFigure(body.referenceFigure),
           clientLog: normalizeClientLog(body.clientLog)
         };
-        const skill = checked.skill;
         tokenRecorder = createTokenUsageRecorder({
           sessionId,
           conversationId: generationRequest.conversationId,
@@ -120,6 +122,23 @@ export async function POST(request: Request) {
 
         try {
           send(statusEvent(language, "queued", "Agent received the request.", 0));
+          send(statusEvent(language, "routing", "Selecting the matching MCP diagram tool.", 0));
+          const routing = await resolveDiagramMcpRoute(generationRequest, async (messages, tools) => {
+            const result = await callTrackedOpenRouterResult(tokenRecorder!, "mcp-routing", messages, {
+              temperature: 0,
+              maxCompletionTokens: 200,
+              responseFormat: null,
+              timeoutMs: requireTimeoutMs(startedAt, MCP_ROUTING_TIMEOUT_MS),
+              tools,
+              toolChoice: "required"
+            });
+            return result.toolCalls;
+          });
+          generationRequest.skillId = routing.skillId;
+          const skill = getInternalSkill(routing.skillId);
+          if (!skill) {
+            throw new Error(`MCP routed to unknown internal skill: ${routing.skillId}`);
+          }
           // First-turn requests without reference material do not need an extra
           // model round-trip for context compression.
           const needsCompression =
@@ -178,6 +197,7 @@ export async function POST(request: Request) {
               conversationTurn: generationRequest.conversationTurn,
               model: getConfiguredModelLabel(),
               artifacts,
+              routing,
               context: { compressed: compressedContext }
             }
           });
@@ -276,7 +296,7 @@ async function validateOrRepair(
     });
     send(statusEvent(language, "repair_fallback", "Repair failed; using a compact fallback figure.", 0));
     return {
-      response: buildFallbackFigureResponse(request, requestId, repairedParsed.error),
+      response: buildGenerationFallback(request, requestId, repairedParsed.error),
       repaired: true,
       fallback: true
     };
@@ -297,213 +317,13 @@ async function validateOrRepair(
     });
     send(statusEvent(language, "repair_fallback", "Repair failed; using a compact fallback figure.", 0));
     return {
-      response: buildFallbackFigureResponse(request, requestId, repairedValidation.errors.join(" ")),
+      response: buildGenerationFallback(request, requestId, repairedValidation.errors.join(" ")),
       repaired: true,
       fallback: true
     };
   }
 
   return { response: repairedValidation.response, repaired: true };
-}
-
-function buildFallbackFigureResponse(
-  request: GenerateFigureRequest,
-  requestId: string,
-  reason: string
-): GenerateFigureResponse {
-  const zh = request.language === "zh";
-  const title = compactTitle(request.userDescription, zh ? "系统架构图" : "System architecture");
-  const labels = zh
-    ? {
-        title,
-        description: `根据“${title}”生成的紧凑保底架构图。`,
-        channels: "渠道接入",
-        users: "用户端",
-        staff: "柜台/运营",
-        gateway: "API 网关",
-        security: "认证授权",
-        services: "业务服务",
-        ticket: "售票服务",
-        order: "订单服务",
-        payment: "支付服务",
-        data: "数据基础",
-        database: "业务数据库",
-        cache: "缓存",
-        integration: "外部集成",
-        fallbackNote: "模型返回的 JSON 被截断或无法修复，已生成紧凑保底版本。"
-      }
-    : {
-        title,
-        description: `Compact fallback architecture generated for "${title}".`,
-        channels: "Channels",
-        users: "Customer app",
-        staff: "Staff console",
-        gateway: "API gateway",
-        security: "Auth & access",
-        services: "Business services",
-        ticket: "Ticketing",
-        order: "Orders",
-        payment: "Payments",
-        data: "Data foundation",
-        database: "Database",
-        cache: "Cache",
-        integration: "Integrations",
-        fallbackNote: "The model returned truncated or unrecoverable JSON, so a compact fallback version was generated."
-      };
-
-  return {
-    figure: {
-      canvas: {
-        width: 1280,
-        height: 720,
-        background: "#FFFFFF"
-      },
-      metadata: {
-        title: labels.title,
-        description: labels.description,
-        skillId: request.skillId,
-        language: request.language
-      },
-      elements: [
-        {
-          id: "main-panel",
-          type: "rect",
-          name: "Main panel",
-          x: 70,
-          y: 54,
-          width: 1140,
-          height: 612,
-          rx: 20,
-          fill: "#F8FAFC",
-          stroke: "#D9E1EA",
-          strokeWidth: 2
-        },
-        {
-          id: "title",
-          type: "text",
-          name: "Title",
-          x: 120,
-          y: 78,
-          width: 1040,
-          height: 42,
-          text: labels.title,
-          fontSize: 30,
-          fontWeight: 700,
-          fill: "#0F172A",
-          textAnchor: "middle"
-        },
-        textElement("label-channels", labels.channels, 115, 158, 92, 42, "#475569", 16, 700),
-        textElement("label-gateway", labels.gateway, 115, 276, 92, 42, "#475569", 16, 700),
-        textElement("label-services", labels.services, 115, 404, 92, 42, "#475569", 16, 700),
-        textElement("label-data", labels.data, 115, 552, 92, 42, "#475569", 16, 700),
-        ...card("users", labels.users, 230, 138, 210, 72, "#E0F2FE", "#38BDF8", "#075985"),
-        ...card("staff", labels.staff, 500, 138, 210, 72, "#E0F2FE", "#38BDF8", "#075985"),
-        ...card("integration", labels.integration, 770, 138, 210, 72, "#FEE2E2", "#F87171", "#991B1B"),
-        ...card("gateway", labels.gateway, 340, 256, 360, 72, "#EEF2FF", "#818CF8", "#3730A3"),
-        ...card("security", labels.security, 760, 256, 220, 72, "#FEF3C7", "#F59E0B", "#92400E"),
-        ...card("ticket", labels.ticket, 230, 384, 210, 72, "#ECFDF5", "#34D399", "#065F46"),
-        ...card("order", labels.order, 500, 384, 210, 72, "#ECFDF5", "#34D399", "#065F46"),
-        ...card("payment", labels.payment, 770, 384, 210, 72, "#ECFDF5", "#34D399", "#065F46"),
-        ...card("database", labels.database, 300, 532, 230, 72, "#F1F5F9", "#94A3B8", "#334155"),
-        ...card("cache", labels.cache, 610, 532, 180, 72, "#F1F5F9", "#94A3B8", "#334155"),
-        arrow("arrow-users-gateway", 335, 210, 460, 256),
-        arrow("arrow-staff-gateway", 605, 210, 560, 256),
-        arrow("arrow-integration-gateway", 770, 174, 700, 284),
-        arrow("arrow-gateway-security", 700, 292, 760, 292),
-        arrow("arrow-gateway-ticket", 430, 328, 335, 384),
-        arrow("arrow-gateway-order", 520, 328, 605, 384),
-        arrow("arrow-gateway-payment", 610, 328, 875, 384),
-        arrow("arrow-ticket-data", 335, 456, 415, 532),
-        arrow("arrow-order-data", 605, 456, 610, 532),
-        arrow("arrow-payment-cache", 875, 456, 700, 532)
-      ]
-    },
-    fit: {
-      score: 0.68,
-      note: `${labels.fallbackNote} requestId=${requestId}; reason=${reason.slice(0, 120)}`
-    }
-  };
-}
-
-function compactTitle(value: string, fallback: string): string {
-  const trimmed = value.replace(/\s+/g, " ").trim();
-  return (trimmed || fallback).slice(0, 42);
-}
-
-function card(
-  id: string,
-  text: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  fill: string,
-  stroke: string,
-  textFill: string
-): GenerateFigureResponse["figure"]["elements"] {
-  return [
-    {
-      id: `${id}-card`,
-      type: "rect",
-      name: `${id} card`,
-      x,
-      y,
-      width,
-      height,
-      rx: 14,
-      fill,
-      stroke,
-      strokeWidth: 2
-    },
-    textElement(`${id}-text`, text, x, y, width, height, textFill, 18, 700)
-  ];
-}
-
-function textElement(
-  id: string,
-  text: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  fill: string,
-  fontSize: number,
-  fontWeight: number
-): GenerateFigureResponse["figure"]["elements"][number] {
-  return {
-    id,
-    type: "text",
-    name: id,
-    x,
-    y,
-    width,
-    height,
-    text,
-    fontSize,
-    fontWeight,
-    fill,
-    textAnchor: "middle"
-  };
-}
-
-function arrow(
-  id: string,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-): GenerateFigureResponse["figure"]["elements"][number] {
-  return {
-    id,
-    type: "arrow",
-    name: id,
-    x1,
-    y1,
-    x2,
-    y2,
-    stroke: "#64748B",
-    strokeWidth: 2
-  };
 }
 
 async function writeFailureDebugArtifact(
@@ -589,6 +409,7 @@ function requireTimeoutMs(startedAt: number, maxMs: number): number {
 function statusEvent(language: "en" | "zh", code: string, english: string, pass: number) {
   const zh: Record<string, string> = {
     queued: "Agent 已收到请求。",
+    routing: "正在选择匹配的 MCP 图形工具。",
     compressing: "正在压缩上下文。",
     generating: "正在生成语义图 JSON。",
     repairing: "正在修复生成的 JSON。",
@@ -678,6 +499,16 @@ async function callTrackedOpenRouter(
   messages: ChatMessage[],
   options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
 ): Promise<string> {
+  const result = await callTrackedOpenRouterResult(tokenRecorder, operation, messages, options);
+  return result.text;
+}
+
+async function callTrackedOpenRouterResult(
+  tokenRecorder: ReturnType<typeof createTokenUsageRecorder>,
+  operation: string,
+  messages: ChatMessage[],
+  options: Parameters<typeof callOpenRouterWithUsage>[1] = {}
+): Promise<Awaited<ReturnType<typeof callOpenRouterWithUsage>>> {
   const result = await callOpenRouterWithUsage(messages, options);
   await tokenRecorder.record({
     operation,
@@ -685,7 +516,7 @@ async function callTrackedOpenRouter(
     model: result.model,
     generationId: result.generationId
   });
-  return result.text;
+  return result;
 }
 
 function fallbackContext(request: GenerateFigureRequest): string {

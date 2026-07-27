@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { MouseEvent, PointerEvent, ReactNode } from "react";
 
 import { limitLinesToHeight, sanitizeXmlText, wrapSvgText } from "@/lib/text-layout";
+import { clientPointToSvg } from "@/lib/svg-pointer";
 import type { Figure, FigureElement, TextElement } from "@/lib/types";
 
 function cssFontStack(fontFamily?: string): string {
@@ -35,11 +36,12 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
 
   function getPoint(event: PointerEvent<SVGSVGElement>) {
     const svg = event.currentTarget;
-    const point = svg.createSVGPoint();
-    point.x = event.clientX;
-    point.y = event.clientY;
-    const transformed = point.matrixTransform(svg.getScreenCTM()?.inverse());
-    return { x: transformed.x, y: transformed.y };
+    return clientPointToSvg(
+      event.clientX,
+      event.clientY,
+      svg.getBoundingClientRect(),
+      { x: 0, y: 0, width: figure.canvas.width, height: figure.canvas.height }
+    );
   }
 
   function handlePointerDown(event: PointerEvent<SVGSVGElement>) {
@@ -91,6 +93,7 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       id={svgId}
       xmlns="http://www.w3.org/2000/svg"
       viewBox={`0 0 ${figure.canvas.width} ${figure.canvas.height}`}
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-labelledby={`${svgId}-title ${svgId}-desc`}
       fontFamily={fontFamily}
@@ -98,6 +101,7 @@ export function FigureSvg({ figure, svgId = "figure-svg", selectedId, selectedId
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={() => setSelectionBox(null)}
     >
       <metadata>{sanitizeXmlText(JSON.stringify(figure.metadata))}</metadata>
       <title id={`${svgId}-title`}>{sanitizeXmlText(figure.metadata.title)}</title>

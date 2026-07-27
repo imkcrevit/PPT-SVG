@@ -50,8 +50,8 @@ Slide 为下列之一：
 ## SVG 图表穿插与类型选择
 - 在资料确实提供足够的结构化关系时，6–12 页的正文优先穿插 2–4 页 diagram，分布在相关章节中，不要全部堆在一起。资料只支持 0–1 张图时以忠实为先，不为凑数造图。
 - 有 2 页及以上 diagram 且资料包含不同语义结构时，优先使用至少 2 种不同类型；不得仅为视觉多样性将同一关系硬改成不合适的图。
-- 按原资料的语义选型：先后步骤→flow；角色交接→swimlane；日期/里程碑→timeline 或 gantt；系统与分层→architecture；上下级→hierarchy；闭环→cycle；原因→fishbone；分类与关联→mindmap 或 network；对比/定位→matrix、venn 或 scatter；多维度定量评分→radar 或 heatmap；累计增减→waterfall。
-- 只有原文提供所需的数字、日期、角色、轴或关系时，才使用 gantt、swimlane、scatter、radar、heatmap、waterfall；缺数据时改用更简单的忠实结构，不生成示例数值。
+- 按原资料的语义选型：先后步骤→flow；角色交接→swimlane；日期/里程碑→timeline 或 gantt；系统与分层→architecture；上下级→hierarchy；闭环→cycle；原因→fishbone；分类与关联→mindmap 或 network；对比/定位→matrix、venn 或 scatter；构成/占比→pie；类别数值对比→bar；有序趋势→line；多维度定量评分→radar 或 heatmap；累计增减→waterfall。
+- 只有原文提供所需的数字、日期、角色、轴或关系时，才使用 pie、bar、line、gantt、swimlane、scatter、radar、heatmap、waterfall；缺数据时不要生成示例数值，图表应明确显示需要补充数值或改用更简单的忠实结构。
 
 ## 规则
 - 6–12 页。**第一页必须是 cover 封面，第二页必须是 toc 目录页**，其余用 section 分隔主要部分。

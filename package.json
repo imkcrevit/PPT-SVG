@@ -18,7 +18,11 @@
     "test:theme:image": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/theme-image-classifier.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:flow-wrap": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/flow-wrap.ts"
+    "test:flow-wrap": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/flow-wrap.ts",
+    "test:ui-selection": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/svg-pointer.ts",
+    "test:mcp-routing": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/diagram-mcp.ts",
+    "test:mcp": "node tests/mcp-server.mjs",
+    "test:fallback": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/generation-fallback.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",

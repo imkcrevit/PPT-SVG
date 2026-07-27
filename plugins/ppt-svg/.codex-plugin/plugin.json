@@ -1,6 +1,6 @@
 {
   "name": "ppt-svg",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260727063740",
   "description": "Create source-grounded SVG diagrams and complete PPTX presentations with two interoperable skills.",
   "author": {
     "name": "Graptolite",
@@ -9,15 +9,26 @@
   "homepage": "https://labs.graptolite.ai/svg/en",
   "repository": "https://github.com/imkcrevit/PPT-SVG",
   "license": "MIT",
-  "keywords": ["svg", "pptx", "presentation", "diagram", "flowchart"],
+  "keywords": [
+    "svg",
+    "pptx",
+    "presentation",
+    "diagram",
+    "flowchart"
+  ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "SVG + PPT",
     "shortDescription": "Grounded diagrams and complete presentations",
     "longDescription": "Two interoperable skills for turning supplied source material into a single SVG diagram or a complete PPTX deck. Both workflows preserve source facts, short verbatim excerpts, and reusable uploaded images.",
     "developerName": "Graptolite",
     "category": "Productivity",
-    "capabilities": ["Create", "Export"],
+    "capabilities": [
+      "Create",
+      "Export",
+      "MCP tools"
+    ],
     "websiteURL": "https://labs.graptolite.ai/svg/en",
     "composerIcon": "./assets/logo.svg",
     "logo": "./assets/logo.svg",

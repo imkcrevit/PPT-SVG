@@ -7,7 +7,7 @@ export type DiagramType =
   | "freeform" | "flow" | "matrix" | "timeline" | "pyramid" | "architecture"
   | "hierarchy" | "cycle" | "funnel" | "venn" | "mindmap" | "fishbone"
   | "gantt" | "swimlane" | "scatter" | "kanban" | "network" | "radar"
-  | "heatmap" | "waterfall";
+  | "heatmap" | "waterfall" | "pie" | "bar" | "line";
 
 export type NodeEmphasis = "normal" | "primary" | "muted";
 
@@ -31,6 +31,8 @@ export interface SemanticNode {
   end?: string | number;
   /** scatter: semantic 2D position, x/y in 0..1. */
   score?: { x: number; y: number };
+  /** pie/bar/line: numeric value for this category or point. */
+  value?: number;
 }
 
 export interface SemanticEdge {

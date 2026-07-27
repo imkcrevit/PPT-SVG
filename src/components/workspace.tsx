@@ -48,7 +48,7 @@ import { validateAndNormalizeFigureResponse } from "@/lib/figure-validation";
 import { createIconCoverageTestFigure, ICON_TEST_OPTIONS, type IconTestId } from "@/lib/icon-test";
 import { dictionaries } from "@/lib/i18n";
 import { productUrl } from "@/lib/product-url";
-import { INTERNAL_SKILLS } from "@/lib/skills";
+import { INTERNAL_SKILLS, isSkillId } from "@/lib/skills";
 import type { ThemeOverride } from "@/lib/theme";
 import type { Figure, FigureElement, FitAssessment, Locale, SkillId, UploadedAttachment } from "@/lib/types";
 
@@ -73,6 +73,12 @@ interface GenerateApiResponse {
   sessionId?: string;
   conversationTurn?: number;
   model?: string;
+  routing?: {
+    protocol: "mcp";
+    toolName: string;
+    skillId: SkillId;
+    source: string;
+  };
   artifacts?: {
     svgPath?: string;
     jsonPath?: string;
@@ -581,6 +587,9 @@ export function Workspace({ locale }: WorkspaceProps) {
 
       setGenerationStatus(t.generateRendering);
       setFigure(payload.figure);
+      if (payload.routing?.skillId && isSkillId(payload.routing.skillId)) {
+        setSkillId(payload.routing.skillId);
+      }
       setCurrentRenderTurn(turn);
       setFit(payload.fit);
       setModel(payload.model ?? "");

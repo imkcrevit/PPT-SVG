@@ -179,6 +179,36 @@ export const INTERNAL_SKILLS: InternalSkill[] = [
     },
     promptFile: "skills/waterfall.md",
     defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "pie",
+    name: { en: "Pie / Donut", zh: "饼图 / 环形图" },
+    description: {
+      en: "Composition, share, and percentage breakdowns.",
+      zh: "构成、占比和百分比分解。"
+    },
+    promptFile: "skills/pie.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "bar",
+    name: { en: "Bar / Column", zh: "柱状图 / 条形图" },
+    description: {
+      en: "Compare numeric values across categories.",
+      zh: "比较不同类别的数值。"
+    },
+    promptFile: "skills/bar.md",
+    defaultCanvas: DEFAULT_CANVAS
+  },
+  {
+    id: "line",
+    name: { en: "Line / Trend", zh: "折线图 / 趋势图" },
+    description: {
+      en: "Show ordered numeric change or a trend over time.",
+      zh: "展示有序数值变化或时间趋势。"
+    },
+    promptFile: "skills/line.md",
+    defaultCanvas: DEFAULT_CANVAS
   }
 ];
 

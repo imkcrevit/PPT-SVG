@@ -3,6 +3,7 @@ import type { ChatMessage } from "@/lib/prompts";
 interface OpenRouterChoice {
   message?: {
     content?: OpenRouterContent;
+    tool_calls?: OpenRouterToolCall[];
   };
 }
 
@@ -17,12 +18,38 @@ interface OpenRouterResponse {
   };
 }
 
-interface OpenRouterCallOptions {
+export interface OpenRouterFunctionTool {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+export interface OpenRouterToolCall {
+  id?: string;
+  type?: "function";
+  function?: {
+    name?: string;
+    arguments?: string;
+  };
+}
+
+export type OpenRouterToolChoice =
+  | "auto"
+  | "required"
+  | "none"
+  | { type: "function"; function: { name: string } };
+
+export interface OpenRouterCallOptions {
   model?: string;
   temperature?: number;
   maxCompletionTokens?: number;
   responseFormat?: "json_object" | null;
   timeoutMs?: number;
+  tools?: OpenRouterFunctionTool[];
+  toolChoice?: OpenRouterToolChoice;
 }
 
 interface LlmProviderConfig {
@@ -36,6 +63,7 @@ interface LlmProviderConfig {
 
 export interface OpenRouterCallResult {
   text: string;
+  toolCalls: OpenRouterToolCall[];
   model: string;
   generationId?: string;
   usage?: unknown;
@@ -52,6 +80,9 @@ export class OpenRouterError extends Error {
 
 export async function callOpenRouter(messages: ChatMessage[], options: OpenRouterCallOptions = {}): Promise<string> {
   const result = await callOpenRouterWithUsage(messages, options);
+  if (!result.text) {
+    throw new OpenRouterError("OpenRouter response did not include assistant content.", 502);
+  }
   return result.text;
 }
 
@@ -92,6 +123,7 @@ export async function callOpenRouterWithUsage(
         messages,
         temperature: options.temperature ?? 0.25,
         max_completion_tokens: options.maxCompletionTokens ?? 4000,
+        ...(options.tools?.length ? { tools: options.tools, tool_choice: options.toolChoice ?? "auto" } : {}),
         // Let OpenRouter fall back to another provider when the first-picked one
         // rejects the request (e.g. a region-locked provider returning 403/400).
         // Without this a single unavailable provider fails the whole call.
@@ -135,17 +167,23 @@ export async function callOpenRouterWithUsage(
 
   const content = payload.choices?.[0]?.message?.content;
   const text = flattenContent(content);
+  const toolCalls = payload.choices?.[0]?.message?.tool_calls?.filter(isToolCall) ?? [];
 
-  if (!text) {
-    throw new OpenRouterError("OpenRouter response did not include assistant content.", 502);
+  if (!text && toolCalls.length === 0) {
+    throw new OpenRouterError("OpenRouter response did not include assistant content or a tool call.", 502);
   }
 
   return {
     text,
+    toolCalls,
     model: provider.model,
     generationId: typeof payload.id === "string" ? payload.id : undefined,
     usage: payload.usage
   };
+}
+
+function isToolCall(value: OpenRouterToolCall): value is OpenRouterToolCall {
+  return Boolean(value && value.type === "function" && value.function?.name);
 }
 
 export function getConfiguredModelLabel(): string {

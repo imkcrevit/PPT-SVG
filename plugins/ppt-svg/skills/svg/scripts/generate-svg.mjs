@@ -25,7 +25,10 @@ const VALID_SKILLS = new Set([
   "network",
   "radar",
   "heatmap",
-  "waterfall"
+  "waterfall",
+  "pie",
+  "bar",
+  "line"
 ]);
 const SOURCE_EXTENSIONS = new Set(["pdf", "doc", "docx", "pptx", "md", "png", "jpg", "jpeg"]);
 

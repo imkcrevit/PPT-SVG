@@ -14,8 +14,9 @@ Think in this order before writing JSON:
 
 Requirements:
 - Produce exactly one diagram object.
-- Use the selected internal skill to choose `diagram.type`. If `selected_skill` is `freeform`, choose the most suitable type from the user's description.
+- Use the MCP-routed internal skill to choose `diagram.type`. The routed skill is authoritative unless the user explicitly requests another supported format in the current message.
 - If the user explicitly names a diagram type such as `甘特图` / `Gantt`, use that semantic type even when `selected_skill` is `freeform`; do not fall back to a generic flow.
+- Treat `饼图` / `占比图` / `pie` / `donut` as `pie`, `柱状图` / `条形图` / `bar` / `column` as `bar`, and `折线图` / `趋势图` / `line` / `area chart` as `line`. Never substitute pyramid, cycle, or generic cards for these chart requests.
 - Treat `output_language` / `ui_language_environment` as the active language environment. Output all visible labels, titles, notes, and metadata directly in that language: `zh` means Simplified Chinese, `en` means English. Only switch language if the user explicitly requests another language.
 - HARD REQUIREMENT: when the active language is `zh`, EVERY label, detail, title, and layer name must be written in Simplified Chinese, even when the user's description is full of English technical terms (Kafka, XGBoost, RAG, API, ...). Keep only unavoidable proper nouns in their original form and write everything else in Chinese. Never return an all-English diagram for a Chinese request.
 - Do not invent external data.

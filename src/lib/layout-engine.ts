@@ -10,10 +10,13 @@ import {
   layoutHeatmap,
   layoutHierarchy,
   layoutKanban,
+  layoutBar,
+  layoutLine,
   layoutMatrix,
   layoutMindmap,
   layoutNetwork,
   layoutPyramid,
+  layoutPie,
   layoutRadar,
   layoutScatter,
   layoutSwimlane,
@@ -579,6 +582,9 @@ export function layoutDiagram(
   if (diagram.type === "radar") return layoutRadar(diagram, theme, canvasBg);
   if (diagram.type === "heatmap") return layoutHeatmap(diagram, theme, canvasBg);
   if (diagram.type === "waterfall") return layoutWaterfall(diagram, theme, canvasBg);
+  if (diagram.type === "pie") return layoutPie(diagram, theme, canvasBg);
+  if (diagram.type === "bar") return layoutBar(diagram, theme, canvasBg);
+  if (diagram.type === "line") return layoutLine(diagram, theme, canvasBg);
 
   const width = CANVAS_W;
   const height = CANVAS_H;

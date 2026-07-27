@@ -25,6 +25,8 @@ Create one clear visual through the PPT-SVG semantic diagram engine. Treat uploa
 
 ## Generate with the bundled client
 
+When Codex exposes the bundled `ppt-svg-diagrams` MCP server, call the matching `render_<type>_svg` tool directly. Explicit user formats such as pie, bar, or line take priority; use `render_freeform_svg` only when no specific format is requested or inferable. The CLI below remains available for non-MCP clients.
+
 The hosted default is `https://labs.graptolite.ai/ppt`. Set `PPT_SVG_BASE_URL` to use another deployment. Files passed with `--source` are uploaded to that service, so use a local deployment for confidential material and never upload secrets without the user's authorization.
 
 ```bash
@@ -37,7 +39,7 @@ node scripts/generate-svg.mjs \
   --json ./approval-flow.json
 ```
 
-Supported diagram IDs are `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, and `waterfall`.
+Supported diagram IDs are `freeform`, `flow`, `matrix`, `timeline`, `pyramid`, `architecture`, `hierarchy`, `cycle`, `funnel`, `venn`, `mindmap`, `fishbone`, `gantt`, `swimlane`, `scatter`, `kanban`, `network`, `radar`, `heatmap`, `waterfall`, `pie`, `bar`, and `line`.
 
 The bundle contains the SVG, semantic figure JSON, metadata, and an editable one-slide PPTX. Return the output paths plus the request and session IDs.
 

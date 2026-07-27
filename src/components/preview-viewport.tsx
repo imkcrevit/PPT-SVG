@@ -15,8 +15,9 @@ function clampScale(value: number): number {
 /**
  * Zoom/pan viewport for the diagram preview. Zoom is applied by growing the
  * inner box (width = scale * 100%) inside an overflow-auto scroller, so panning
- * is native scrolling and FigureSvg's getScreenCTM-based hit-testing keeps
- * working at any zoom. Wheel zooms toward the cursor; scrollbars pan.
+ * is native scrolling. FigureSvg maps the resulting bounding rect back to its
+ * viewBox for stable hit-testing at every zoom. Wheel zooms toward the cursor;
+ * scrollbars pan.
  */
 export function PreviewViewport({
   children,
