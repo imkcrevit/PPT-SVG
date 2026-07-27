@@ -34,18 +34,22 @@ const PAD = 18;
 const HEADER_H = 34;
 const GAP = 22;
 const LAYER_GAP = 60;
+const CANVAS_W = 1280;
+const CANVAS_H = 720;
+const CANVAS_MARGIN = 48;
 // A horizontal flow is normally a chain with few roots. Beyond this many
 // parallel roots, wrap them into balanced rows instead of one cramped row.
 const FLOW_ROW_MAX = 5;
-// A long connected chain snakes (boustrophedon) into rows of this width so it
-// fills the canvas vertically. Chains at or below FLOW_SNAKE_MAX keep one row.
-const FLOW_SNAKE_MAX = 6;
+// A connected flow keeps one row through five compact steps. Six-step flows
+// (the common point where a slide starts looking like a thin strip), or shorter
+// flows whose measured cards no longer fit the body width, snake into rows.
+const FLOW_SINGLE_ROW_MAX = 5;
+const FLOW_SINGLE_ROW_MAX_WIDTH = CANVAS_W - CANVAS_MARGIN * 2;
 const FLOW_SNAKE_COLS = 4;
 // Upscale cap for wrapped flows so they fill the canvas without ballooning text.
-const FLOW_FILL_MAX = 1.5;
+const FLOW_FILL_MAX = 2;
 const MIN_W = 110;
 const MAX_W = 320;
-const CANVAS_MARGIN = 48;
 // Top reserve below the title band. Sized so a title at y=74 (matching the deck
 // template's content-page title) never overlaps the diagram body.
 const TITLE_H = 112;
@@ -232,6 +236,34 @@ function place(layoutNode: LayoutNode, x: number, y: number): void {
 interface Band {
   name?: string;
   roots: LayoutNode[];
+  align?: "start" | "center" | "end";
+}
+
+function rootsWidth(roots: LayoutNode[]): number {
+  return roots.reduce((sum, root) => sum + root.box.width, 0) + GAP * Math.max(0, roots.length - 1);
+}
+
+function widestFlowRow(roots: LayoutNode[], perRow: number): number {
+  let widest = 0;
+
+  for (let index = 0; index < roots.length; index += perRow) {
+    widest = Math.max(widest, rootsWidth(roots.slice(index, index + perRow)));
+  }
+
+  return widest;
+}
+
+function chooseFlowRowSize(roots: LayoutNode[]): number {
+  // Once wrapping is required, use at least two rows. Four columns is a good
+  // upper bound for readable 16:9 slides; measured width can reduce it further
+  // for containers or unusually long labels.
+  let perRow = Math.min(FLOW_SNAKE_COLS, Math.ceil(roots.length / 2));
+
+  while (perRow > 1 && widestFlowRow(roots, perRow) > FLOW_SINGLE_ROW_MAX_WIDTH) {
+    perRow -= 1;
+  }
+
+  return Math.max(1, perRow);
 }
 
 function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: Band[]; totalW: number; totalH: number } {
@@ -260,20 +292,25 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
     const rootIndex = new Map(roots.map((root, index) => [root.node.id, index]));
     const rootEdges = diagram.edges.filter((edge) => rootIndex.has(edge.from) && rootIndex.has(edge.to));
     const rootsAreChained = rootEdges.length > 0;
+    const chainNeedsWrap =
+      rootsAreChained &&
+      (roots.length > FLOW_SINGLE_ROW_MAX || rootsWidth(roots) > FLOW_SINGLE_ROW_MAX_WIDTH);
     if (roots.length > FLOW_ROW_MAX && !rootsAreChained) {
       const cols = chooseCols(roots.length);
       for (let index = 0; index < roots.length; index += cols) {
         bands.push({ roots: roots.slice(index, index + cols) });
       }
-    } else if (rootsAreChained && roots.length > FLOW_SNAKE_MAX) {
-      // Snake (boustrophedon): rows of ~FLOW_SNAKE_COLS, every other row reversed
-      // so the end of one row sits directly above the start of the next and the
-      // transition connector is a short vertical.
-      const rowCount = Math.ceil(roots.length / FLOW_SNAKE_COLS);
-      const perRow = Math.ceil(roots.length / rowCount);
-      for (let r = 0; r < rowCount; r++) {
-        const slice = roots.slice(r * perRow, (r + 1) * perRow);
-        bands.push({ roots: r % 2 === 1 ? slice.reverse() : slice });
+    } else if (chainNeedsWrap) {
+      // Snake (boustrophedon): every other row is reversed. Later rows align
+      // toward their incoming turn, so a partial final row still starts directly
+      // below the preceding row end instead of drifting into the center.
+      const perRow = chooseFlowRowSize(roots);
+      for (let index = 0, row = 0; index < roots.length; index += perRow, row += 1) {
+        const slice = roots.slice(index, index + perRow);
+        bands.push({
+          roots: row % 2 === 1 ? [...slice].reverse() : slice,
+          align: row === 0 ? "center" : row % 2 === 1 ? "end" : "start"
+        });
       }
     } else {
       bands = [{ roots }];
@@ -289,14 +326,16 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
   }
 
   const bandWidths = bands.map(
-    (band) => band.roots.reduce((sum, root) => sum + root.box.width, 0) + GAP * Math.max(0, band.roots.length - 1)
+    (band) => rootsWidth(band.roots)
   );
   const totalW = Math.max(...bandWidths, 1);
   let cursorY = 0;
 
   bands.forEach((band, index) => {
     const bandHeight = Math.max(...band.roots.map((root) => root.box.height), 1);
-    let cursorX = (totalW - bandWidths[index]) / 2;
+    const remainingWidth = totalW - bandWidths[index];
+    let cursorX =
+      band.align === "start" ? 0 : band.align === "end" ? remainingWidth : remainingWidth / 2;
 
     for (const root of band.roots) {
       place(root, cursorX, cursorY + (bandHeight - root.box.height) / 2);
@@ -541,8 +580,8 @@ export function layoutDiagram(
   if (diagram.type === "heatmap") return layoutHeatmap(diagram, theme, canvasBg);
   if (diagram.type === "waterfall") return layoutWaterfall(diagram, theme, canvasBg);
 
-  const width = 1280;
-  const height = 720;
+  const width = CANVAS_W;
+  const height = CANVAS_H;
   const direction = diagram.direction ?? "horizontal";
 
   const roots = buildTree(diagram);

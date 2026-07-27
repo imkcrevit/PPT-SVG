@@ -9,6 +9,9 @@ Create a clean process flow as a semantic graph.
 - Connect consecutive steps with `edges`: step1 -> step2 -> step3.
 - Set `direction` to `horizontal` by default, or `vertical` if requested.
 - Use `emphasis: "primary"` on start/end nodes when useful.
+- Keep long sequences as one ordered chain with one node per step. Do not merge
+  steps merely to force a single row; the layout engine automatically wraps
+  longer horizontal chains into a multi-row serpentine path.
 
 ## Decompose Phases
 

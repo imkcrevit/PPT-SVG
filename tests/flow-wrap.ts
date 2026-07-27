@@ -47,6 +47,48 @@ function connectorSegs(els: any[]): Seg[] {
   return segs;
 }
 
+function flowNodeRect(figure: { elements: any[] }, id: string): Rect | undefined {
+  const rect = flatten(figure.elements).find((e) => e.type === "rect" && e.id === `${id}-rect`);
+  return rect ? { x: rect.x, y: rect.y, w: rect.width, h: rect.height, id } : undefined;
+}
+
+function snakeIssues(figure: { elements: any[] }, count: number, expectedRows: number): string[] {
+  const issues: string[] = [];
+  const boxes = Array.from({ length: count }, (_, i) => flowNodeRect(figure, `n${i}`));
+  if (boxes.some((box) => !box)) return ["missing one or more flow node rectangles"];
+
+  const complete = boxes as Rect[];
+  const centers = complete.map((box) => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 }));
+  const rowKey = (y: number) => Math.round(y / 4) * 4;
+  const rowCenters = [...new Set(centers.map((point) => rowKey(point.y)))].sort((a, b) => a - b);
+  if (rowCenters.length !== expectedRows) {
+    issues.push(`expected ${expectedRows} row(s), got ${rowCenters.length}`);
+  }
+
+  const rowOf = (point: { y: number }) => rowCenters.indexOf(rowKey(point.y));
+  for (let i = 0; i + 1 < centers.length; i += 1) {
+    const currentRow = rowOf(centers[i]);
+    const nextRow = rowOf(centers[i + 1]);
+
+    if (currentRow === nextRow) {
+      const travelsRight = centers[i + 1].x > centers[i].x;
+      const expectedRight = currentRow % 2 === 0;
+      if (travelsRight !== expectedRight) {
+        issues.push(`n${i}->n${i + 1} travels the wrong way in row ${currentRow + 1}`);
+      }
+    } else {
+      if (nextRow !== currentRow + 1) {
+        issues.push(`n${i}->n${i + 1} skips from row ${currentRow + 1} to ${nextRow + 1}`);
+      }
+      if (Math.abs(centers[i].x - centers[i + 1].x) > 3) {
+        issues.push(`n${i}->n${i + 1} turn is not vertically aligned`);
+      }
+    }
+  }
+
+  return issues;
+}
+
 // Segment vs axis-aligned rect (rect shrunk by inset so border touches don't
 // count). Liang–Barsky clip.
 function segHitsRect(s: Seg, r: Rect, inset: number): boolean {
@@ -103,6 +145,16 @@ function chainFlow(n: number, backEdges: Array<[number, number]> = []) {
   return layoutDiagram(v.diagram!, {});
 }
 
+function wideChainFlow() {
+  const nodes = Array.from({ length: 4 }, (_, i) => ({
+    id: `n${i}`,
+    label: `阶段 ${i + 1}：这是一个用于验证超宽卡片会按实际宽度自动换行的很长步骤标题`
+  }));
+  const edges = Array.from({ length: nodes.length - 1 }, (_, i) => ({ from: `n${i}`, to: `n${i + 1}` }));
+  const v = validateAndNormalizeSemanticDiagram({ type: "flow", title: "T", language: "zh", nodes, edges } as any, "flow", "zh");
+  return layoutDiagram(v.diagram!, {});
+}
+
 // The reported real shape: a tall container node first, then a chain of stages,
 // with a feedback edge from the last stage back to an early one.
 function containerFlow() {
@@ -126,24 +178,31 @@ function containerFlow() {
   return layoutDiagram(v.diagram!, {});
 }
 
-const cases: Array<[string, any]> = [
-  ["container+chain+feedback", containerFlow()],
-  ["chain-4", chainFlow(4)],
-  ["chain-6", chainFlow(6)],
-  ["chain-7", chainFlow(7)],
-  ["chain-8", chainFlow(8)],
-  ["chain-10", chainFlow(10)],
-  ["chain-7 +feedback(6->1)", chainFlow(7, [[6, 1]])],
-  ["chain-8 +feedback(7->0)", chainFlow(8, [[7, 0]])],
-  ["chain-10 +2back", chainFlow(10, [[9, 0], [5, 2]])]
+const cases: Array<[string, any, string[]]> = [
+  ["container+chain+feedback", containerFlow(), []],
+  ["chain-4", chainFlow(4), snakeIssues(chainFlow(4), 4, 1)],
+  ["chain-5 threshold", chainFlow(5), snakeIssues(chainFlow(5), 5, 1)],
+  ["chain-6 wraps 3x2", chainFlow(6), snakeIssues(chainFlow(6), 6, 2)],
+  ["chain-7", chainFlow(7), snakeIssues(chainFlow(7), 7, 2)],
+  ["chain-8", chainFlow(8), snakeIssues(chainFlow(8), 8, 2)],
+  ["chain-10", chainFlow(10), snakeIssues(chainFlow(10), 10, 3)],
+  ["wide chain-4 wraps", wideChainFlow(), snakeIssues(wideChainFlow(), 4, 2)],
+  ["chain-7 +feedback(6->1)", chainFlow(7, [[6, 1]]), []],
+  ["chain-8 +feedback(7->0)", chainFlow(8, [[7, 0]]), []],
+  ["chain-10 +2back", chainFlow(10, [[9, 0], [5, 2]]), []]
 ];
 
 let fail = 0;
-for (const [name, fig] of cases) {
+for (const [name, fig, geometryIssues] of cases) {
   const o = overlaps(fig);
-  const status = o.count === 0 ? "PASS" : "FAIL";
-  if (o.count) fail++;
-  console.log(`${status}  ${name.padEnd(26)} overlaps=${o.count}${o.count ? " via " + o.hits.join(",") : ""}`);
+  const caseFailed = o.count > 0 || geometryIssues.length > 0;
+  const status = caseFailed ? "FAIL" : "PASS";
+  if (caseFailed) fail++;
+  const details = [
+    o.count ? `overlaps=${o.count} via ${o.hits.join(",")}` : "overlaps=0",
+    geometryIssues.length ? `geometry=${geometryIssues.join("; ")}` : ""
+  ].filter(Boolean).join(" ");
+  console.log(`${status}  ${name.padEnd(26)} ${details}`);
 }
-console.log(fail ? `\n${fail} case(s) with overlap ❌` : "\nNO CONNECTOR-NODE OVERLAPS ✅");
+console.log(fail ? `\n${fail} flow layout case(s) failed ❌` : "\nFLOW WRAP + ROUTING PASS ✅");
 if (fail) process.exit(1);
