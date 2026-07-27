@@ -178,12 +178,14 @@ svg text {
 }
 
 .workspace-chat-history {
-  min-height: 0;
-  flex: 1 1 auto;
+  min-height: clamp(240px, 38vh, 380px);
+  flex: 1 0 clamp(240px, 38vh, 380px);
+  overflow: hidden;
 }
 
 .workspace-chat-scroll {
-  min-height: 380px;
+  width: 100%;
+  min-height: 0;
 }
 
 .workspace-preview-panel {
@@ -1159,6 +1161,7 @@ svg text {
 
 .chat-composer {
   display: block;
+  flex: 0 0 auto;
   border: 1px solid var(--line);
   background: var(--panel);
   padding: 8px;
@@ -1227,6 +1230,7 @@ svg text {
 
 .chat-actions {
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
   gap: 8px;
 }
