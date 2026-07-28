@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "ppt-svg",
+  "displayName": "SVG + PPT",
+  "description": "Create source-grounded SVG diagrams and complete PPTX presentations with two interoperable skills.",
+  "author": {
+    "name": "Graptolite",
+    "url": "https://graptolite.ai"
+  },
+  "homepage": "https://labs.graptolite.ai/skills/",
+  "repository": "https://github.com/imkcrevit/PPT-SVG",
+  "license": "MIT",
+  "keywords": [
+    "svg",
+    "pptx",
+    "presentation",
+    "diagram",
+    "flowchart"
+  ],
+  "mcpServers": "./.claude-plugin/mcp.json"
+}

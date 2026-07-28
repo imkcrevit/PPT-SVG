@@ -11,6 +11,8 @@ The plugin also registers the `ppt-svg-diagrams` MCP server. It exposes one `ren
 
 ## Install from the repository marketplace
 
+### Codex
+
 After this repository is public or otherwise accessible to the user:
 
 ```bash
@@ -18,7 +20,16 @@ codex plugin marketplace add imkcrevit/PPT-SVG --ref main
 codex plugin add ppt-svg@graptolite-labs
 ```
 
-The repository marketplace lives at `.agents/plugins/marketplace.json`; the plugin manifest is `plugins/ppt-svg/.codex-plugin/plugin.json`.
+The Codex marketplace lives at `.agents/plugins/marketplace.json`; the plugin manifest is `plugins/ppt-svg/.codex-plugin/plugin.json`. Invoke the installed skills as `$svg` and `$ppt`.
+
+### Claude Code
+
+```bash
+claude plugin marketplace add imkcrevit/PPT-SVG
+claude plugin install ppt-svg@graptolite-labs
+```
+
+The Claude Code marketplace lives at `.claude-plugin/marketplace.json`; its plugin manifest is `plugins/ppt-svg/.claude-plugin/plugin.json`. Invoke the installed skills as `/ppt-svg:svg` and `/ppt-svg:ppt`.
 
 ## Install for Hermes or OpenClaw
 

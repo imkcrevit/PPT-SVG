@@ -10,7 +10,7 @@ Create one clear visual through the PPT-SVG semantic diagram engine. Treat uploa
 ## Choose the workflow
 
 - For one diagram or chart, stay in this skill.
-- For a whole presentation or multiple slides, invoke `$ppt` and let it call the SVG engine for diagram slides.
+- For a whole presentation or multiple slides, invoke the `ppt` skill and let it call the SVG engine for diagram slides.
 - In the PPT-SVG repository, work through the public `@/features/svg` contract. Read [references/repository.md](references/repository.md) before changing code.
 - Outside the repository, use `scripts/generate-svg.mjs` against the hosted service or a user-configured local deployment.
 
@@ -25,7 +25,7 @@ Create one clear visual through the PPT-SVG semantic diagram engine. Treat uploa
 
 ## Generate with the bundled client
 
-When Codex exposes the bundled `ppt-svg-diagrams` MCP server, call the matching `render_<type>_svg` tool directly. Explicit user formats such as pie, bar, or line take priority; use `render_freeform_svg` only when no specific format is requested or inferable. The CLI below remains available for non-MCP clients.
+When the agent exposes the bundled `ppt-svg-diagrams` MCP server, call the matching `render_<type>_svg` tool directly. Explicit user formats such as pie, bar, or line take priority; use `render_freeform_svg` only when no specific format is requested or inferable. The CLI below remains available for non-MCP clients.
 
 The hosted default is `https://labs.graptolite.ai/ppt`. Set `PPT_SVG_BASE_URL` to use another deployment. Files passed with `--source` are uploaded to that service, so use a local deployment for confidential material and never upload secrets without the user's authorization.
 

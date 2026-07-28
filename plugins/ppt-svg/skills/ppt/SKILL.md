@@ -5,12 +5,12 @@ description: Create or revise a complete multi-slide PPTX presentation from uplo
 
 # PPT
 
-Create a complete presentation whose claims, structure, short quotations, and images remain grounded in the user's selected source material. Text slides carry the narrative; every diagram slide is compiled through the same SVG engine used by `$svg`.
+Create a complete presentation whose claims, structure, short quotations, and images remain grounded in the user's selected source material. Text slides carry the narrative; every diagram slide is compiled through the same SVG engine used by the `svg` skill.
 
 ## Choose the workflow
 
 - For a complete deck, multiple slides, or an uploaded PPTX template, stay in this skill.
-- For only one flowchart, architecture diagram, matrix, timeline, or presentation visual, invoke `$svg`.
+- For only one flowchart, architecture diagram, matrix, timeline, or presentation visual, invoke the `svg` skill.
 - In the PPT-SVG repository, work through `@/features/deck` and its one-way bridge to `@/features/svg`. Read [references/repository.md](references/repository.md) before changing code.
 - Outside the repository, use `scripts/generate-ppt.mjs` against the hosted service or a user-configured local deployment.
 
@@ -21,7 +21,7 @@ Create a complete presentation whose claims, structure, short quotations, and im
 3. Create the smallest coherent slide sequence supported by that evidence. Do not pad the deck with generic industry content.
 4. Use 1–3 short verbatim excerpts only when the source contains representative complete sentences. Copy them exactly, keep them short, and attribute the filename. Never put quotation marks around a paraphrase.
 5. Prefer uploaded original images when they directly support a slide. Use an SVG diagram only when the source explicitly supplies a process, hierarchy, comparison, timeline, role split, or relationship that benefits from visualization.
-6. Preserve the source's node count, names, direction, order, and relationships in diagram slides. Invoke `$svg` and its matching `render_<type>_svg` MCP tool for generation or repair; do not reimplement diagram layout inside this skill.
+6. Preserve the source's node count, names, direction, order, and relationships in diagram slides. Invoke the `svg` skill and its matching `render_<type>_svg` MCP tool for generation or repair; do not reimplement diagram layout inside this skill.
 7. If information is missing, reduce scope or ask a focused question. Never invent metrics, milestones, roles, customer quotes, citations, or conclusions.
 
 ## Generate with the bundled client

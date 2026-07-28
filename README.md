@@ -49,12 +49,25 @@ For local Hermes/OpenClaw installs, users can bring their own OpenAI-compatible 
 
 ## Installable SVG and PPT Skills
 
-The repository includes a Codex plugin with two interoperable skills, plus compatible Hermes/OpenClaw installers. The web app and APIs remain the implementation source of truth.
+The repository includes Codex and Claude Code plugins with two interoperable skills, plus compatible Hermes/OpenClaw installers. The web app and APIs remain the implementation source of truth.
+
+### Codex
 
 ```bash
 codex plugin marketplace add imkcrevit/PPT-SVG --ref main
 codex plugin add ppt-svg@graptolite-labs
 ```
+
+Invoke the installed skills as `$svg` and `$ppt`.
+
+### Claude Code
+
+```bash
+claude plugin marketplace add imkcrevit/PPT-SVG
+claude plugin install ppt-svg@graptolite-labs
+```
+
+Invoke the installed skills as `/ppt-svg:svg` and `/ppt-svg:ppt`. The Claude Code plugin also registers the bundled diagram MCP server.
 
 For Hermes/OpenClaw:
 

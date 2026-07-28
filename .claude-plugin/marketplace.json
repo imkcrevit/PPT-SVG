@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "graptolite-labs",
+  "description": "Installable Graptolite workflows for grounded SVG diagrams and complete PPTX presentations.",
+  "owner": {
+    "name": "Graptolite"
+  },
+  "plugins": [
+    {
+      "name": "ppt-svg",
+      "description": "Create source-grounded SVG diagrams and complete PPTX presentations with two interoperable skills and diagram MCP tools.",
+      "author": {
+        "name": "Graptolite"
+      },
+      "source": "./plugins/ppt-svg",
+      "category": "productivity",
+      "homepage": "https://labs.graptolite.ai/skills/",
+      "tags": [
+        "svg",
+        "pptx",
+        "presentation",
+        "diagram"
+      ]
+    }
+  ]
+}
