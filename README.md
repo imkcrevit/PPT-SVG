@@ -69,14 +69,14 @@ Invoke the installed skills as `/ppt-svg:svg` and `/ppt-svg:ppt`. The Claude Cod
 
 ### DeepSeek Harness (DSH)
 
-Install the source checkout into a DSH profile, then inspect the composed configuration:
+Install the public GitHub bundle into a DSH profile, then inspect the composed configuration:
 
 ```bash
-dsh plugin --profile default add ./plugins/ppt-svg
+dsh plugin --profile default add github:imkcrevit/PPT-SVG#path:/plugins/ppt-svg
 dsh --profile default --dump-config
 ```
 
-The bundle registers native `svg` and `ppt` skills plus `mcp__ppt_svg__render_<type>_svg` tools. After `dsh-ppt-svg` is published to npm, the install source can be replaced with the package name. For public DSH discovery, add the `dsh-plugin` topic to the GitHub repository.
+Use `./plugins/ppt-svg` instead when installing from a local checkout. The bundle registers native `svg` and `ppt` skills plus `mcp__ppt_svg__render_<type>_svg` tools. After `dsh-ppt-svg` is published to npm, the install source can be replaced with the package name. For public DSH discovery, add the `dsh-plugin` topic to the GitHub repository.
 
 For Hermes/OpenClaw:
 

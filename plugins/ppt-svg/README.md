@@ -2,12 +2,14 @@
 
 DeepSeek Harness bundle for the PPT-SVG `svg` and `ppt` skills. It registers both skills through DSH's native skill catalog and exposes the bundled semantic diagram MCP tools.
 
-## Install from a source checkout
+## Install from GitHub
 
 ```bash
-dsh plugin --profile default add ./plugins/ppt-svg
+dsh plugin --profile default add github:imkcrevit/PPT-SVG#path:/plugins/ppt-svg
 dsh --profile default --dump-config
 ```
+
+Use `./plugins/ppt-svg` instead when installing from a local checkout.
 
 After this package is published to npm, install it with:
 

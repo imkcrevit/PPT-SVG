@@ -33,14 +33,14 @@ The Claude Code marketplace lives at `.claude-plugin/marketplace.json`; its plug
 
 ### DeepSeek Harness (DSH)
 
-Install the local bundle into a profile and inspect the effective configuration before booting it:
+Install the public GitHub bundle into a profile and inspect the effective configuration before booting it:
 
 ```bash
-dsh plugin --profile default add ./plugins/ppt-svg
+dsh plugin --profile default add github:imkcrevit/PPT-SVG#path:/plugins/ppt-svg
 dsh --profile default --dump-config
 ```
 
-The DSH package manifest is `plugins/ppt-svg/package.json`, and its configuration layer is `plugins/ppt-svg/cordis.patch.yml`. It registers the `svg` and `ppt` skills as a native DSH provider and bridges the bundled MCP server as `mcp__ppt_svg__render_<type>_svg` tools. After the declared `dsh-ppt-svg` package is published to npm, users can install it by package name. Add the `dsh-plugin` topic to the GitHub repository for public DSH discovery.
+Use `./plugins/ppt-svg` instead when installing from a local checkout. The DSH package manifest is `plugins/ppt-svg/package.json`, and its configuration layer is `plugins/ppt-svg/cordis.patch.yml`. It registers the `svg` and `ppt` skills as a native DSH provider and bridges the bundled MCP server as `mcp__ppt_svg__render_<type>_svg` tools. After the declared `dsh-ppt-svg` package is published to npm, users can install it by package name. Add the `dsh-plugin` topic to the GitHub repository for public DSH discovery.
 
 ## Install for Hermes or OpenClaw
 
