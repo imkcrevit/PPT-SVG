@@ -12,7 +12,7 @@ Create one clear visual through the PPT-SVG semantic diagram engine. Treat uploa
 - For one diagram or chart, stay in this skill.
 - For a whole presentation or multiple slides, invoke the `ppt` skill and let it call the SVG engine for diagram slides.
 - In the PPT-SVG repository, work through the public `@/features/svg` contract. Read [references/repository.md](references/repository.md) before changing code.
-- Outside the repository, use `scripts/generate-svg.mjs` against the hosted service or a user-configured local deployment.
+- Outside the repository, use `scripts/generate-svg.mjs` against the local deployment or another service explicitly configured by the operator.
 
 ## Ground the visual
 
@@ -27,7 +27,7 @@ Create one clear visual through the PPT-SVG semantic diagram engine. Treat uploa
 
 When the agent exposes the bundled `ppt-svg-diagrams` MCP server, call the matching `render_<type>_svg` tool directly. Explicit user formats such as pie, bar, or line take priority; use `render_freeform_svg` only when no specific format is requested or inferable. The CLI below remains available for non-MCP clients.
 
-The hosted default is `https://labs.graptolite.ai/ppt`. Set `PPT_SVG_BASE_URL` to use another deployment. Files passed with `--source` are uploaded to that service, so use a local deployment for confidential material and never upload secrets without the user's authorization.
+The private-by-default endpoint is `http://127.0.0.1:3000/ppt`. Start PPT-SVG locally before generation. Only use `PPT_SVG_BASE_URL` or `--base-url` when the operator has explicitly approved another deployment. Files passed with `--source` are uploaded to the selected service; never send confidential material or secrets to an external endpoint without the user's authorization. The local PPT-SVG service may still call its configured LLM provider, so use a self-hosted OpenAI-compatible provider when data must remain entirely inside the private environment.
 
 ```bash
 node scripts/generate-svg.mjs \

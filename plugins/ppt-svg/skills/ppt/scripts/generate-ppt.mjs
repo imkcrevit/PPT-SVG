@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const DEFAULT_BASE_URL = "https://labs.graptolite.ai/ppt";
+const DEFAULT_BASE_URL = "http://127.0.0.1:3000/ppt";
 const VALID_LANGUAGES = new Set(["en", "zh"]);
 const VALID_STYLES = new Set(["tech", "corporate", "academic", "government", "nature", "creative", "minimal"]);
 const SOURCE_EXTENSIONS = new Set(["pdf", "doc", "docx", "pptx", "md", "png", "jpg", "jpeg"]);

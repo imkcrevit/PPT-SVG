@@ -63,6 +63,6 @@ Installed the SVG and PPT skills under:
   $TARGET_ROOT/svg
   $TARGET_ROOT/ppt
 
-The clients default to https://labs.graptolite.ai/ppt.
-Set PPT_SVG_BASE_URL to use a local or another deployed service.
+The clients default to http://127.0.0.1:3000/ppt.
+Set PPT_SVG_BASE_URL only to use an explicitly approved alternative service.
 DONE

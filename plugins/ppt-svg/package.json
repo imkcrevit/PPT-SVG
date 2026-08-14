@@ -1,0 +1,48 @@
+{
+  "name": "dsh-ppt-svg",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness bundle for private-by-default SVG diagrams and PPTX presentations.",
+  "type": "module",
+  "main": "./dsh/skills.mjs",
+  "exports": {
+    ".": "./dsh/skills.mjs",
+    "./dsh/runtime": "./dsh/runtime.mjs",
+    "./dsh/skills": "./dsh/skills.mjs",
+    "./mcp/server": "./mcp/server.mjs",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "assets/logo.svg",
+    "cordis.patch.yml",
+    "dsh/*.mjs",
+    "mcp/*.mjs",
+    "skills/**"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imkcrevit/PPT-SVG.git",
+    "directory": "plugins/ppt-svg"
+  },
+  "homepage": "https://github.com/imkcrevit/PPT-SVG",
+  "license": "MIT",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "svg",
+    "pptx",
+    "presentation",
+    "diagram"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}

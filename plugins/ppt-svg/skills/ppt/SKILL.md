@@ -12,7 +12,7 @@ Create a complete presentation whose claims, structure, short quotations, and im
 - For a complete deck, multiple slides, or an uploaded PPTX template, stay in this skill.
 - For only one flowchart, architecture diagram, matrix, timeline, or presentation visual, invoke the `svg` skill.
 - In the PPT-SVG repository, work through `@/features/deck` and its one-way bridge to `@/features/svg`. Read [references/repository.md](references/repository.md) before changing code.
-- Outside the repository, use `scripts/generate-ppt.mjs` against the hosted service or a user-configured local deployment.
+- Outside the repository, use `scripts/generate-ppt.mjs` against the local deployment or another service explicitly configured by the operator.
 
 ## Build a source-grounded deck
 
@@ -26,7 +26,7 @@ Create a complete presentation whose claims, structure, short quotations, and im
 
 ## Generate with the bundled client
 
-The hosted default is `https://labs.graptolite.ai/ppt`. Set `PPT_SVG_BASE_URL` to use another deployment. Files passed with `--source` or `--template` are uploaded to that service, so use a local deployment for confidential material and never upload secrets without the user's authorization.
+The private-by-default endpoint is `http://127.0.0.1:3000/ppt`. Start PPT-SVG locally before generation. Only use `PPT_SVG_BASE_URL` or `--base-url` when the operator has explicitly approved another deployment. Files passed with `--source` or `--template` are uploaded to the selected service; never send confidential material or secrets to an external endpoint without the user's authorization. The local PPT-SVG service may still call its configured LLM provider, so use a self-hosted OpenAI-compatible provider when data must remain entirely inside the private environment.
 
 ```bash
 node scripts/generate-ppt.mjs \

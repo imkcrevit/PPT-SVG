@@ -1,0 +1,25 @@
+# DeepSeek Harness bundle for PPT-SVG. The MCP bridge starts the bundled
+# server directly with the current Node executable. Prompt and attachment
+# traffic stays on the local PPT-SVG deployment unless the operator explicitly
+# overrides PPT_SVG_BASE_URL before launching dsh.
+
+- insert:
+    - id: ppt-svg-runtime
+      name: dsh-ppt-svg/dsh/runtime
+
+    - id: ppt-svg-skills
+      name: dsh-ppt-svg/dsh/skills
+
+    - id: ppt-svg-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      inject: [pptSvgRuntime]
+      config:
+        transport: stdio
+        serverName: ppt_svg
+        command: !!js process.execPath
+        args: !!js "[ctx.pptSvgRuntime.mcpServerPath, '--stdio']"
+        env:
+          PPT_SVG_BASE_URL: !!js process.env.PPT_SVG_BASE_URL?.trim() || 'http://127.0.0.1:3000/ppt'
+        cwd: !!js ctx.pptSvgRuntime.pluginRoot
+        toolCallTimeoutMs: 180000
+        failOnStartupError: true

@@ -31,6 +31,17 @@ claude plugin install ppt-svg@graptolite-labs
 
 The Claude Code marketplace lives at `.claude-plugin/marketplace.json`; its plugin manifest is `plugins/ppt-svg/.claude-plugin/plugin.json`. Invoke the installed skills as `/ppt-svg:svg` and `/ppt-svg:ppt`.
 
+### DeepSeek Harness (DSH)
+
+Install the local bundle into a profile and inspect the effective configuration before booting it:
+
+```bash
+dsh plugin --profile default add ./plugins/ppt-svg
+dsh --profile default --dump-config
+```
+
+The DSH package manifest is `plugins/ppt-svg/package.json`, and its configuration layer is `plugins/ppt-svg/cordis.patch.yml`. It registers the `svg` and `ppt` skills as a native DSH provider and bridges the bundled MCP server as `mcp__ppt_svg__render_<type>_svg` tools. After the declared `dsh-ppt-svg` package is published to npm, users can install it by package name. Add the `dsh-plugin` topic to the GitHub repository for public DSH discovery.
+
 ## Install for Hermes or OpenClaw
 
 ```bash
@@ -42,19 +53,23 @@ The installer creates separate `svg` and `ppt` skill directories. It copies no A
 
 ## Service selection and privacy
 
-The bundled clients default to the hosted service:
-
-```bash
-export PPT_SVG_BASE_URL=https://labs.graptolite.ai/ppt
-```
-
-Source files passed to a client are uploaded to the configured service. For confidential material, run the app locally and point the skills at it:
+The bundled clients and the DSH MCP bridge default to the local service:
 
 ```bash
 export PPT_SVG_BASE_URL=http://127.0.0.1:3000/ppt
 ```
 
-The service accepts `OPENROUTER_*`, `PPT_SVG_LLM_*`, or `OPENAI_*` environment variables. Keep keys in the service process; never paste them into a skill prompt.
+No public Graptolite endpoint is contacted by default. Source files passed to a client are uploaded to the selected service, so only override `PPT_SVG_BASE_URL` or pass `--base-url` after the operator approves that endpoint.
+
+The local PPT-SVG process still sends generation content to whichever LLM provider it is configured to use. For a completely private pipeline, leave `OPENROUTER_*` and `OPENAI_*` unset and configure a self-hosted OpenAI-compatible provider:
+
+```bash
+PPT_SVG_LLM_API_KEY=local-only
+PPT_SVG_LLM_MODEL=your-local-model
+PPT_SVG_LLM_BASE_URL=http://127.0.0.1:11434/v1
+```
+
+The service also accepts explicitly configured `OPENROUTER_*` or `OPENAI_*` providers. Keep keys in the service process; never paste them into a skill prompt. DSH's own model-provider privacy remains governed by the user's DSH profile and is separate from the PPT-SVG endpoint.
 
 ## Generate one SVG visual
 

@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 
-const DEFAULT_BASE_URL = "https://labs.graptolite.ai/ppt";
+const DEFAULT_BASE_URL = "http://127.0.0.1:3000/ppt";
 const SOURCE_EXTENSIONS = new Set(["pdf", "doc", "docx", "pptx", "md", "png", "jpg", "jpeg"]);
 const SKILLS = [
   ["freeform", "Other / AI choice", "Choose the best visual structure from the supplied content."],
@@ -50,7 +50,7 @@ const TOOLS = SKILLS.map(([id, title, description]) => ({
       },
       session_id: { type: "string", description: "Optional stable session ID for revisions." },
       conversation_turn: { type: "integer", minimum: 1, maximum: 5, default: 1 },
-      base_url: { type: "string", description: "Optional service URL; defaults to PPT_SVG_BASE_URL." }
+      base_url: { type: "string", description: "Optional operator-approved service URL; defaults to PPT_SVG_BASE_URL or the local PPT-SVG service." }
     },
     required: ["prompt"],
     additionalProperties: false
