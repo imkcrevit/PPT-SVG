@@ -919,10 +919,134 @@ export function withDeckChrome(diagram: Figure, palette: DeckPalette, ctx: DeckC
   // The diagram lays out its own title at a layout-specific spot; strip it and
   // let the template redraw the title at the SAME (M, 74) as every content page,
   // so no two slides put their title at different coordinates.
-  const body = diagram.elements.filter((el) => el.id !== "figure-title-text");
+  const body = fitIntoArea(
+    diagram.elements.filter((el) => el.id !== "figure-title-text"),
+    diagramSafeArea(tpl.masters.diagram.blocks)
+  );
   const placeholder: DeckSlide = { kind: "section", title: diagram.metadata.title };
   const chrome = buildMaster({ blocks: tpl.masters.diagram.blocks }, placeholder, tpl, palette, ctx);
   return { ...diagram, elements: [...body, ...chrome] };
+}
+
+interface Area {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+const SAFE_PAD = 14;
+
+/**
+ * The region a diagram body may occupy under a template's chrome: below the
+ * title/rule band, above the footer, and clear of side bars. Derived from the
+ * blocks themselves, so built-in and uploaded (.pptx-derived) templates behave
+ * the same.
+ */
+export function diagramSafeArea(blocks: TemplateBlock[]): Area {
+  const area: Area = { left: 40, top: 0, right: CANVAS_W - 40, bottom: CANVAS_H };
+  for (const block of blocks) {
+    if (block.type !== "rect" && block.type !== "text") continue;
+    const { x, y, w, h } = block;
+    // Full-bleed backdrops are decoration behind the diagram, not chrome.
+    if (w >= CANVAS_W * 0.9 && h >= CANVAS_H * 0.8) continue;
+    if (h >= CANVAS_H * 0.4 && w <= 200) {
+      if (x + w / 2 < CANVAS_W / 2) area.left = Math.max(area.left, x + w + SAFE_PAD);
+      else area.right = Math.min(area.right, x - SAFE_PAD);
+    } else if (y + h / 2 < CANVAS_H / 2) {
+      area.top = Math.max(area.top, y + h + SAFE_PAD);
+    } else {
+      area.bottom = Math.min(area.bottom, y - SAFE_PAD);
+    }
+  }
+  return area;
+}
+
+function elementBounds(el: FigureElement): Area | undefined {
+  switch (el.type) {
+    case "group": {
+      const parts = el.children.map(elementBounds).filter((b): b is Area => Boolean(b));
+      return parts.length ? unionAreas(parts) : undefined;
+    }
+    case "rect":
+    case "image":
+      return { left: el.x, top: el.y, right: el.x + el.width, bottom: el.y + el.height };
+    case "text":
+      return { left: el.x, top: el.y, right: el.x + (el.width ?? 0), bottom: el.y + (el.height ?? el.fontSize ?? 16) };
+    case "ellipse":
+      return { left: el.cx - el.rx, top: el.cy - el.ry, right: el.cx + el.rx, bottom: el.cy + el.ry };
+    case "line":
+    case "arrow":
+      return { left: Math.min(el.x1, el.x2), top: Math.min(el.y1, el.y2), right: Math.max(el.x1, el.x2), bottom: Math.max(el.y1, el.y2) };
+    case "connector":
+    case "polygon": {
+      const xs = el.points.map((p) => p.x);
+      const ys = el.points.map((p) => p.y);
+      return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
+    }
+  }
+}
+
+function unionAreas(areas: Area[]): Area {
+  return {
+    left: Math.min(...areas.map((a) => a.left)),
+    top: Math.min(...areas.map((a) => a.top)),
+    right: Math.max(...areas.map((a) => a.right)),
+    bottom: Math.max(...areas.map((a) => a.bottom))
+  };
+}
+
+/**
+ * Uniformly scale + move a compiled diagram body so it sits inside `area`.
+ * Standalone diagrams are laid out for a bare 1280×720 canvas; under deck
+ * chrome that canvas is smaller, and without this the body ran into the
+ * footer rule, side bars and page number. Fonts scale with the geometry, so
+ * text wraps exactly as before and stays inside its shapes.
+ */
+function fitIntoArea(elements: FigureElement[], area: Area): FigureElement[] {
+  const parts = elements.map(elementBounds).filter((b): b is Area => Boolean(b));
+  if (!parts.length) return elements;
+  const box = unionAreas(parts);
+  const inside = box.left >= area.left && box.top >= area.top && box.right <= area.right && box.bottom <= area.bottom;
+  if (inside) return elements;
+
+  const bw = box.right - box.left || 1;
+  const bh = box.bottom - box.top || 1;
+  const scale = Math.min(1, (area.right - area.left) / bw, (area.bottom - area.top) / bh);
+  const offX = area.left + (area.right - area.left - bw * scale) / 2;
+  const offY = area.top + (area.bottom - area.top - bh * scale) / 2;
+  const px = (v: number) => Math.round((offX + (v - box.left) * scale) * 100) / 100;
+  const py = (v: number) => Math.round((offY + (v - box.top) * scale) * 100) / 100;
+  const len = (v: number) => Math.round(v * scale * 100) / 100;
+
+  const map = (el: FigureElement): FigureElement => {
+    switch (el.type) {
+      case "group":
+        return { ...el, children: el.children.map(map) };
+      case "rect":
+        return { ...el, x: px(el.x), y: py(el.y), width: len(el.width), height: len(el.height), ...(el.rx !== undefined ? { rx: len(el.rx) } : {}) };
+      case "image":
+        return { ...el, x: px(el.x), y: py(el.y), width: len(el.width), height: len(el.height) };
+      case "text":
+        return {
+          ...el,
+          x: px(el.x),
+          y: py(el.y),
+          ...(el.width !== undefined ? { width: len(el.width) } : {}),
+          ...(el.height !== undefined ? { height: len(el.height) } : {}),
+          fontSize: len(el.fontSize ?? 22)
+        };
+      case "ellipse":
+        return { ...el, cx: px(el.cx), cy: py(el.cy), rx: len(el.rx), ry: len(el.ry) };
+      case "line":
+      case "arrow":
+        return { ...el, x1: px(el.x1), y1: py(el.y1), x2: px(el.x2), y2: py(el.y2) };
+      case "connector":
+      case "polygon":
+        return { ...el, points: el.points.map((p) => ({ x: px(p.x), y: py(p.y) })) };
+    }
+  };
+  return elements.map(map);
 }
 
 // ── Validation ─────────────────────────────────────────────────────────────────

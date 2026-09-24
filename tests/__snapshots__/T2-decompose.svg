@@ -9,8 +9,10 @@
 <text data-node-id="start-title" x="150.5" y="271" fill="#1D2433" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="150.5" y="271">项目启动</tspan></text>
 </g>
 <g data-node-id="p1-group">
-<rect data-node-id="p1-rect" x="238" y="160" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="1.5" />
-<text data-node-id="p1-label" x="470" y="179.5" fill="#1D2433" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="470" y="179.5">前期准备</tspan></text>
+<rect data-node-id="p1-rect" x="238" y="160" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
+<rect data-node-id="p1-header" x="238" y="160" width="464" height="39" rx="12" fill="#6B5BD2" stroke="none" stroke-width="0" />
+<rect data-node-id="p1-header-base" x="238" y="187" width="464" height="12" rx="0" fill="#6B5BD2" stroke="none" stroke-width="0" />
+<text data-node-id="p1-label" x="470" y="179.5" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="470" y="179.5">前期准备</tspan></text>
 <g data-node-id="p1-0-group">
 <rect data-node-id="p1-0-rect" x="258" y="219" width="125" height="59" rx="12" fill="#FFFFFF" stroke="#6B5BD2" stroke-width="2" />
 <text data-node-id="p1-0-title" x="320.5" y="248" fill="#1D2433" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="320.5" y="248">需求确认</tspan></text>
@@ -33,8 +35,10 @@
 </g>
 </g>
 <g data-node-id="p2-group">
-<rect data-node-id="p2-rect" x="727" y="160" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="1.5" />
-<text data-node-id="p2-label" x="959" y="179.5" fill="#1D2433" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="959" y="179.5">设计深化</tspan></text>
+<rect data-node-id="p2-rect" x="727" y="160" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<rect data-node-id="p2-header" x="727" y="160" width="464" height="39" rx="12" fill="#7A5AC4" stroke="none" stroke-width="0" />
+<rect data-node-id="p2-header-base" x="727" y="187" width="464" height="12" rx="0" fill="#7A5AC4" stroke="none" stroke-width="0" />
+<text data-node-id="p2-label" x="959" y="179.5" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="959" y="179.5">设计深化</tspan></text>
 <g data-node-id="p2-0-group">
 <rect data-node-id="p2-0-rect" x="748" y="219" width="125" height="59" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
 <text data-node-id="p2-0-title" x="810.5" y="248" fill="#1D2433" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="810.5" y="248">初步设计</tspan></text>
@@ -57,8 +61,10 @@
 </g>
 </g>
 <g data-node-id="p3-group">
-<rect data-node-id="p3-rect" x="727" y="450" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="1.5" />
-<text data-node-id="p3-label" x="959" y="469.5" fill="#1D2433" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="959" y="469.5">报审采购</tspan></text>
+<rect data-node-id="p3-rect" x="727" y="450" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
+<rect data-node-id="p3-header" x="727" y="450" width="464" height="39" rx="12" fill="#2E9E76" stroke="none" stroke-width="0" />
+<rect data-node-id="p3-header-base" x="727" y="477" width="464" height="12" rx="0" fill="#2E9E76" stroke="none" stroke-width="0" />
+<text data-node-id="p3-label" x="959" y="469.5" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="959" y="469.5">报审采购</tspan></text>
 <g data-node-id="p3-0-group">
 <rect data-node-id="p3-0-rect" x="748" y="509" width="125" height="59" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
 <text data-node-id="p3-0-title" x="810.5" y="538" fill="#1D2433" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="810.5" y="538">报审材料</tspan></text>
@@ -81,8 +87,10 @@
 </g>
 </g>
 <g data-node-id="p4-group">
-<rect data-node-id="p4-rect" x="238" y="450" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="1.5" />
-<text data-node-id="p4-label" x="470" y="469.5" fill="#1D2433" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="470" y="469.5">施工交付</tspan></text>
+<rect data-node-id="p4-rect" x="238" y="450" width="464" height="222" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
+<rect data-node-id="p4-header" x="238" y="450" width="464" height="39" rx="12" fill="#2F6FED" stroke="none" stroke-width="0" />
+<rect data-node-id="p4-header-base" x="238" y="477" width="464" height="12" rx="0" fill="#2F6FED" stroke="none" stroke-width="0" />
+<text data-node-id="p4-label" x="470" y="469.5" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="470" y="469.5">施工交付</tspan></text>
 <g data-node-id="p4-0-group">
 <rect data-node-id="p4-0-rect" x="258" y="509" width="125" height="59" rx="12" fill="#FFFFFF" stroke="#2F6FED" stroke-width="2" />
 <text data-node-id="p4-0-title" x="320.5" y="538" fill="#1D2433" font-size="17" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="320.5" y="538">施工准备</tspan></text>

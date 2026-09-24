@@ -2,6 +2,7 @@ import type { Figure, FigureElement } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
 import { DEFAULT_THEME, resolveTheme, type DiagramTheme } from "@/lib/theme";
 import { estimateLineCount, measureSvgText } from "@/lib/text-layout";
+import { placeEdgeLabel, routeEdge, type Box, type Pt } from "@/lib/orthogonal-route";
 import {
   layoutCycle,
   layoutFishbone,
@@ -64,17 +65,6 @@ const DETAIL_LH = DETAIL_FONT * 1.32;
 const BOX_PAD_Y = 12;
 const BOX_PAD_X = 16;
 
-interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface Pt {
-  x: number;
-  y: number;
-}
 
 interface LayoutNode {
   node: SemanticNode;
@@ -91,6 +81,37 @@ let ACCENTS = DEFAULT_THEME.accents;
 let TEXT = DEFAULT_THEME.text;
 let SUBTEXT = DEFAULT_THEME.subtext;
 let EDGE = DEFAULT_THEME.edge;
+// Horizontal gap between two adjacent siblings/roots that share a labelled
+// edge, keyed by the unordered id pair. A default 22px gap cannot hold a label
+// plate, so the label used to land on top of the neighbouring cards.
+let LABEL_GAPS = new Map<string, number>();
+// Vertical gap between two rows when a labelled edge crosses between them.
+const LABEL_ROW_GAP = 44;
+const EDGE_LABEL_FONT = 12;
+const EDGE_LABEL_H = 22;
+
+function pairKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+function gapBetween(a: LayoutNode, b: LayoutNode): number {
+  return Math.max(GAP, LABEL_GAPS.get(pairKey(a.node.id, b.node.id)) ?? 0);
+}
+
+function rowWidthOf(row: LayoutNode[]): number {
+  return row.reduce((sum, child, index) => sum + child.box.width + (index > 0 ? gapBetween(row[index - 1], child) : 0), 0);
+}
+
+function rowGapBetween(upper: LayoutNode[], lower: LayoutNode[]): number {
+  for (const a of upper) {
+    for (const b of lower) {
+      if (LABEL_GAPS.has(pairKey(a.node.id, b.node.id))) {
+        return LABEL_ROW_GAP;
+      }
+    }
+  }
+  return GAP;
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -201,10 +222,10 @@ function measure(layoutNode: LayoutNode, direction: "horizontal" | "vertical"): 
   let innerHeight = 0;
 
   rows.forEach((row, index) => {
-    const rowWidth = row.reduce((sum, child) => sum + child.box.width, 0) + GAP * (row.length - 1);
+    const rowWidth = rowWidthOf(row);
     const rowHeight = Math.max(...row.map((child) => child.box.height));
     innerWidth = Math.max(innerWidth, rowWidth);
-    innerHeight += rowHeight + (index > 0 ? GAP : 0);
+    innerHeight += rowHeight + (index > 0 ? rowGapBetween(rows[index - 1], row) : 0);
   });
 
   layoutNode.box.width = innerWidth + PAD * 2;
@@ -222,18 +243,20 @@ function place(layoutNode: LayoutNode, x: number, y: number): void {
   const innerWidth = layoutNode.box.width - PAD * 2;
   let cursorY = y + HEADER_H + PAD;
 
-  for (const row of layoutNode.rows) {
-    const rowWidth = row.reduce((sum, child) => sum + child.box.width, 0) + GAP * (row.length - 1);
+  layoutNode.rows.forEach((row, rowIndex) => {
+    const rowWidth = rowWidthOf(row);
     const rowHeight = Math.max(...row.map((child) => child.box.height));
     let cursorX = x + PAD + (innerWidth - rowWidth) / 2;
 
-    for (const child of row) {
+    row.forEach((child, index) => {
+      if (index > 0) cursorX += gapBetween(row[index - 1], child);
       place(child, cursorX, cursorY + (rowHeight - child.box.height) / 2);
-      cursorX += child.box.width + GAP;
-    }
+      cursorX += child.box.width;
+    });
 
-    cursorY += rowHeight + GAP;
-  }
+    const next = layoutNode.rows[rowIndex + 1];
+    cursorY += rowHeight + (next ? rowGapBetween(row, next) : GAP);
+  });
 }
 
 interface Band {
@@ -243,7 +266,7 @@ interface Band {
 }
 
 function rootsWidth(roots: LayoutNode[]): number {
-  return roots.reduce((sum, root) => sum + root.box.width, 0) + GAP * Math.max(0, roots.length - 1);
+  return rowWidthOf(roots);
 }
 
 function widestFlowRow(roots: LayoutNode[], perRow: number): number {
@@ -340,10 +363,11 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
     let cursorX =
       band.align === "start" ? 0 : band.align === "end" ? remainingWidth : remainingWidth / 2;
 
-    for (const root of band.roots) {
+    band.roots.forEach((root, rootIndex) => {
+      if (rootIndex > 0) cursorX += gapBetween(band.roots[rootIndex - 1], root);
       place(root, cursorX, cursorY + (bandHeight - root.box.height) / 2);
-      cursorX += root.box.width + GAP;
-    }
+      cursorX += root.box.width;
+    });
 
     cursorY += bandHeight + LAYER_GAP;
   });
@@ -351,207 +375,49 @@ function arrangeRoots(roots: LayoutNode[], diagram: SemanticDiagram): { bands: B
   return { bands, totalW, totalH: cursorY - LAYER_GAP };
 }
 
-function center(box: Box): Pt {
-  return {
-    x: box.x + box.width / 2,
-    y: box.y + box.height / 2
+interface ContainerStyle {
+  fill: string;
+  strokeWidth: number;
+  rx: number;
+  fontSize: number;
+  headerFill?: string;
+  headerText: string;
+}
+
+// Each split level gets its own visual weight so nesting reads at a glance:
+//   level 1 group  → white body + solid accent title bar (white title)
+//   level 2 group  → tinted body, accent-coloured title
+//   level 3+ group → light neutral body, thinner border, smaller title
+// Leaf cards stay white, so they always contrast with the group they sit in.
+function containerStyle(depth: number, accent: { stroke: string; tint: string }): ContainerStyle {
+  if (depth === 0) {
+    return { fill: "#FFFFFF", strokeWidth: 2, rx: 12, fontSize: 16, headerFill: accent.stroke, headerText: readableOn(accent.stroke) };
+  }
+  if (depth === 1) {
+    return { fill: accent.tint, strokeWidth: 1.5, rx: 10, fontSize: 14, headerText: TEXT };
+  }
+  return { fill: "#F7F8FA", strokeWidth: 1.2, rx: 8, fontSize: 13, headerText: SUBTEXT };
+}
+
+function readableOn(hex: string): string {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return "#FFFFFF";
+  const value = parseInt(match[1], 16);
+  const channel = (shift: number) => {
+    const c = ((value >> shift) & 0xff) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   };
+  const luminance = 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0);
+  return luminance > 0.45 ? TEXT : "#FFFFFF";
 }
 
-function intersects(a: Box, b: Box): boolean {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-}
-
-// Does an axis-aligned segment cross a rect's strict interior?
-function segHitsRectInterior(x1: number, y1: number, x2: number, y2: number, r: Box): boolean {
-  const rx1 = r.x;
-  const ry1 = r.y;
-  const rx2 = r.x + r.width;
-  const ry2 = r.y + r.height;
-  if (Math.abs(y1 - y2) < 0.01) {
-    if (y1 <= ry1 || y1 >= ry2) return false;
-    return Math.min(x1, x2) < rx2 && Math.max(x1, x2) > rx1;
+function findNode(roots: LayoutNode[], id: string): LayoutNode | undefined {
+  for (const root of roots) {
+    if (root.node.id === id) return root;
+    const found = findNode(root.children, id);
+    if (found) return found;
   }
-  if (x1 <= rx1 || x1 >= rx2) return false;
-  return Math.min(y1, y2) < ry2 && Math.max(y1, y2) > ry1;
-}
-
-function pathHitsObstacle(points: Pt[], obstacles: Box[]): boolean {
-  for (let i = 0; i + 1 < points.length; i++) {
-    for (const o of obstacles) {
-      if (segHitsRectInterior(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, o)) return true;
-    }
-  }
-  return false;
-}
-
-function inflate(b: Box, m: number): Box {
-  return { x: b.x - m, y: b.y - m, width: b.width + 2 * m, height: b.height + 2 * m };
-}
-
-// Anchor on the side of `box` facing `toward`.
-function sideAnchor(box: Box, toward: Pt): Pt {
-  const c = center(box);
-  if (Math.abs(toward.x - c.x) >= Math.abs(toward.y - c.y)) {
-    return { x: toward.x >= c.x ? box.x + box.width : box.x, y: c.y };
-  }
-  return { x: c.x, y: toward.y >= c.y ? box.y + box.height : box.y };
-}
-
-// Orthogonal A* on the Hanan grid (obstacle corners + anchors) that routes
-// around node boxes with clearance. Used only when the simple route is blocked.
-function routeAround(source: Box, target: Box, obstacles: Box[]): Pt[] | null {
-  const CLEAR = 12;
-  // source/target block the path (so it can't cut through them) but are not
-  // inflated, so an anchor on their border stays valid.
-  const blockers = [source, target, ...obstacles.map((o) => inflate(o, CLEAR))];
-  const a = sideAnchor(source, center(target));
-  const b = sideAnchor(target, center(source));
-
-  const uniq = (vals: number[]) => [...new Set(vals.map((v) => Math.round(v)))].sort((p, q) => p - q);
-  const xs = uniq([a.x, b.x, ...blockers.flatMap((o) => [o.x, o.x + o.width])]);
-  const ys = uniq([a.y, b.y, ...blockers.flatMap((o) => [o.y, o.y + o.height])]);
-  const ix = new Map(xs.map((v, i) => [v, i]));
-  const iy = new Map(ys.map((v, i) => [v, i]));
-  const si = ix.get(Math.round(a.x));
-  const sj = iy.get(Math.round(a.y));
-  const gi = ix.get(Math.round(b.x));
-  const gj = iy.get(Math.round(b.y));
-  if (si === undefined || sj === undefined || gi === undefined || gj === undefined) return null;
-
-  const clear = (x1: number, y1: number, x2: number, y2: number) => !blockers.some((o) => segHitsRectInterior(x1, y1, x2, y2, o));
-  const key = (i: number, j: number) => i * ys.length + j;
-  const start = key(si, sj);
-  const goal = key(gi, gj);
-  const gScore = new Map<number, number>([[start, 0]]);
-  const cameFrom = new Map<number, number>();
-  const open: Array<{ n: number; f: number }> = [{ n: start, f: 0 }];
-  const h = (i: number, j: number) => Math.abs(xs[i] - xs[gi]) + Math.abs(ys[j] - ys[gj]);
-  const TURN = 40;
-
-  while (open.length) {
-    open.sort((p, q) => p.f - q.f);
-    const { n } = open.shift()!;
-    if (n === goal) break;
-    const i = Math.floor(n / ys.length);
-    const j = n % ys.length;
-    const prev = cameFrom.get(n);
-    const pdir = prev === undefined ? -1 : Math.floor(prev / ys.length) === i ? 0 : 1; // 0=horiz,1=vert incoming
-    for (const [di, dj] of [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1]
-    ]) {
-      const ni = i + di;
-      const nj = j + dj;
-      if (ni < 0 || nj < 0 || ni >= xs.length || nj >= ys.length) continue;
-      if (!clear(xs[i], ys[j], xs[ni], ys[nj])) continue;
-      const dir = di !== 0 ? 0 : 1;
-      const step = Math.abs(xs[ni] - xs[i]) + Math.abs(ys[nj] - ys[j]) + (pdir !== -1 && pdir !== dir ? TURN : 0);
-      const nk = key(ni, nj);
-      const tentative = (gScore.get(n) ?? Infinity) + step;
-      if (tentative < (gScore.get(nk) ?? Infinity)) {
-        cameFrom.set(nk, n);
-        gScore.set(nk, tentative);
-        open.push({ n: nk, f: tentative + h(ni, nj) });
-      }
-    }
-  }
-  if (!cameFrom.has(goal) && goal !== start) return null;
-
-  const raw: Pt[] = [];
-  let cur = goal;
-  raw.push({ x: xs[Math.floor(cur / ys.length)], y: ys[cur % ys.length] });
-  while (cur !== start) {
-    const p = cameFrom.get(cur);
-    if (p === undefined) return null;
-    cur = p;
-    raw.push({ x: xs[Math.floor(cur / ys.length)], y: ys[cur % ys.length] });
-  }
-  raw.reverse();
-  // Drop collinear midpoints.
-  const pts: Pt[] = [];
-  for (let k = 0; k < raw.length; k++) {
-    if (k > 0 && k < raw.length - 1) {
-      const a1 = raw[k - 1];
-      const b1 = raw[k];
-      const c1 = raw[k + 1];
-      if ((a1.x === b1.x && b1.x === c1.x) || (a1.y === b1.y && b1.y === c1.y)) continue;
-    }
-    pts.push(raw[k]);
-  }
-  return pts.length >= 2 ? pts : null;
-}
-
-function routeEdge(source: Box, target: Box, obstacles: Box[]): Pt[] {
-  const simple = simpleRoute(source, target, obstacles);
-  if (!pathHitsObstacle(simple, obstacles)) return simple;
-  const around = routeAround(source, target, obstacles);
-  return around && !pathHitsObstacle(around, obstacles) ? around : simple;
-}
-
-function simpleRoute(source: Box, target: Box, obstacles: Box[]): Pt[] {
-  const sourceCenter = center(source);
-  const targetCenter = center(target);
-  const vertical = Math.abs(targetCenter.y - sourceCenter.y) > Math.abs(targetCenter.x - sourceCenter.x) + 1;
-
-  if (vertical) {
-    const down = targetCenter.y > sourceCenter.y;
-    const sourceY = down ? source.y + source.height : source.y;
-    const targetY = down ? target.y : target.y + target.height;
-    const channelY = (sourceY + targetY) / 2;
-
-    if (Math.abs(sourceCenter.x - targetCenter.x) < 2) {
-      return [
-        { x: sourceCenter.x, y: sourceY },
-        { x: targetCenter.x, y: targetY }
-      ];
-    }
-
-    return [
-      { x: sourceCenter.x, y: sourceY },
-      { x: sourceCenter.x, y: channelY },
-      { x: targetCenter.x, y: channelY },
-      { x: targetCenter.x, y: targetY }
-    ];
-  }
-
-  const right = targetCenter.x > sourceCenter.x;
-  const sourceX = right ? source.x + source.width : source.x;
-  const targetX = right ? target.x : target.x + target.width;
-  const corridor: Box = {
-    x: Math.min(sourceX, targetX),
-    y: Math.min(source.y, target.y),
-    width: Math.abs(targetX - sourceX),
-    height: Math.max(source.y + source.height, target.y + target.height) - Math.min(source.y, target.y)
-  };
-  const blocked = obstacles.some((obstacle) => intersects(corridor, obstacle));
-
-  if (!blocked) {
-    if (Math.abs(sourceCenter.y - targetCenter.y) < 2) {
-      return [
-        { x: sourceX, y: sourceCenter.y },
-        { x: targetX, y: targetCenter.y }
-      ];
-    }
-
-    const centerX = (sourceX + targetX) / 2;
-    return [
-      { x: sourceX, y: sourceCenter.y },
-      { x: centerX, y: sourceCenter.y },
-      { x: centerX, y: targetCenter.y },
-      { x: targetX, y: targetCenter.y }
-    ];
-  }
-
-  const laneY = Math.max(source.y + source.height, target.y + target.height) + GAP;
-  return [
-    { x: sourceCenter.x, y: source.y + source.height },
-    { x: sourceCenter.x, y: laneY },
-    { x: targetCenter.x, y: laneY },
-    { x: targetCenter.x, y: target.y + target.height }
-  ];
+  return undefined;
 }
 
 export function layoutDiagram(
@@ -590,6 +456,14 @@ export function layoutDiagram(
   const height = CANVAS_H;
   const direction = diagram.direction ?? "horizontal";
 
+  LABEL_GAPS = new Map();
+  for (const edge of diagram.edges) {
+    if (edge.label) {
+      const need = measureSvgText(edge.label, EDGE_LABEL_FONT) + 12 + 28;
+      const key = pairKey(edge.from, edge.to);
+      LABEL_GAPS.set(key, Math.max(LABEL_GAPS.get(key) ?? 0, need));
+    }
+  }
   const roots = buildTree(diagram);
   roots.forEach((root) => measure(root, direction));
   const { bands, totalW, totalH } = arrangeRoots(roots, diagram);
@@ -677,7 +551,8 @@ export function layoutDiagram(
     const isContainer = layoutNode.children.length > 0;
     const accent = accentFor(layoutNode);
     const emphasis = layoutNode.node.emphasis ?? "normal";
-    const fill = isContainer ? "#FFFFFF" : emphasis === "primary" ? accent.tint : emphasis === "muted" ? "#F4F5F7" : "#FFFFFF";
+    const style = isContainer ? containerStyle(layoutNode.depth, accent) : undefined;
+    const fill = style ? style.fill : emphasis === "primary" ? accent.tint : emphasis === "muted" ? "#F4F5F7" : "#FFFFFF";
     const parts: FigureElement[] = [
       {
         id: `${layoutNode.node.id}-rect`,
@@ -687,13 +562,47 @@ export function layoutDiagram(
         y: y(box.y),
         width: scaled(box.width),
         height: scaled(box.height),
-        rx: 12,
+        rx: style ? style.rx : 12,
         fill,
         stroke: accent.stroke,
-        strokeWidth: isContainer ? 1.5 : 2,
+        strokeWidth: style ? style.strokeWidth : 2,
         dash: layoutNode.node.dashed === true
       }
     ];
+
+    if (style?.headerFill) {
+      // Solid title bar marks a top-level group, so the first split level reads
+      // at a glance. A second, square-cornered rect flattens the bar's bottom.
+      const headerH = scaled(HEADER_H);
+      parts.push(
+        {
+          id: `${layoutNode.node.id}-header`,
+          type: "rect",
+          name: `${layoutNode.node.label} header`,
+          x: x(box.x),
+          y: y(box.y),
+          width: scaled(box.width),
+          height: headerH,
+          rx: style.rx,
+          fill: style.headerFill,
+          stroke: "none",
+          strokeWidth: 0
+        },
+        {
+          id: `${layoutNode.node.id}-header-base`,
+          type: "rect",
+          name: `${layoutNode.node.label} header base`,
+          x: x(box.x),
+          y: y(box.y) + headerH - Math.min(style.rx, Math.floor(headerH / 2)),
+          width: scaled(box.width),
+          height: Math.min(style.rx, Math.floor(headerH / 2)),
+          rx: 0,
+          fill: style.headerFill,
+          stroke: "none",
+          strokeWidth: 0
+        }
+      );
+    }
 
     if (isContainer) {
       parts.push({
@@ -705,9 +614,9 @@ export function layoutDiagram(
         width: scaled(box.width),
         height: scaled(HEADER_H),
         text: layoutNode.node.label,
-        fontSize: scaledFont(16, 11),
+        fontSize: scaledFont(style?.fontSize ?? 16, 11),
         fontWeight: 700,
-        fill: TEXT,
+        fill: style?.headerText ?? TEXT,
         textAnchor: "middle"
       });
     } else {
@@ -771,6 +680,32 @@ export function layoutDiagram(
   };
   roots.forEach((root) => collect(root, []));
 
+  // A container's title text is content too: edges must not run through it and
+  // labels must not sit on it.
+  const headerTextBoxes = new Map<string, Box>();
+  for (const { id, box } of allBoxes) {
+    const layoutNode = findNode(roots, id);
+    if (!layoutNode || layoutNode.children.length === 0) continue;
+    const fontSize = containerStyle(layoutNode.depth, accentFor(layoutNode)).fontSize;
+    const textW = Math.min(box.width, measureSvgText(layoutNode.node.label, fontSize) + 24);
+    headerTextBoxes.set(id, { x: box.x + (box.width - textW) / 2, y: box.y + 4, width: textW, height: HEADER_H - 8 });
+  }
+  const placedLabels: Box[] = [];
+
+  // Architecture bands (tinted panels) and their captions, in layout units.
+  const bandPanels: Box[] = [];
+  const bandCaptions: Box[] = [];
+  if (diagram.type === "architecture" && diagram.layers?.length) {
+    bands.forEach((band) => {
+      if (!band.name || band.roots.length === 0) return;
+      const top = Math.min(...band.roots.map((root) => root.box.y));
+      const bottom = Math.max(...band.roots.map((root) => root.box.y + root.box.height));
+      bandPanels.push({ x: -8 / scale, y: top - 8 / scale, width: totalW + 16 / scale, height: bottom - top + 16 / scale });
+      const captionW = measureSvgText(band.name, scaledFont(14, 11)) + 8;
+      bandCaptions.push({ x: -8 / scale, y: top - 32 / scale, width: captionW / scale, height: 22 / scale });
+    });
+  }
+
   const descendantsOf = (id: string): Set<string> => {
     const descendants = new Set<string>();
 
@@ -783,6 +718,7 @@ export function layoutDiagram(
     return descendants;
   };
 
+  const routed: Array<{ edge: SemanticDiagram["edges"][number]; index: number; points: Pt[] }> = [];
   diagram.edges.forEach((edge, index) => {
     const source = boxById.get(edge.from);
     const target = boxById.get(edge.to);
@@ -805,8 +741,19 @@ export function layoutDiagram(
       exclude.add(descendant);
     }
 
-    const obstacles = allBoxes.filter((candidate) => !exclude.has(candidate.id)).map((candidate) => candidate.box);
-    const points = routeEdge(source, target, obstacles);
+    const obstacles = [
+      ...allBoxes.filter((candidate) => !exclude.has(candidate.id)).map((candidate) => candidate.box),
+      ...[...headerTextBoxes].filter(([id]) => id !== edge.from && id !== edge.to).map(([, box]) => box),
+      ...bandCaptions
+    ];
+    let points = routeEdge(source, target, obstacles);
+    // A→B plus B→A on one straight run would draw two arrows on the same line;
+    // pull each direction a few pixels to its own side.
+    if (points.length === 2 && diagram.edges.some((other) => other.from === edge.to && other.to === edge.from)) {
+      const shift = (edge.from < edge.to ? -1 : 1) * 7;
+      const horizontal = Math.abs(points[0].y - points[1].y) < 1;
+      points = points.map((point) => (horizontal ? { x: point.x, y: point.y + shift } : { x: point.x + shift, y: point.y }));
+    }
     const dash = edge.dashed === true;
 
     elements.push({
@@ -819,35 +766,46 @@ export function layoutDiagram(
       dash,
       endArrow: true
     });
+    routed.push({ edge, index, points });
+  });
 
+  // Labels go on after every edge is routed, so a plate can also avoid the
+  // lines of other edges, and are drawn above all connectors.
+  const segmentBoxes = (points: Pt[]): Box[] =>
+    points.slice(0, -1).map((a, k) => {
+      const b = points[k + 1];
+      return { x: Math.min(a.x, b.x) - 1, y: Math.min(a.y, b.y) - 1, width: Math.abs(b.x - a.x) + 2, height: Math.abs(b.y - a.y) + 2 };
+    });
+  routed.forEach(({ edge, index, points }) => {
     if (edge.label) {
-      let best = {
-        mx: (points[0].x + points[1].x) / 2,
-        my: (points[0].y + points[1].y) / 2,
-        len: 0
-      };
-
-      for (let pointIndex = 0; pointIndex < points.length - 1; pointIndex += 1) {
-        const length = Math.abs(points[pointIndex + 1].x - points[pointIndex].x);
-
-        if (length > best.len) {
-          best = {
-            mx: (points[pointIndex].x + points[pointIndex + 1].x) / 2,
-            my: (points[pointIndex].y + points[pointIndex + 1].y) / 2,
-            len: length
-          };
-        }
-      }
-
-      const plateW = Math.max(34, measureSvgText(edge.label, 12) + 12);
+      const fontSize = scaledFont(EDGE_LABEL_FONT, 9);
+      const plateW = Math.max(34, measureSvgText(edge.label, fontSize) + 12);
+      // Work in layout units so the plate can be tested against node boxes.
+      const plate = { width: plateW / scale, height: EDGE_LABEL_H / scale };
+      const blockers: Array<{ box: Box; container: boolean }> = [
+        ...allBoxes.map(({ id, box }) => ({ box, container: headerTextBoxes.has(id) })),
+        // Whole title bar, not just its text: a plate on a coloured bar reads as a glitch.
+        ...[...headerTextBoxes.keys()].map((id) => {
+          const box = boxById.get(id)!;
+          return { box: { x: box.x, y: box.y, width: box.width, height: HEADER_H }, container: false };
+        }),
+        ...placedLabels.map((box) => ({ box, container: false })),
+        ...bandPanels.map((box) => ({ box, container: true })),
+        ...bandCaptions.map((box) => ({ box, container: false })),
+        ...routed.filter((other) => other.index !== index).flatMap((other) => segmentBoxes(other.points).map((box) => ({ box, container: false })))
+      ];
+      const best = placeEdgeLabel(points, plate, blockers);
+      placedLabels.push({ x: best.x - plate.width / 2, y: best.y - plate.height / 2, width: plate.width, height: plate.height });
+      const labelX = x(best.x) - Math.round(plateW / 2);
+      const labelY = y(best.y) - Math.round(EDGE_LABEL_H / 2);
       elements.push({
         id: `edge-${index}-label-bg`,
         type: "rect",
         name: `${edge.from} -> ${edge.to} label bg`,
-        x: x(best.mx) - Math.round((plateW * scale) / 2),
-        y: y(best.my) - 12,
-        width: scaled(plateW),
-        height: 22,
+        x: labelX,
+        y: labelY,
+        width: Math.round(plateW),
+        height: EDGE_LABEL_H,
         rx: 4,
         fill: "#FFFFFF",
         stroke: "none",
@@ -857,19 +815,18 @@ export function layoutDiagram(
         id: `edge-${index}-label`,
         type: "text",
         name: `${edge.from} -> ${edge.to} label`,
-        x: x(best.mx) - Math.round((plateW * scale) / 2),
-        y: y(best.my) - 12,
-        width: scaled(plateW),
-        height: 22,
+        x: labelX,
+        y: labelY,
+        width: Math.round(plateW),
+        height: EDGE_LABEL_H,
         text: edge.label,
-        fontSize: scaledFont(12, 9),
+        fontSize,
         fontWeight: 500,
         fill: SUBTEXT,
         textAnchor: "middle"
       });
     }
   });
-
   return {
     canvas: { width, height, background: canvasBg, fontFamily: theme.fontFamily },
     metadata: {

@@ -11,6 +11,7 @@
     "stop": "bash ./scripts/start.sh stop",
     "check:sessions": "node scripts/check-session-concurrency.mjs",
     "test:snapshots": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/snapshot-test.ts",
+    "test:collisions": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/collision-audit.ts",
     "test:layout": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/diagram-layout-assertions.ts",
     "test:deck": "node --experimental-strip-types --experimental-loader ./tests/ts-path-loader.mjs tests/deck-template.ts",
     "test:theme": "npm run test:theme:intent && npm run test:theme:image",

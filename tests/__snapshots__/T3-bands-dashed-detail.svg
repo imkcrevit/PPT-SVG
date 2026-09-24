@@ -4,14 +4,14 @@
 <desc id="figure-desc">RAG + 多 Agent 代码生成流水线</desc>
 <rect width="1280" height="720" fill="#FFFFFF" />
 <text data-node-id="figure-title-text" x="48" y="100" fill="#1D2433" font-size="32" font-weight="800" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="48" y="100">RAG + 多 Agent 代码生成流水线</tspan></text>
-<rect data-node-id="band-0" x="202" y="192" width="877" height="79" rx="14" fill="#FBF6EC" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-0" x="202" y="179" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="202" y="179">训练阶段：OFFLINE</tspan></text>
-<rect data-node-id="band-1" x="202" y="315" width="877" height="79" rx="14" fill="#EFEBFB" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-1" x="202" y="302" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="202" y="302">使用阶段 ①：RAG 检索</tspan></text>
-<rect data-node-id="band-2" x="202" y="438" width="877" height="79" rx="14" fill="#F0EAFA" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-2" x="202" y="425" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="202" y="425">使用阶段 ②：代码生成 + 抗幻觉 + 用户确认</tspan></text>
-<rect data-node-id="band-3" x="202" y="561" width="877" height="79" rx="14" fill="#E7F5EF" stroke="none" stroke-width="0" />
-<text data-node-id="band-label-3" x="202" y="548" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="202" y="548">使用阶段 ③：Revit 执行 + Tool 固化</tspan></text>
+<rect data-node-id="band-0" x="153" y="192" width="975" height="79" rx="14" fill="#FBF6EC" stroke="none" stroke-width="0" />
+<text data-node-id="band-label-0" x="153" y="179" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="153" y="179">训练阶段：OFFLINE</tspan></text>
+<rect data-node-id="band-1" x="153" y="315" width="975" height="79" rx="14" fill="#EFEBFB" stroke="none" stroke-width="0" />
+<text data-node-id="band-label-1" x="153" y="302" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="153" y="302">使用阶段 ①：RAG 检索</tspan></text>
+<rect data-node-id="band-2" x="153" y="438" width="975" height="79" rx="14" fill="#F0EAFA" stroke="none" stroke-width="0" />
+<text data-node-id="band-label-2" x="153" y="425" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="153" y="425">使用阶段 ②：代码生成 + 抗幻觉 + 用户确认</tspan></text>
+<rect data-node-id="band-3" x="153" y="561" width="975" height="79" rx="14" fill="#E7F5EF" stroke="none" stroke-width="0" />
+<text data-node-id="band-label-3" x="153" y="548" fill="#5B6577" font-size="14" font-weight="700" text-anchor="start" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="153" y="548">使用阶段 ③：Revit 执行 + Tool 固化</tspan></text>
 <g data-node-id="collect-group">
 <rect data-node-id="collect-rect" x="269" y="200" width="123" height="63" rx="12" fill="#FFFFFF" stroke="#5B6B86" stroke-width="2" />
 <text data-node-id="collect-title" x="330.5" y="221.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="330.5" y="221.5">数据采集</tspan></text>
@@ -57,24 +57,24 @@
 <text data-node-id="score-detail" x="961" y="366" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="961" y="366">评估检索质量，通过则进入下游</tspan></text>
 </g>
 <g data-node-id="code-group">
-<rect data-node-id="code-rect" x="210" y="446" width="142" height="63" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="code-title" x="281" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="281" y="467.5">Code Agent</tspan></text>
-<text data-node-id="code-detail" x="281" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="281" y="489">Claude：生成 C#</tspan></text>
+<rect data-node-id="code-rect" x="161" y="446" width="142" height="63" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="code-title" x="232" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="232" y="467.5">Code Agent</tspan></text>
+<text data-node-id="code-detail" x="232" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="232" y="489">Claude：生成 C#</tspan></text>
 </g>
 <g data-node-id="halluc-group">
-<rect data-node-id="halluc-rect" x="374" y="446" width="276" height="63" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="halluc-title" x="512" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="512" y="467.5">幻觉对抗 Agent</tspan></text>
-<text data-node-id="halluc-detail" x="512" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="512" y="489">验证 API 真实存在；假 API 拒绝、重写</tspan></text>
+<rect data-node-id="halluc-rect" x="422" y="446" width="276" height="63" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="halluc-title" x="560" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="560" y="467.5">幻觉对抗 Agent</tspan></text>
+<text data-node-id="halluc-detail" x="560" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="560" y="489">验证 API 真实存在；假 API 拒绝、重写</tspan></text>
 </g>
 <g data-node-id="param-group">
-<rect data-node-id="param-rect" x="672" y="446" width="267" height="63" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="param-title" x="805.5" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="805.5" y="467.5">动态参数 Agent</tspan></text>
-<text data-node-id="param-detail" x="805.5" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="805.5" y="489">查 Revit 现有模型，让用户选具体实例</tspan></text>
+<rect data-node-id="param-rect" x="720" y="446" width="267" height="63" rx="12" fill="#F0EAFA" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="param-title" x="853.5" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="853.5" y="467.5">动态参数 Agent</tspan></text>
+<text data-node-id="param-detail" x="853.5" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="853.5" y="489">查 Revit 现有模型，让用户选具体实例</tspan></text>
 </g>
 <g data-node-id="confirm-group">
-<rect data-node-id="confirm-rect" x="961" y="446" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
-<text data-node-id="confirm-title" x="1016" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1016" y="467.5">用户确认</tspan></text>
-<text data-node-id="confirm-detail" x="1016" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1016" y="489">参数 + 代码</tspan></text>
+<rect data-node-id="confirm-rect" x="1009" y="446" width="110" height="63" rx="12" fill="#FFFFFF" stroke="#7A5AC4" stroke-width="2" />
+<text data-node-id="confirm-title" x="1064" y="467.5" fill="#1D2433" font-size="15" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1064" y="467.5">用户确认</tspan></text>
+<text data-node-id="confirm-detail" x="1064" y="489" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="1064" y="489">参数 + 代码</tspan></text>
 </g>
 <g data-node-id="revit-group">
 <rect data-node-id="revit-rect" x="442" y="569" width="119" height="63" rx="12" fill="#FFFFFF" stroke="#2E9E76" stroke-width="2" />
@@ -121,29 +121,27 @@
 </g>
 <g data-node-id="edge-7-connector">
 <defs><marker id="marker-edge-7-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="961,386 961,531 281,531 281,509" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-7-connector)" />
+<polyline points="961,386 961,531 232,531 232,509" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-7-connector)" />
 </g>
 <g data-node-id="edge-8-connector">
 <defs><marker id="marker-edge-8-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="352,478 374,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-8-connector)" />
+<polyline points="303,471 422,471" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-8-connector)" />
 </g>
 <g data-node-id="edge-9-connector">
 <defs><marker id="marker-edge-9-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="650,478 672,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-9-connector)" />
+<polyline points="698,478 720,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-9-connector)" />
 </g>
 <g data-node-id="edge-10-connector">
 <defs><marker id="marker-edge-10-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="939,478 961,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-10-connector)" />
+<polyline points="987,478 1009,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-10-connector)" />
 </g>
 <g data-node-id="edge-11-connector">
 <defs><marker id="marker-edge-11-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="374,478 352,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-11-connector)" />
+<polyline points="422,485 303,485" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-11-connector)" />
 </g>
-<rect data-node-id="edge-11-label-bg" x="317" y="466" width="92" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-11-label" x="363" y="477" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="363" y="477">假 API → 重写</tspan></text>
 <g data-node-id="edge-12-connector">
 <defs><marker id="marker-edge-12-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="1016,509 1016,654 502,654 502,632" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-12-connector)" />
+<polyline points="1064,509 1064,654 502,654 502,632" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#marker-edge-12-connector)" />
 </g>
 <g data-node-id="edge-13-connector">
 <defs><marker id="marker-edge-13-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
@@ -155,8 +153,10 @@
 </g>
 <g data-node-id="edge-15-connector">
 <defs><marker id="marker-edge-15-connector" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth" overflow="visible"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52607A" /></marker></defs>
-<polyline points="777,632 777,654 281,654 281,509" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-15-connector)" />
+<polyline points="715,601 711,601 711,571 709,571 709,569 707,569 707,557 705,557 705,525 573,525 573,521 571,521 571,525 570,525 570,521 568,521 568,525 536,525 536,521 534,521 534,525 444,525 444,521 430,521 430,525 411,525 411,521 404,521 404,525 402,525 402,521 332,521 332,525 330,525 330,521 318,521 318,509 306,509 306,478 303,478" fill="none" stroke="#52607A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#marker-edge-15-connector)" />
 </g>
-<rect data-node-id="edge-15-label-bg" x="475" y="642" width="108" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
-<text data-node-id="edge-15-label" x="529" y="653" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="529" y="653">下次同类直接调用</tspan></text>
+<rect data-node-id="edge-11-label-bg" x="317" y="474" width="92" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
+<text data-node-id="edge-11-label" x="363" y="485" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="363" y="485">假 API → 重写</tspan></text>
+<rect data-node-id="edge-15-label-bg" x="651" y="535" width="108" height="22" rx="4" fill="#FFFFFF" stroke="none" stroke-width="0" />
+<text data-node-id="edge-15-label" x="705" y="546" fill="#6B7280" font-size="12" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Microsoft YaHei', 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans CJK SC', Inter, Arial, sans-serif"><tspan x="705" y="546">下次同类直接调用</tspan></text>
 </svg>

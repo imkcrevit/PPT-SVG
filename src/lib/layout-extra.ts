@@ -16,6 +16,7 @@ import { SKILL_IDS, type SkillId } from "@/lib/types";
 import type { SemanticDiagram, SemanticNode } from "@/lib/semantic-types";
 import { DEFAULT_THEME, type DiagramTheme } from "@/lib/theme";
 import { estimateLineCount, measureSvgText } from "@/lib/text-layout";
+import { placeEdgeLabel, routeEdge, type Box } from "@/lib/orthogonal-route";
 
 const W = 1280;
 const H = 720;
@@ -169,6 +170,21 @@ function card(
   }
 
   return { id: `${idBase}-group`, type: "group", name: label, children };
+}
+
+function segmentBoxes(points: Array<{ x: number; y: number }>): Box[] {
+  return points.slice(0, -1).map((a, k) => {
+    const b = points[k + 1];
+    return { x: Math.min(a.x, b.x) - 1, y: Math.min(a.y, b.y) - 1, width: Math.abs(b.x - a.x) + 2, height: Math.abs(b.y - a.y) + 2 };
+  });
+}
+
+// White plate + caption for an edge label centred on (cx, cy).
+function edgeLabelPlate(idBase: string, label: string, cx: number, cy: number, width: number): FigureElement[] {
+  return [
+    { id: `${idBase}-label-bg`, type: "rect", name: `${label} bg`, x: cx - width / 2, y: cy - 11, width, height: 22, rx: 4, fill: "#FFFFFF", stroke: "none", strokeWidth: 0 },
+    { id: `${idBase}-label`, type: "text", name: label, x: cx - width / 2, y: cy - 11, width, height: 22, text: label, fontSize: 12, fontWeight: 500, fill: SUBTEXT, textAnchor: "middle" }
+  ];
 }
 
 // ============================================================ TIMELINE
@@ -437,7 +453,7 @@ export function layoutHierarchy(diagram: SemanticDiagram, theme: DiagramTheme = 
   positions.forEach((p, i) => {
     const acc = accent(p.depth);
     const B = boxOf(p);
-    elements.push(card(`htree-${i}`, p.node.label, p.node.detail, B.x, B.y, B.w, B.h, acc, { fill: p.depth === 0 ? acc.tint : "#FFFFFF", dashed: p.node.dashed === true, titleFont }));
+    elements.push(card(`htree-${i}`, p.node.label, p.node.detail, B.x, B.y, B.w, B.h, acc, { fill: p.depth <= 1 && maxDepth > 1 ? acc.tint : p.depth === 0 ? acc.tint : "#FFFFFF", dashed: p.node.dashed === true, titleFont }));
   });
 
   return frame(diagram, elements, canvasBg);
@@ -622,28 +638,45 @@ export function layoutMindmap(diagram: SemanticDiagram, theme: DiagramTheme = DE
   const right = branches.filter((_, i) => i % 2 === 0);
   const left = branches.filter((_, i) => i % 2 === 1);
 
+  // Each branch owns a vertical block tall enough for its stacked leaves, and
+  // blocks are packed top-to-bottom per side, so leaves of neighbouring
+  // branches can never overlap and the stack never leaves the body area.
+  const BRANCH_H = 52;
+  const BLOCK_GAP = 14;
   const placeSide = (list: SemanticNode[], side: 1 | -1) => {
-    const n = list.length;
+    const leafCounts = list.map((br) => childrenOf(diagram, br.id).length);
+    const avail = areaBot - areaTop;
+    const totalLeaves = leafCounts.reduce((a, b) => a + b, 0);
+    const gaps = BLOCK_GAP * Math.max(0, list.length - 1);
+    const pitch = clamp(totalLeaves ? (avail - gaps) / totalLeaves : 46, 24, 46);
+    const leafH = Math.min(38, pitch - 6);
+    const leafFont = leafH < 30 ? 11 : 12;
+    const blockH = leafCounts.map((count) => Math.max(BRANCH_H, count * pitch));
+    const usedH = blockH.reduce((a, b) => a + b, 0) + gaps;
+    // If even the tightest pitch overflows, compress the branch blocks too.
+    const squeeze = usedH > avail ? avail / usedH : 1;
+    let cursor = cy - (usedH * squeeze) / 2;
     list.forEach((br, k) => {
       const idx = branches.indexOf(br);
       const acc = accent(idx);
-      const by = n === 1 ? cy : areaTop + 26 + ((areaBot - areaTop - 52) * k) / (n - 1);
+      const h = blockH[k] * squeeze;
+      const midY = cursor + h / 2;
+      const by = midY - BRANCH_H / 2;
       const bw = 160;
       const bx = cx + side * 215 - (side === 1 ? 0 : bw);
-      const bcx = bx + bw / 2;
       // center -> branch connector
-      elements.push({ id: `mind-l-${idx}`, type: "line", name: "branch", x1: cx + side * 92, y1: cy, x2: side === 1 ? bx : bx + bw, y2: by + 26, stroke: acc.stroke, strokeWidth: 2 });
-      // leaves further out, stacked around branch y
+      elements.push({ id: `mind-l-${idx}`, type: "line", name: "branch", x1: cx + side * 92, y1: cy, x2: side === 1 ? bx : bx + bw, y2: midY, stroke: acc.stroke, strokeWidth: 2 });
       const leaves = childrenOf(diagram, br.id);
       const nl = leaves.length;
       leaves.forEach((leaf, j) => {
         const lw = 138;
-        const ly = by + 26 + (nl === 1 ? 0 : (j - (nl - 1) / 2) * 50);
+        const ly = midY + (j - (nl - 1) / 2) * pitch * squeeze;
         const lx = side === 1 ? bx + bw + 60 : bx - 60 - lw;
-        elements.push({ id: `mind-ll-${idx}-${j}`, type: "line", name: "leaf", x1: side === 1 ? bx + bw : bx, y1: by + 26, x2: side === 1 ? lx : lx + lw, y2: ly, stroke: acc.stroke, strokeWidth: 1.5 });
-        elements.push(card(`mind-leaf-${idx}-${j}`, leaf.label, undefined, lx, ly - 19, lw, 38, acc, { titleFont: 12 }));
+        elements.push({ id: `mind-ll-${idx}-${j}`, type: "line", name: "leaf", x1: side === 1 ? bx + bw : bx, y1: midY, x2: side === 1 ? lx : lx + lw, y2: ly, stroke: acc.stroke, strokeWidth: 1.5 });
+        elements.push(card(`mind-leaf-${idx}-${j}`, leaf.label, undefined, lx, ly - leafH / 2, lw, leafH, acc, { titleFont: leafFont }));
       });
-      elements.push(card(`mind-br-${idx}`, br.label, br.detail, bx, by, bw, 52, acc, { fill: acc.tint }));
+      elements.push(card(`mind-br-${idx}`, br.label, br.detail, bx, by, bw, BRANCH_H, acc, { fill: acc.tint }));
+      cursor += h + BLOCK_GAP * squeeze;
     });
   };
 
@@ -688,13 +721,21 @@ export function layoutFishbone(diagram: SemanticDiagram, theme: DiagramTheme = D
     elements.push({ id: `fish-bone-${i}`, type: "line", name: cat.label, x1: baseX, y1: spineY, x2: boneEndX, y2: boneEndY, stroke: acc.stroke, strokeWidth: 2 });
     // category box at bone end
     elements.push(card(`fish-cat-${i}`, cat.label, undefined, boneEndX - 75, boneEndY - (above ? 46 : 0), 150, 46, acc, { fill: acc.tint, titleFont: 13 }));
-    // sub-causes as small labels along the bone
-    const subs = childrenOf(diagram, cat.id);
-    subs.slice(0, 3).forEach((sub, j) => {
-      const t = (j + 1) / (subs.slice(0, 3).length + 1);
-      const sx = baseX + (boneEndX - baseX) * t;
-      const sy = spineY + (boneEndY - spineY) * t;
-      elements.push({ id: `fish-sub-${i}-${j}`, type: "text", name: sub.label, x: sx - 60, y: sy - 8, width: 120, height: 16, text: sub.label, fontSize: 11, fontWeight: 500, fill: SUBTEXT, textAnchor: above ? "start" : "start" });
+    // Sub-causes hang off the bone as short horizontal ribs. The label sits on
+    // the outer side of its rib and ends short of the bone, so neither the
+    // bone nor the neighbouring rib ever runs through the text.
+    const subs = childrenOf(diagram, cat.id).slice(0, 4);
+    const pitch = 150 / (subs.length + 1);
+    const labelW = clamp(per * 2 - 90, 70, 124);
+    subs.forEach((sub, j) => {
+      const t = (j + 1) / (subs.length + 1);
+      const px = baseX + (boneEndX - baseX) * t;
+      const py = spineY + (boneEndY - spineY) * t;
+      const lines = Math.min(pitch >= 34 ? 2 : 1, estLines(sub.label, labelW, 11));
+      const textH = lines * 13 + 2;
+      const textRight = px - 14;
+      elements.push({ id: `fish-rib-${i}-${j}`, type: "line", name: `${sub.label} rib`, x1: textRight - labelW, y1: py, x2: px, y2: py, stroke: acc.stroke, strokeWidth: 1 });
+      elements.push({ id: `fish-sub-${i}-${j}`, type: "text", name: sub.label, x: textRight - labelW, y: above ? py - textH - 2 : py + 2, width: labelW, height: textH, text: sub.label, fontSize: 11, fontWeight: 500, fill: SUBTEXT, textAnchor: "end" });
     });
   });
 
@@ -893,30 +934,42 @@ export function layoutSwimlane(diagram: SemanticDiagram, theme: DiagramTheme = D
   });
 
   // edges (or sequential)
-  const edges = diagram.edges?.length ? diagram.edges : nodes.slice(1).map((n, i) => ({ from: nodes[i].id, to: n.id, dashed: false }));
+  const edges = diagram.edges?.length ? diagram.edges : nodes.slice(1).map((n, i) => ({ from: nodes[i].id, to: n.id, dashed: false, label: undefined as string | undefined }));
+  const boxOf = (id: string) => {
+    const p = pos.get(id);
+    return p ? { x: p.cx - cardW / 2, y: p.cy - cardH / 2, width: cardW, height: cardH } : undefined;
+  };
+  const edgeElements: FigureElement[] = [];
+  const labelElements: FigureElement[] = [];
+  const routed: Array<{ i: number; label?: string; points: Array<{ x: number; y: number }> }> = [];
+  const placed: Box[] = [];
   edges.forEach((e, i) => {
-    const a = pos.get(e.from);
-    const b = pos.get(e.to);
+    const a = boxOf(e.from);
+    const b = boxOf(e.to);
     if (!a || !b) return;
-    const x1 = a.cx + cardW / 2;
-    const x2 = b.cx - cardW / 2;
-    const midX = (a.cx + b.cx) / 2;
-    elements.push({
-      id: `lane-e${i}`,
-      type: "connector",
-      name: "edge",
-      points: [
-        { x: x1, y: a.cy },
-        { x: midX, y: a.cy },
-        { x: midX, y: b.cy },
-        { x: x2, y: b.cy }
-      ],
-      stroke: EDGE,
-      strokeWidth: 2,
-      dash: e.dashed === true,
-      endArrow: true
-    });
+    // Route around every other card so a step never runs through another one.
+    const obstacles = nodes.filter((n) => n.id !== e.from && n.id !== e.to).map((n) => boxOf(n.id)!);
+    const points = routeEdge(a, b, obstacles, 18);
+    edgeElements.push({ id: `lane-e${i}`, type: "connector", name: "edge", points, stroke: EDGE, strokeWidth: 2, dash: e.dashed === true, endArrow: true });
+    routed.push({ i, label: e.label, points });
   });
+  routed.forEach(({ i, label, points }) => {
+    if (!label) return;
+    const plate = { width: Math.max(34, measureSvgText(label, 12) + 12), height: 22 };
+    const blockers = [
+      ...nodes.map((n) => ({ box: boxOf(n.id)!, container: false })),
+      ...lanes!.map((_, r) => ({ box: { x: MARGIN, y: top + r * laneH, width: W - MARGIN * 2, height: laneH - 6 }, container: true })),
+      ...placed.map((box) => ({ box, container: false })),
+      ...routed.filter((other) => other.i !== i).flatMap((other) => segmentBoxes(other.points).map((box) => ({ box, container: false })))
+    ];
+    const c = placeEdgeLabel(points, plate, blockers);
+    placed.push({ x: c.x - plate.width / 2, y: c.y - plate.height / 2, width: plate.width, height: plate.height });
+    labelElements.push(...edgeLabelPlate(`lane-e${i}`, label, c.x, c.y, plate.width));
+  });
+  // Cards were pushed before edges; draw connectors underneath them.
+  const firstCard = elements.findIndex((el) => el.id.startsWith("lane-node-"));
+  elements.splice(firstCard, 0, ...edgeElements);
+  elements.push(...labelElements);
 
   return frame(diagram, elements, canvasBg);
 }
@@ -1020,42 +1073,68 @@ export function layoutNetwork(diagram: SemanticDiagram, theme: DiagramTheme = DE
     pos.set(n.id, { x, y });
   });
 
+  const cardH = new Map<string, number>();
+  nodes.forEach((n) => {
+    const titleLines = estLines(n.label, cardW, 14);
+    const detailLines = n.detail ? estLines(n.detail, cardW, DETAIL_FONT) : 0;
+    cardH.set(n.id, titleLines * (14 * 1.28) + (detailLines ? 4 + detailLines * DETAIL_LH : 0) + 20);
+  });
+  const boxOf = (id: string): Box => {
+    const p = pos.get(id)!;
+    const h = cardH.get(id)!;
+    return { x: p.x - cardW / 2, y: p.y - h / 2, width: cardW, height: h };
+  };
+  // Point where the ray from the card centre toward `to` leaves the card, so
+  // connectors (and their arrowheads) stop at the border instead of hiding
+  // under the card.
+  const exitPoint = (id: string, to: { x: number; y: number }, pad: number) => {
+    const p = pos.get(id)!;
+    const box = boxOf(id);
+    const dx = to.x - p.x;
+    const dy = to.y - p.y;
+    const t = Math.min(dx ? (box.width / 2 + pad) / Math.abs(dx) : Infinity, dy ? (box.height / 2 + pad) / Math.abs(dy) : Infinity);
+    return { x: p.x + dx * Math.min(t, 1), y: p.y + dy * Math.min(t, 1) };
+  };
+
   // Edges first so cards render on top of the connectors.
+  const edgeSegs: Array<{ i: number; label?: string; points: Array<{ x: number; y: number }> }> = [];
   (diagram.edges ?? []).forEach((e, i) => {
     const a = pos.get(e.from);
     const b = pos.get(e.to);
-    if (!a || !b) return;
+    if (!a || !b || e.from === e.to) return;
+    const points = [exitPoint(e.from, b, 2), exitPoint(e.to, a, 3)];
+    edgeSegs.push({ i, label: e.label, points });
     elements.push({
       id: `net-edge-${i}`,
       type: "connector",
       name: `${e.from} -> ${e.to}`,
-      points: [
-        { x: a.x, y: a.y },
-        { x: b.x, y: b.y }
-      ],
+      points,
       stroke: EDGE,
       strokeWidth: 2,
       dash: e.dashed === true,
       endArrow: true
     });
-    if (e.label) {
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2;
-      const plateW = Math.max(34, measureSvgText(e.label, 12) + 12);
-      elements.push({ id: `net-edge-${i}-bg`, type: "rect", name: `${e.label} bg`, x: mx - plateW / 2, y: my - 11, width: plateW, height: 22, rx: 4, fill: "#FFFFFF", stroke: "none", strokeWidth: 0 });
-      elements.push({ id: `net-edge-${i}-label`, type: "text", name: e.label, x: mx - plateW / 2, y: my - 11, width: plateW, height: 22, text: e.label, fontSize: 12, fontWeight: 500, fill: SUBTEXT, textAnchor: "middle" });
-    }
   });
+  const placedPlates: Box[] = [];
+  const labelEls: FigureElement[] = [];
+  edgeSegs.forEach(({ i, label, points }) => {
+    if (!label) return;
+    const plate = { width: Math.max(34, measureSvgText(label, 12) + 12), height: 22 };
+    const c = placeEdgeLabel(points, plate, [
+      ...nodes.map((n) => ({ box: boxOf(n.id), container: false })),
+      ...placedPlates.map((box) => ({ box, container: false }))
+    ]);
+    placedPlates.push({ x: c.x - plate.width / 2, y: c.y - plate.height / 2, width: plate.width, height: plate.height });
+    labelEls.push(...edgeLabelPlate(`net-edge-${i}`, label, c.x, c.y, plate.width));
+  });
+  elements.push(...labelEls);
 
   nodes.forEach((n, i) => {
-    const p = pos.get(n.id)!;
     const acc = accent(i);
-    const titleLines = estLines(n.label, cardW, 14);
-    const detailLines = n.detail ? estLines(n.detail, cardW, DETAIL_FONT) : 0;
-    const cardH = titleLines * (14 * 1.28) + (detailLines ? 4 + detailLines * DETAIL_LH : 0) + 20;
+    const box = boxOf(n.id);
     const emph = (n as unknown as { emphasis?: string }).emphasis;
     elements.push(
-      card(`net-node-${i}`, n.label, n.detail, p.x - cardW / 2, p.y - cardH / 2, cardW, cardH, acc, {
+      card(`net-node-${i}`, n.label, n.detail, box.x, box.y, box.width, box.height, acc, {
         dashed: n.dashed === true,
         titleFont: 14,
         fill: emph === "primary" ? acc.tint : "#FFFFFF"
@@ -1211,19 +1290,25 @@ export function layoutLine(diagram: SemanticDiagram, theme: DiagramTheme = DEFAU
   const minRaw = Math.min(...(numeric.length ? numeric : [0]));
   const maxRaw = Math.max(...(numeric.length ? numeric : [1]));
   const padding = (maxRaw - minRaw || Math.max(1, Math.abs(maxRaw))) * 0.12;
-  const minValue = minRaw - padding;
-  const maxValue = maxRaw + padding;
+  // Round axis values (0, 20, 40 …) instead of raw padded extremes like 81.52.
+  const axis = niceAxis(minRaw - padding, maxRaw + padding);
+  const minValue = axis.min;
+  const maxValue = axis.max;
   const span = maxValue - minValue || 1;
-  const yOf = (value: number) => bottom - ((value - minValue) / span) * (bottom - top);
-  const xOf = (index: number) => points.length === 1 ? (left + right) / 2 : left + (index / (points.length - 1)) * (right - left);
+  // Value labels need headroom above the highest dot inside the frame.
+  const plotTop = top + 30;
+  const yOf = (value: number) => bottom - ((value - minValue) / span) * (bottom - plotTop);
+  // Points sit at slot centres (like the bar chart) so the first/last value
+  // labels stay inside the frame and every category label centres on its point.
+  const slot = (right - left) / Math.max(1, points.length);
+  const xOf = (index: number) => left + slot * (index + 0.5);
 
   elements.push({ id: "line-frame", type: "rect", name: "chart frame", x: left, y: top, width: right - left, height: bottom - top, rx: 3, fill: "#FFFFFF", stroke: "#D5DAE2", strokeWidth: 1.2 });
-  for (let tick = 0; tick <= 4; tick += 1) {
-    const value = minValue + (span * tick) / 4;
+  axis.ticks.forEach((value, tick) => {
     const y = yOf(value);
     elements.push({ id: `line-grid-${tick}`, type: "line", name: `grid ${tick}`, x1: left, y1: y, x2: right, y2: y, stroke: "#E7EAF0", strokeWidth: 1 });
     elements.push({ id: `line-tick-${tick}`, type: "text", name: `tick ${tick}`, x: MARGIN - 2, y: y - 10, width: 54, height: 20, text: formatChartValue(value), fontSize: 11, fontWeight: 500, fill: SUBTEXT, textAnchor: "end" });
-  }
+  });
 
   for (let index = 0; index + 1 < points.length; index += 1) {
     const current = values[index];
@@ -1238,8 +1323,8 @@ export function layoutLine(diagram: SemanticDiagram, theme: DiagramTheme = DEFAU
     const y = value === undefined ? bottom : yOf(value);
     elements.push({ id: `line-dot-${index}`, type: "ellipse", name: node.label, cx: x, cy: y, rx: 6, ry: 6, fill: value === undefined ? "#FFFFFF" : accent(0).stroke, stroke: accent(0).stroke, strokeWidth: 2, dash: value === undefined });
     elements.push({ id: `line-value-${index}`, type: "text", name: `${node.label} value`, x: x - 48, y: y - 30, width: 96, height: 20, text: value === undefined ? "—" : formatChartValue(value), fontSize: 11, fontWeight: 700, fill: value === undefined ? SUBTEXT : TEXT, textAnchor: "middle" });
-    const labelWidth = Math.min(140, (right - left) / Math.max(1, points.length));
-    const labelX = clamp(x - labelWidth / 2, MARGIN, W - MARGIN - labelWidth);
+    const labelWidth = Math.min(140, slot);
+    const labelX = x - labelWidth / 2;
     elements.push({ id: `line-label-${index}`, type: "text", name: `${node.label} label`, x: labelX, y: bottom + 10, width: labelWidth, height: 36, text: node.label, fontSize: points.length > 10 ? 10 : 12, fontWeight: 600, fill: TEXT, textAnchor: "middle" });
   });
 
@@ -1248,6 +1333,17 @@ export function layoutLine(diagram: SemanticDiagram, theme: DiagramTheme = DEFAU
   }
 
   return frame(diagram, elements, canvasBg);
+}
+
+function niceAxis(lo: number, hi: number): { min: number; max: number; ticks: number[] } {
+  const rough = (hi - lo || Math.abs(hi) || 1) / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(rough));
+  const step = ([1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((candidate) => candidate >= rough) ?? 10 * magnitude);
+  const min = Math.floor(lo / step) * step;
+  const max = Math.ceil(hi / step) * step;
+  const ticks: number[] = [];
+  for (let value = min; value <= max + step / 2; value += step) ticks.push(Math.round(value * 1e6) / 1e6);
+  return { min, max, ticks };
 }
 
 // ============================================================ RADAR / spider chart (axes = nodes, value = score.x 0..1)

@@ -93,6 +93,7 @@ When an uploaded bundle includes replacement files, compare them against the cur
 - `npm run test:theme:intent` checks conversational theme requests such as background, font, text color, and accent changes.
 - `npm run test:theme:image` checks uploaded-image classification, including palette extraction, background stripping, screenshot rejection, overly rich image rejection, and neutral image rejection.
 - `npm run test:snapshots` runs deterministic SVG snapshot checks for the core semantic layout engine.
+- `npm run test:collisions` compiles realistic diagrams of every type, fails on overlapping/clipped text, partially overlapping shapes, or lines through labels, and re-checks each one as a deck slide under every built-in template. Set `COLLISION_SVG_DIR=<dir>` to dump the audited SVGs for visual review.
 - `npm run build` creates a production Next.js build with `/ppt` as the default base path.
 
 For nginx reverse-proxy testing, keep the complete `/ppt` path. On port `3000`, verify `http://127.0.0.1:3000/ppt/zh` and `http://127.0.0.1:3000/ppt/en`; do not use or document shortened `/zh` or `/en` paths for this deployment shape. To build without a base path, explicitly run `NEXT_PUBLIC_BASE_PATH= npm run build`. To bind another host or port, use `BIND_HOST=0.0.0.0 PORT=3001 ./scripts/start.sh dev`. Port `3000` is the nginx upstream app port; the script may stop `ppt-svg.service` before manual local launches, but it must not stop nginx itself.
@@ -155,6 +156,7 @@ There is currently no dedicated unit or end-to-end test runner configured. Befor
 npm run test:layout
 npm run test:theme
 npm run test:snapshots
+npm run test:collisions
 npm run lint
 npm run typecheck
 npm run build
